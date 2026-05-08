@@ -43,34 +43,38 @@ function pianoPerformSongPage(){
   var h = '<div class="card mb16">';
   h += '<h2>'+escHTML(songTitle)+'</h2>';
   h += '<div class="muted">'+escHTML(songArtist)+'</div>';
-  h += '<div style="margin-top:8px">Mastery: <b>'+escHTML(mastery)+'</b></div>';
+  h += '<div class="split-row" style="margin-top:8px;gap:12px"><span class="metric-label">Mastery</span><span class="metric-value">'+escHTML(mastery)+'</span></div>';
   if(best){
-    h += '<div>Best Accuracy: '+Math.round(bestAccuracy)+'%</div>';
-    h += '<div>Best Stars: '+(best.bestStars||0)+'</div>';
+    h += '<div class="split-row" style="gap:12px"><span class="metric-label">Best Accuracy</span><span class="metric-value">'+Math.round(bestAccuracy)+'%</span></div>';
+    h += '<div class="split-row" style="gap:12px"><span class="metric-label">Best Stars</span><span class="metric-value">'+(best.bestStars||0)+'</span></div>';
   }
   h += '</div>';
 
   h += '<div class="card mb16">';
-  h += '<div><b>Arrangement</b></div>';
+  h += '<div class="card-section-heading">Arrangement</div>';
+  h += '<div class="action-row" style="gap:6px;flex-wrap:wrap">';
   h += '<button class="btn'+(S.performArrangementType==="block_chords"?" btn-primary":"")+'" onclick="act(\'performArrangement\',\'block_chords\')">Block Chords</button> ';
   h += '<button class="btn'+(S.performArrangementType==="left_hand_patterns"?" btn-primary":"")+'" onclick="act(\'performArrangement\',\'left_hand_patterns\')">Left Hand</button> ';
   h += '<button class="btn'+(S.performArrangementType==="melody"?" btn-primary":"")+'" onclick="act(\'performArrangement\',\'melody\')">Melody</button>';
+  h += '</div>';
   h += '</div>';
 
   if(S.performArrangementType==="left_hand_patterns"){
     var pat = typeof getCurrentLHPattern==="function" ? getCurrentLHPattern() : null;
     var patternName = pianoFirstPerformanceTextToken(pat && pat.name, "Unknown pattern");
     h += '<div class="card mb16">';
-    h += '<div><b>LH Pattern</b></div>';
+    h += '<div class="card-section-heading">LH Pattern</div>';
     h += '<div class="muted">'+escHTML(patternName)+'</div>';
     h += '</div>';
   }
 
   h += '<div class="card mb16">';
-  h += '<div><b>Difficulty</b></div>';
+  h += '<div class="card-section-heading">Difficulty</div>';
+  h += '<div class="action-row" style="gap:6px;flex-wrap:wrap">';
   h += '<button class="btn'+(S.performDifficulty==="easy"?" btn-primary":"")+'" onclick="act(\'performDifficulty\',\'easy\')">Easy</button> ';
   h += '<button class="btn'+(S.performDifficulty==="normal"?" btn-primary":"")+'" onclick="act(\'performDifficulty\',\'normal\')">Normal</button> ';
   h += '<button class="btn'+(S.performDifficulty==="pro"?" btn-primary":"")+'" onclick="act(\'performDifficulty\',\'pro\')">Pro</button>';
+  h += '</div>';
   h += '</div>';
 
   // Audio import
@@ -78,11 +82,11 @@ function pianoPerformSongPage(){
   var audioData = S.songAudioData[songId];
 
   h += '<div class="card mb16">';
-  h += '<div><b>Song Audio</b></div>';
+  h += '<div class="card-section-heading">Song Audio</div>';
 
   if (audioData && audioData.stemPaths) {
     var pianoDetectedBpm = pianoNormalizePerformanceNumber(audioData.detectedBpm, null);
-    h += '<div style="color:#5a9e6a;font-weight:600">Audio loaded</div>';
+    h += '<div class="card-micro-heading" style="color:#5a9e6a">Audio loaded</div>';
     if (pianoDetectedBpm != null) {
       h += '<div class="muted" style="font-size:12px">Detected BPM: ' + Math.round(pianoDetectedBpm) + '</div>';
     }
@@ -98,8 +102,10 @@ function pianoPerformSongPage(){
   h += '</div>';
 
   h += '<div class="card mb16">';
+  h += '<div class="action-row" style="gap:6px;flex-wrap:wrap">';
   h += '<button class="btn btn-primary" onclick="act(\'performStart\')">Start Performance</button> ';
   h += '<button class="btn" onclick="act(\'back\')">Back</button>';
+  h += '</div>';
   h += '</div>';
 
   return h;

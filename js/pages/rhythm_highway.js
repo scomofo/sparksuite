@@ -238,8 +238,8 @@
     var h = '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Rhythm Highway</h2>';
     h += '<p style="color:var(--text-dim);font-size:13px;margin-bottom:8px">Hold frets 1-5 and strum on time. Audio clock drives the run; this page only renders snapshots.</p>';
     h += '<div style="margin-bottom:14px">';
-    h += '<div style="font-size:11px;font-weight:800;color:var(--text-secondary);margin-bottom:6px">Assist Mode</div>';
-    h += '<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap">';
+    h += '<div class="metric-label" style="margin-bottom:6px">Assist Mode</div>';
+    h += '<div class="action-row" style="justify-content:center">';
     for (var pi = 0; pi < ASSIST_PRESETS.length; pi++) {
       var preset = ASSIST_PRESETS[pi];
       var presetActive = activePreset && activePreset.id === preset.id;
@@ -249,9 +249,9 @@
     h += '<div style="margin-top:6px;font-size:11px;color:var(--text-muted)">' + escHTML(activePreset ? activePreset.hint : "Switching assist mode restarts the run.") + '</div>';
     h += '</div>';
     h += '<div style="display:flex;justify-content:center;gap:18px;margin-bottom:12px">';
-    h += '<div><div style="font-size:24px;font-weight:900;color:#FFE66D">' + snapshot.gameplay.score + '</div><div style="font-size:10px;color:var(--text-muted)">Score</div></div>';
-    h += '<div><div style="font-size:24px;font-weight:900;color:#FF6B6B">' + snapshot.gameplay.maxCombo + 'x</div><div style="font-size:10px;color:var(--text-muted)">Max Combo</div></div>';
-    h += '<div><div style="font-size:24px;font-weight:900;color:#4ECDC4">' + Math.round((snapshot.gameplay.accuracy || 0) * 100) + '%</div><div style="font-size:10px;color:var(--text-muted)">Accuracy</div></div>';
+    h += '<div><div class="metric-value" style="font-size:24px;color:#FFE66D">' + snapshot.gameplay.score + '</div><div class="metric-label">Score</div></div>';
+    h += '<div><div class="metric-value" style="font-size:24px;color:#FF6B6B">' + snapshot.gameplay.maxCombo + 'x</div><div class="metric-label">Max Combo</div></div>';
+    h += '<div><div class="metric-value" style="font-size:24px;color:#4ECDC4">' + Math.round((snapshot.gameplay.accuracy || 0) * 100) + '%</div><div class="metric-label">Accuracy</div></div>';
     h += '</div>';
     if (S.rhythmHighwayLaunchContext && S.rhythmHighwayLaunchContext.label) {
       h += '<div style="margin-bottom:12px;font-size:11px;color:var(--text-muted);font-weight:700">Focused Drill: ' + escHTML(firstRhythmHighwayTextToken(S.rhythmHighwayLaunchContext.label, "current drill")) + '</div>';
@@ -274,13 +274,13 @@
     }
     h += '</div>';
 
-    h += '<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">';
+    h += '<div class="action-row" style="justify-content:center;margin-bottom:12px">';
     for (var fi = 0; fi < laneCount; fi++) {
       var active = maskHasLane(S.rhythmHighwayHeldMask, fi);
       h += '<button class="btn" onclick="act(\'rhythmHighwayLane\',' + fi + ')" style="min-width:54px;background:' + (active ? laneColor(fi, accessibility) : "var(--input-bg)") + ';color:' + (active ? "#fff" : "var(--text-secondary)") + ';font-weight:800">' + (accessibility.laneLabels ? labels[fi] : (fi + 1)) + '</button>';
     }
     h += '</div>';
-    h += '<div style="display:flex;justify-content:center;gap:10px">';
+    h += '<div class="action-row" style="justify-content:center">';
     h += '<button class="btn" onclick="act(\'rhythmHighwayStrum\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;font-size:18px;padding:14px 28px">Strum</button>';
     h += '<button class="btn" onclick="act(\'' + (S.rhythmHighwayLoop ? "rhythmHighwayClearLoop" : "rhythmHighwayLoopWindow") + '\')" style="background:' + (S.rhythmHighwayLoop ? "#4ECDC4" : "var(--input-bg)") + ';color:' + (S.rhythmHighwayLoop ? "#fff" : "var(--text-secondary)") + '">' + (S.rhythmHighwayLoop ? "Clear Loop" : "Loop Window") + '</button>';
     h += '<button class="btn" onclick="act(\'back\')" style="background:var(--input-bg);color:var(--text-secondary)">Exit</button>';
@@ -312,22 +312,22 @@
     }
     if (moduleGuidance) {
       h += '<div class="card mb16" style="text-align:left;background:linear-gradient(180deg,rgba(20,184,166,.12),rgba(20,184,166,.04));border:1px solid rgba(20,184,166,.28)">';
-      h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:6px">' + escHTML(moduleGuidance.title) + '</div>';
+      h += '<div class="card-section-heading" style="margin-bottom:6px">' + escHTML(moduleGuidance.title) + '</div>';
       h += '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">' + escHTML(moduleGuidance.summary) + '</div>';
       h += '<div style="font-size:11px;color:var(--text-muted)">Next: ' + escHTML(moduleGuidance.nextStep) + '</div>';
       h += '</div>';
     }
-    h += '<div class="card mb16"><div style="display:flex;justify-content:space-around;text-align:center">';
-    h += '<div><div style="font-size:28px;font-weight:900;color:#FFE66D">' + gameplay.score + '</div><div style="font-size:11px;color:var(--text-muted)">Score</div></div>';
-    h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + Math.round((gameplay.accuracy || 0) * 100) + '%</div><div style="font-size:11px;color:var(--text-muted)">Accuracy</div></div>';
-    h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">' + (gameplay.maxCombo || 0) + 'x</div><div style="font-size:11px;color:var(--text-muted)">Max Combo</div></div>';
+    h += '<div class="card mb16"><div style="display:flex;justify-content:space-around;text-align:center;gap:12px">';
+    h += '<div><div class="metric-value" style="font-size:28px;color:#FFE66D">' + gameplay.score + '</div><div class="metric-label">Score</div></div>';
+    h += '<div><div class="metric-value" style="font-size:28px;color:#4ECDC4">' + Math.round((gameplay.accuracy || 0) * 100) + '%</div><div class="metric-label">Accuracy</div></div>';
+    h += '<div><div class="metric-value" style="font-size:28px;color:#FF6B6B">' + (gameplay.maxCombo || 0) + 'x</div><div class="metric-label">Max Combo</div></div>';
     h += '</div></div>';
-    h += '<div class="card mb16" style="text-align:left"><div style="font-size:13px;font-weight:800;color:var(--text-primary);margin-bottom:8px">Learning</div>';
+    h += '<div class="card mb16" style="text-align:left"><div class="card-section-heading" style="margin-bottom:8px">Learning</div>';
     h += '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">Skills:</div>';
     h += '<div style="font-size:12px;color:var(--text-muted)">' + escHTML(formatSkills(learning.skills || [])) + '</div>';
     h += '<div style="font-size:12px;color:var(--text-secondary);margin:8px 0 6px">Weak Areas:</div>';
     h += '<div style="font-size:12px;color:var(--text-muted)">' + escHTML(formatRhythmWeakAreas(learning.weakAreas || [])) + '</div></div>';
-    h += '<div style="display:flex;gap:10px;justify-content:center">';
+    h += '<div class="action-row" style="justify-content:center">';
     h += '<button class="btn" onclick="act(\'restartRhythmHighway\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Play Again</button>';
     if (S.rhythmHighwayLoop) {
       h += '<button class="btn" onclick="act(\'rhythmHighwayClearLoop\')" style="background:var(--input-bg);color:var(--text-secondary)">Play Full Run</button>';

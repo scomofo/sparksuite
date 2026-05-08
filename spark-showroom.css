@@ -670,6 +670,7 @@
 }
 .showroom-settings-range{
   width:100%;
+  min-height:28px;
   accent-color:#ff7b3a;
   cursor:pointer;
 }
@@ -1193,6 +1194,8 @@
   font-weight:800;font-size:15px;color:var(--text-primary);margin:0;
 }
 .showroom-section-h2 .link{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:28px;padding:6px 0 6px 10px;
   font-size:11px;font-weight:700;letter-spacing:.3px;
   color:var(--text-secondary);cursor:pointer;
 }
@@ -1265,6 +1268,7 @@
 .showroom-search .material-symbols-outlined{color:#ff7b3a;font-size:24px}
 .showroom-search input{
   flex:1;background:transparent;border:none;
+  min-height:28px;
   /* No outline:none here — let the global *:focus-visible style in
      styles.css render the keyboard focus ring (a11y). */
   color:var(--text-primary);font-family:'Plus Jakarta Sans',var(--font-body);
@@ -1324,6 +1328,8 @@
   color:var(--text-primary);margin:0;
 }
 .showroom-trending-head .link{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:28px;padding:6px 0 6px 10px;
   color:#ff7b3a;font-size:13px;font-weight:700;cursor:pointer;
 }
 
@@ -2171,6 +2177,8 @@
   color:var(--text-primary);margin:0;
 }
 .showroom-path-section-head .link{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:28px;padding:6px 0 6px 10px;
   color:#ff7b3a;font-weight:700;font-size:11px;letter-spacing:.05em;
   text-transform:uppercase;cursor:pointer;
 }
@@ -2477,6 +2485,8 @@
   letter-spacing:-.01em;color:var(--text-primary);margin:0;
 }
 .showroom-quicktools-head .link{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:28px;padding:6px 0 6px 10px;
   color:#ff7b3a;font-weight:800;font-size:11px;letter-spacing:.15em;
   text-transform:uppercase;cursor:pointer;
 }
@@ -3011,7 +3021,7 @@
   display:flex; align-items:center; justify-content:center;
 }
 .showroom-profile-ember-mini-icon .material-symbols-outlined{ font-size:20px; }
-.showroom-profile-ember-mini-num{
+.showroom-profile-ember-mini-num{}
 /* ═══════════════════════════════════════════════════════════════════
    Session Summary Screen (Stitch 2026-04)
    Refreshed token-driven rules for sessionSummaryRender(). Appended
@@ -3312,7 +3322,8 @@
   margin:0;
 }
 .showroom-profile-ember-viewall{
-  background:none; border:none; padding:0;
+  background:none; border:none; padding:6px 0 6px 10px;
+  min-height:28px;
   cursor:pointer;
   font-family:'Syne', var(--font-body);
   font-weight:700; font-size:12px;
@@ -3406,6 +3417,7 @@
 }
 .showroom-profile-ember-badges .showroom-badge.locked .showroom-badge-label{
   color:var(--text-muted);
+}
 .showroom-summary-lesson-meta{
   margin:2px 0 0;
   font-family:'Plus Jakarta Sans', var(--font-body);
@@ -3445,6 +3457,7 @@
   background:rgba(255,255,255,.05);
   filter:none;
 }
+/*
    Performance Mode Screen (Stitch 2026-04)
    Ported from docs/design/stitch-2026-04/performance_mode/.
    Layered on top of the original .showroom-perf-* rules via cascade
@@ -3688,6 +3701,7 @@
 .showroom-perf2-tappad.cyan{ color:var(--perform-cyan); }
 .showroom-perf2-tappad.yellow{ color:var(--perform-yellow); }
 .showroom-perf2-tappad.peach{ color:var(--brand-peach); }
+/*
    Course Syllabus Screen (Stitch 2026-04)
    Ported from docs/design/stitch-2026-04/course_syllabus/. Showroom
    design reference only — not wired into render.js dispatch. Exported

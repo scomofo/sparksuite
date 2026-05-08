@@ -3,6 +3,110 @@
     this.psychologyEngine = psychologyEngine;
   }
 
+  PracticeEngine.prototype.setCalibrationDependencies = function(dependencies) {
+    return {};
+  };
+
+  PracticeEngine.prototype.getCalibrationDependencies = function() {
+    return {};
+  };
+
+  PracticeEngine.prototype.startCalibration = function(state, options) {
+    state = state || {};
+    options = options || {};
+    var bpm = Number(options.bpm || 80);
+    if (!isFinite(bpm) || bpm < 20 || bpm > 300) throw new Error("Invalid calibration BPM: " + options.bpm);
+    return Object.assign({}, state, {
+      calibrationRunning: true,
+      calibrationOffsets: [],
+      calibrationBpm: bpm,
+      calibrationEffect: "startMetronome"
+    });
+  };
+
+  PracticeEngine.prototype.stopCalibration = function(state) {
+    state = state || {};
+    return Object.assign({}, state, {
+      calibrationRunning: false,
+      calibrationOffsets: state.calibrationOffsets || [],
+      calibrationEffect: "stopMetronome"
+    });
+  };
+
+  PracticeEngine.prototype.getValidatedShellAction = function(action) {
+    var allowed = {
+      sessionPauseBlock: true,
+      sessionResumeBlock: true,
+      sessionSkipBlock: true,
+      openPracticePlan: true
+    };
+    return allowed[action] ? action : "openPracticePlan";
+  };
+
+  PracticeEngine.prototype.resolveStrumChordNotes = function(chordName, context) {
+    context = context || {};
+    var activeData = context.activeInstrumentData || null;
+    var globalChordNotes = context.chordNotes || (typeof CHORD_NOTES !== "undefined" ? CHORD_NOTES : null);
+    if (activeData && activeData.CHORD_NOTES && activeData.CHORD_NOTES[chordName]) {
+      return activeData.CHORD_NOTES[chordName];
+    }
+    return globalChordNotes ? globalChordNotes[chordName] : null;
+  };
+
+  PracticeEngine.prototype.generateEarTrainingQuestion = function(context) {
+    context = context || {};
+    var data = context.instrumentData || {};
+    var random = typeof context.random === "function" ? context.random : Math.random;
+    var level = parseInt(context.level, 10);
+    var pool = [];
+    var all = Array.isArray(data.ALL_CHORDS) ? data.ALL_CHORDS : [];
+    var levelChords = data.CHORDS || {};
+    var l;
+    var i;
+    var questionChord;
+    var options;
+    var attempts;
+    var candidate;
+    var fallbackPool;
+    var fallbackName;
+    var swapIdx;
+    var tmp;
+    function pickChord(source) {
+      return source.length ? source[Math.floor(random() * source.length)] : null;
+    }
+    if (isNaN(level) || level < 1) level = 1;
+    for (l = 1; l <= level; l++) {
+      if (Array.isArray(levelChords[l])) pool = pool.concat(levelChords[l]);
+    }
+    if (!pool.length && Array.isArray(levelChords[1])) pool = levelChords[1].slice();
+    if (!pool.length) pool = all.slice();
+    if (!pool.length) return null;
+
+    questionChord = pickChord(pool);
+    options = [questionChord.name];
+    attempts = 0;
+    while (options.length < 4 && attempts < 100) {
+      candidate = pickChord(all) || pickChord(pool);
+      if (candidate && candidate.name && options.indexOf(candidate.name) === -1) options.push(candidate.name);
+      attempts++;
+    }
+    if (options.length < 4) {
+      fallbackPool = all.concat(pool);
+      for (i = 0; i < fallbackPool.length && options.length < 4; i++) {
+        fallbackName = fallbackPool[i] && fallbackPool[i].name;
+        if (fallbackName && options.indexOf(fallbackName) === -1) options.push(fallbackName);
+      }
+      while (options.length < 4) options.push("");
+    }
+    for (i = options.length - 1; i > 0; i--) {
+      swapIdx = Math.floor(random() * (i + 1));
+      tmp = options[i];
+      options[i] = options[swapIdx];
+      options[swapIdx] = tmp;
+    }
+    return { question: questionChord.name, options: options };
+  };
+
   PracticeEngine.prototype.buildDailyPracticePlan = function(context) {
     context = context || {};
     var miniSession = buildUkuleleMiniSessionPracticePlan(context);

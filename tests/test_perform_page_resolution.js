@@ -12,6 +12,8 @@ function loadJS(file) {
 global.window = global.window || global;
 var _testEval = eval;
 _testEval(loadJS("js/utils/normalize.js"));
+_testEval(loadJS("js/sparksuite/core/psychology_engine.js"));
+_testEval(loadJS("js/sparksuite/core/progress_engine.js"));
 
 
 function resetEnv() {
@@ -89,6 +91,7 @@ function resetEnv() {
   };
   global.S.performChart.phrases = [{ id: 2, name: "undefined" }];
   global.sparkCore = {
+    progressEngine: new SparkSuiteProgressEngine(null, new SparkSuitePsychologyEngine()),
     getActiveSessionView: function() {
       return {
         runtimeState: {
@@ -212,6 +215,97 @@ test("perform pages can resolve sparkCore from the global binding", function() {
   assert.ok(doneHtml.indexOf("The Meteors") >= 0);
   assert.ok(doneHtml.indexOf("Tap-note consistency") >= 0);
   assert.ok(doneHtml.indexOf("Turbo Mode") >= 0);
+});
+
+test("performDonePage hides weakest retry when no phrase target exists", function() {
+  S.performChart.phrases = [];
+  S.performResults.phraseStats = [
+    { name: "Only Phrase", total: 2, scoreSum: 1, perfects: 1, goods: 0, oks: 0, misses: 1 }
+  ];
+
+  var html = performDonePage();
+
+  assert.strictEqual(html.indexOf("performRetryPhrase"), -1);
+  assert.ok(html.indexOf("Finish a phrase-tracked run") >= 0);
+});
+
+test("performDonePage keeps weakest retry when phrase target exists", function() {
+  S.performChart.phrases = [{ id: "phrase-a", name: "Phrase A", startSec: 0, endSec: 4 }];
+  S.performResults.phraseStats = [
+    { name: "Phrase A", total: 2, scoreSum: 1, perfects: 1, goods: 0, oks: 0, misses: 1 }
+  ];
+
+  var html = performDonePage();
+
+  assert.ok(html.indexOf("performRetryPhrase") >= 0);
+  assert.strictEqual(html.indexOf("Finish a phrase-tracked run"), -1);
+});
+
+test("performDonePage no-results fallback exits through the performance song list action", function() {
+  S.performResults = null;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          performanceResults: null,
+          performanceChartId: null,
+          performanceTargetTechnique: null,
+          performanceDifficultyId: null,
+          performanceSpeed: null,
+          performancePracticePreset: null,
+          performanceInputMode: null,
+          performanceLoop: null,
+          transport: { positionMs: 0, status: "stopped" }
+        }
+      };
+    }
+  };
+
+  var html = performDonePage();
+
+  assert.ok(html.indexOf("No results.") >= 0);
+  assert.ok(html.indexOf("performDoneSongs") >= 0);
+  assert.strictEqual(html.indexOf("act('back')"), -1);
+});
+
+test("performDonePage uses shared result surface classes", function() {
+  var html = performDonePage();
+
+  assert.ok(html.indexOf("metric-value") >= 0);
+  assert.ok(html.indexOf("metric-label") >= 0);
+  assert.ok(html.indexOf("card-section-heading") >= 0);
+  assert.ok(html.indexOf("card-micro-heading") >= 0);
+  assert.ok(html.indexOf("split-row") >= 0);
+  assert.ok(html.indexOf("action-row") >= 0);
+  assert.strictEqual(html.indexOf("<h3 style="), -1);
+  assert.strictEqual(html.indexOf("font-size:13px;font-weight:700;color:var(--text-primary)"), -1);
+});
+
+test("performanceStatsPage uses shared list and metric classes", function() {
+  global.getPerformanceTotals = function() {
+    return { runs: 8, songsPlayed: 4, masteredSongs: 2, avgAccuracy: 91, totalStars: 15 };
+  };
+  global.getPerformanceRecentRuns = function() {
+    return [{ songId: "night_drive", arrangement: "chords", difficulty: "normal", mastery: "solid", bestAccuracy: 91, bestStars: 4 }];
+  };
+  global.getPerformanceTopSongs = function() {
+    return [{ songId: "night_drive", bestScore: 2100 }];
+  };
+  global.getPerformanceWeakSongs = function() {
+    return [{ songId: "slow_burn", bestAccuracy: 62 }];
+  };
+  global.S.performanceDailyHistory = [{ date: "2026-05-06", type: "full_run", xp: 25 }];
+  global.eval(loadJS("js/pages/performance_stats.js"));
+
+  var html = performanceStatsPage();
+
+  assert.ok(html.indexOf("card-section-heading") >= 0);
+  assert.ok(html.indexOf("metric-value") >= 0);
+  assert.ok(html.indexOf("metric-label") >= 0);
+  assert.ok(html.indexOf("split-row") >= 0);
+  assert.ok(html.indexOf("action-row") >= 0);
+  assert.strictEqual(html.indexOf("<h3 style="), -1);
+  assert.strictEqual(html.indexOf("font-size:13px;font-weight:700;color:var(--text-primary)"), -1);
 });
 
 if (process.exitCode) process.exit(process.exitCode);

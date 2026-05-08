@@ -451,8 +451,8 @@ test("piano guided actions let the shared action family own showroom lesson laun
     return true;
   };
 
-  pianoAct("start_guided_session", "1");
-  pianoAct("resume_guided_session");
+  assert.strictEqual(pianoAct("start_guided_session", "1"), true);
+  assert.strictEqual(pianoAct("resume_guided_session"), true);
 
   assert.deepStrictEqual(familyCalls, [
     ["start_guided_session", "1"],
@@ -473,6 +473,31 @@ test("start_guided_session legacy fallback honors requested piano lesson number"
   assert.strictEqual(S.sessionPlan.title, "Session 1");
   assert.strictEqual(S.sessionStep, "spark");
   assert.strictEqual(S.screen, "session");
+});
+
+test("start_session opens the piano chord practice session screen", function() {
+  var originalSetInterval = global.setInterval;
+  var originalClearInterval = global.clearInterval;
+  var intervalCalls = [];
+  global.setInterval = function(fn, ms) {
+    intervalCalls.push({ fn: fn, ms: ms });
+    return 123;
+  };
+  global.clearInterval = function() {};
+  S.practiceLen = 90;
+
+  try {
+    pianoAct("start_session", "C");
+  } finally {
+    global.setInterval = originalSetInterval;
+    global.clearInterval = originalClearInterval;
+  }
+
+  assert.strictEqual(S.chord, "C");
+  assert.strictEqual(S.screen, "session");
+  assert.strictEqual(S.timer, 90);
+  assert.strictEqual(S.active, true);
+  assert.strictEqual(intervalCalls.length, 1);
 });
 
 test("resume_guided_session reopens the active piano guided shell without restarting it", function() {
@@ -512,6 +537,37 @@ test("resume_guided_session reopens the active piano guided shell without restar
   assert.strictEqual(saveStateCalls, 1);
 });
 
+test("resume_guided_session clears any stale guided stop confirmation", function() {
+  S.guidedStopConfirm = true;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedSession: 2,
+            guidedPlan: {
+              num: 2,
+              title: "Session 2",
+              bpm: 84,
+              spark: { text: "next" },
+              newMove: { chord: "G" }
+            }
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "spark"
+        }
+      };
+    }
+  };
+
+  pianoAct("resume_guided_session");
+
+  assert.strictEqual(S.guidedStopConfirm, false);
+  assert.strictEqual(S.screen, "session");
+});
 test("complete_victory_lap delegates to sparkCore and syncs piano completion aliases", function() {
   S.sessionPlan = {
     num: 2,
@@ -536,6 +592,39 @@ test("complete_victory_lap delegates to sparkCore and syncs piano completion ali
   assert.strictEqual(confettiCalls, 1);
 });
 
+test("piano legacy guided completion uses the shared core progress engine only", function() {
+  var calls = 0;
+  delete global.completeGuidedSessionRequest;
+  S.sessionPlan = { num: 4, newMove: { chord: "C Major" } };
+  S.sessionStep = "victoryLap";
+  S.screen = "session";
+  global.window.sparkCore = {
+    progressEngine: {
+      buildLegacyGuidedSessionCompletion: function(plan, options) {
+        calls++;
+        assert.strictEqual(plan.num, 4);
+        assert.strictEqual(options.level, S.level);
+        assert.strictEqual(options.lhLevel, S.lhLevel);
+        return {
+          completedSessionNums: [4],
+          sessionsDelta: 1,
+          currentSession: 5,
+          chordProgress: { "C Major": 15 },
+          xpAwarded: 50,
+          historyEntry: { type: "guided_session", detail: { session: 4, chord: "C Major" } },
+          lhLevel: 2
+        };
+      }
+    }
+  };
+
+  pianoAct("complete_victory_lap");
+
+  assert.strictEqual(calls, 1);
+  assert.strictEqual(S.currentSession, 5);
+  assert.strictEqual(S.lhLevel, 2);
+});
+
 test("open_perform_song delegates to sparkCore and syncs piano performance aliases", function() {
   pianoAct("open_perform_song", "1");
 
@@ -549,8 +638,27 @@ test("open_perform_song delegates to sparkCore and syncs piano performance alias
   assert.strictEqual(S.screen, "performSong");
 });
 
+test("open_perform_song does not depend on the legacy song id helper", function() {
+  delete global.normalizeSongId;
+
+  pianoAct("open_perform_song", "1");
+
+  assert.strictEqual(sparkCoreCalls.length, 1);
+  assert.strictEqual(sparkCoreCalls[0].payload.songId, "river_walk");
+  assert.strictEqual(S.performSongId, "river_walk");
+  assert.strictEqual(S.screen, "performSong");
+});
+
 test("openPlan delegates piano dashboard practice entry to the shared helper", function() {
   pianoAct("openPlan");
+
+  assert.strictEqual(sparkCoreCalls.length, 1);
+  assert.strictEqual(sparkCoreCalls[0].fn, "openPracticePlanScreen");
+  assert.strictEqual(S.screen, "practicePlan");
+});
+
+test("quickStart from the shared hero opens the piano practice plan", function() {
+  pianoAct("quickStart");
 
   assert.strictEqual(sparkCoreCalls.length, 1);
   assert.strictEqual(sparkCoreCalls[0].fn, "openPracticePlanScreen");
@@ -591,6 +699,29 @@ test("performStart delegates launch request construction to sparkCore helpers", 
   assert.strictEqual(performanceStarts[0].options.difficulty, "hard");
   assert.strictEqual(performanceStarts[0].options.speed, 0.8);
   assert.strictEqual(performanceStarts[0].options.mode, "mic");
+});
+
+test("piano performance controls let the shared action family own shared run actions", function() {
+  var familyCalls = [];
+  global.runSparkActionFamilies = function(action, value) {
+    familyCalls.push([action, value]);
+    return true;
+  };
+
+  assert.strictEqual(pianoAct("performStart"), true);
+  assert.strictEqual(pianoAct("pausePerform"), true);
+  assert.strictEqual(pianoAct("resumePerform"), true);
+  assert.strictEqual(pianoAct("performRetry"), true);
+  assert.strictEqual(pianoAct("stopPerform"), true);
+
+  assert.deepStrictEqual(familyCalls, [
+    ["performStartFromSong", undefined],
+    ["pausePerform", undefined],
+    ["resumePerform", undefined],
+    ["performRetry", undefined],
+    ["stopPerform", undefined]
+  ]);
+  assert.strictEqual(performanceStarts.length, 0);
 });
 
 test("select_song mirrors piano song detail selection into song-session core helpers", function() {

@@ -85,6 +85,7 @@ function resetEnvironment() {
 function test(name, fn) {
   try {
     resetEnvironment();
+    global.eval(loadJS("js/sparksuite/core/psychology_engine.js"));
     global.eval(loadJS("js/instruments/piano/pages/games.js"));
     fn();
     console.log("  PASS: " + name);
@@ -160,6 +161,32 @@ test("drill tab ignores stale transition tip text", function() {
   assert.ok(html.indexOf("💡") === -1 || html.indexOf("undefined") === -1);
 });
 
+test("active timed piano game cards suppress entrance animations during timer ticks", function() {
+  var psychology = new SparkSuitePsychologyEngine();
+  assert.strictEqual(psychology.isIntenseFlowState({ mode: "drill" }), true);
+  assert.strictEqual(psychology.isIntenseFlowState({ mode: "daily", type: "daily" }), true);
+  assert.strictEqual(psychology.isIntenseFlowState({ mode: "daily" }), false);
+  S.drillActive = true;
+  S.drillChords = ["C", "G"];
+  S.drillIdx = 0;
+  S.drillTimer = 29;
+  var drillHtml = drillTab();
+
+  S.dailyActive = true;
+  S.dailyType = "daily";
+  S.dailyTimer = 28;
+  S.dailyScore = 1;
+  S.chord = "C";
+  pianoGamesTab();
+  var dailyHtml = dailyTab();
+  var styles = loadJS("styles.css");
+
+  assert.ok(drillHtml.indexOf("live-timer-surface") >= 0);
+  assert.ok(dailyHtml.indexOf("live-timer-surface") >= 0);
+  assert.ok(styles.indexOf(".live-timer-surface.card") >= 0);
+  assert.ok(styles.indexOf("animation:none") >= 0);
+});
+
 test("rhythm tab ignores malformed BPM values", function() {
   S._gameTab = "rhythm";
   S.rhythmActive = false;
@@ -168,6 +195,14 @@ test("rhythm tab ignores malformed BPM values", function() {
   assert.ok(html.indexOf("BPM: 90") >= 0);
   assert.ok(html.indexOf('value="90"') >= 0);
   assert.ok(html.indexOf("NaN") === -1);
+});
+
+test("piano games use classed visible labels instead of inline strong headings", function() {
+  var source = loadJS("js/instruments/piano/pages/games.js");
+  assert.ok(source.indexOf('class="card-section-heading"') >= 0);
+  assert.ok(source.indexOf('class="card-micro-heading"') >= 0);
+  assert.strictEqual(source.indexOf("'<strong>' + escHTML(exerciseName)"), -1);
+  assert.strictEqual(source.indexOf("<strong>Injury Prevention:</strong>"), -1);
 });
 
 if (process.exitCode) process.exit(process.exitCode);

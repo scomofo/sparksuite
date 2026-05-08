@@ -65,6 +65,7 @@ function resetEnvironment() {
       global._openedLauncherView = view;
     }
   };
+  global.eval(loadJS("js/showroom/routing_state.js"));
   global.eval(loadJS("js/showroom/spark-showroom.js"));
 }
 
@@ -103,6 +104,22 @@ test("leaving lesson clears the pinned lesson id on unrelated routes", function(
   SparkShowroomNavigate("lesson", 3);
   SparkShowroomNavigate("practice");
   assert.strictEqual(S._showroomLessonId, null);
+});
+
+test("showroom routing clear is UI-runtime only and does not mutate session plan state", function() {
+  var state = {
+    sessionPlan: { id: "keep-session" },
+    showroomReturnView: "guitar",
+    showroomLessonId: "lesson-1",
+    screen: "showroom"
+  };
+
+  SparkShowroomRoutingState.clear(state);
+
+  assert.deepStrictEqual(state.sessionPlan, { id: "keep-session" });
+  assert.strictEqual(state.showroomReturnView, null);
+  assert.strictEqual(state.showroomLessonId, null);
+  assert.strictEqual(state.screen, "showroom");
 });
 
 test("practice action family wires practiceStartItem to the runtime launcher", function() {
@@ -164,10 +181,10 @@ test("instrument guided handlers clear stale showroom routing", function() {
   assert.ok(bassSource.indexOf("clearBassShowroomRoute();") >= 0);
 });
 
-test("session registry prefers instrument guided session page over generic shell", function() {
+test("session registry prefers instrument session page when the engine-owned flag requests it", function() {
   var rendered = [];
   global.S.screen = "session";
-  global.S.sessionPlan = { title: "Guided" };
+  global.S.sessionPlan = { title: "Guided", useInstrumentPage: true };
   global.S.sessionStep = "spark";
   global.sessionPage = function() {
     rendered.push("shared");
@@ -185,6 +202,31 @@ test("session registry prefers instrument guided session page over generic shell
 
   assert.strictEqual(global._renderActiveScreenContent(), "instrument");
   assert.deepStrictEqual(rendered, ["instrument"]);
+});
+
+test("session registry keeps legacy active chord routing in the shared session shell", function() {
+  var rendered = [];
+  global.S.screen = "session";
+  global.S.sessionPlan = null;
+  global.S.sessionStep = null;
+  global.S.active = true;
+  global.S.chord = "C";
+  global.sessionPage = function() {
+    rendered.push("shared");
+    return "shared";
+  };
+  global.SparkInstruments.getPage = function(screen) {
+    assert.strictEqual(screen, "session");
+    return function() {
+      rendered.push("instrument");
+      return "instrument";
+    };
+  };
+
+  global.eval(loadJS("js/render_registry.js"));
+
+  assert.strictEqual(global._renderActiveScreenContent(), "shared");
+  assert.deepStrictEqual(rendered, ["shared"]);
 });
 
 test("showroom practice drills route start buttons through practiceStartItem", function() {

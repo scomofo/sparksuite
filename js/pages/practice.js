@@ -251,7 +251,54 @@ function hasRenderablePracticeSummaryItems(plan) {
   return !!(plan && Array.isArray(plan.items) && plan.items.some(isRenderablePracticeSummaryItem));
 }
 
-function renderSv2HomeHero(inst, levelName, currentLevel, currentXp, currentStreak, masteredCount, chordCount) {
+function getPracticeHeroProgress(inst, data) {
+  var instrumentType = getPracticePageInstrumentType(inst);
+  var allChords = data && data.ALL_CHORDS;
+  var lessons;
+  var count = 0;
+  var mastered = 0;
+  var label = "chords";
+
+  if (Array.isArray(allChords) && allChords.length) {
+    return {
+      mastered: getPracticeMasteredChordCount(allChords),
+      count: allChords.length,
+      label: "chords"
+    };
+  }
+
+  if (allChords && typeof allChords === "object") {
+    count = Object.keys(allChords).length;
+    if (count > 0) {
+      return {
+        mastered: getPracticeMasteredChordCount(Object.keys(allChords)),
+        count: count,
+        label: "chords"
+      };
+    }
+  }
+
+  if (inst && typeof inst.getLessons === "function") {
+    try { lessons = inst.getLessons() || []; } catch (e) { lessons = []; }
+  }
+  if ((!lessons || !lessons.length) && data && Array.isArray(data.CURRICULUM)) {
+    lessons = data.CURRICULUM;
+  }
+
+  if (Array.isArray(lessons) && lessons.length) {
+    for (var i = 0; i < lessons.length; i++) {
+      if (lessons[i] && S.completedLessons && S.completedLessons.indexOf(lessons[i].id) >= 0) mastered++;
+    }
+    if (instrumentType === "drums") label = "lessons";
+    else if (instrumentType === "vocals") label = "lessons";
+    else label = "items";
+    return { mastered: mastered, count: lessons.length, label: label };
+  }
+
+  return { mastered: 0, count: 0, label: "items" };
+}
+
+function renderSv2HomeHero(inst, levelName, currentLevel, currentXp, currentStreak, progress) {
   var instTabs = inst.tabs || [];
   var hasSongs = false;
   var hasDrill = false;
@@ -266,7 +313,7 @@ function renderSv2HomeHero(inst, levelName, currentLevel, currentXp, currentStre
   h += '<div class="sv2-home-hero__badges">';
   h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.1s">' + currentXp + ' XP</span>';
   h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.15s;background:rgba(255,215,61,0.12);color:#ffd93d">\uD83D\uDD25 ' + currentStreak + '</span>';
-  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.2s;background:rgba(107,203,119,0.12);color:#6bcb77">' + masteredCount + '/' + chordCount + ' chords</span>';
+  h += '<span class="sv2-badge sv2-anim-badge" style="animation-delay:0.2s;background:rgba(107,203,119,0.12);color:#6bcb77">' + progress.mastered + '/' + progress.count + ' ' + escHTML(progress.label) + '</span>';
   h += '</div></div></div>';
   for (ti = 0; ti < instTabs.length; ti++) {
     tabId = typeof instTabs[ti] === "string" ? instTabs[ti] : instTabs[ti].id;
@@ -340,21 +387,24 @@ function renderHomeTabBar(instTabs) {
 }
 
 function getSharedHomeTabRenderers() {
+  var sharedPractice = typeof SparkSharedPracticeRenderers !== "undefined" ? SparkSharedPracticeRenderers : null;
+  var sharedGames = typeof SparkSharedGameRenderers !== "undefined" ? SparkSharedGameRenderers : null;
+  var sharedTools = typeof SparkSharedToolRenderers !== "undefined" ? SparkSharedToolRenderers : null;
   return {
     practice: typeof practiceTab === "function" ? practiceTab : null,
-    drill: typeof drillTab === "function" ? drillTab : null,
-    daily: typeof dailyTab === "function" ? dailyTab : null,
-    quiz: typeof quizTab === "function" ? quizTab : null,
-    ear: typeof earTrainTab === "function" ? earTrainTab : null,
+    drill: sharedPractice && typeof sharedPractice.drillTab === "function" ? sharedPractice.drillTab : (typeof drillTab === "function" ? drillTab : null),
+    daily: sharedPractice && typeof sharedPractice.dailyTab === "function" ? sharedPractice.dailyTab : (typeof dailyTab === "function" ? dailyTab : null),
+    quiz: sharedPractice && typeof sharedPractice.quizTab === "function" ? sharedPractice.quizTab : (typeof quizTab === "function" ? quizTab : null),
+    ear: sharedPractice && typeof sharedPractice.earTrainTab === "function" ? sharedPractice.earTrainTab : (typeof earTrainTab === "function" ? earTrainTab : null),
     strum: typeof strumTab === "function" ? strumTab : null,
     songs: typeof songsTab === "function" ? songsTab : null,
-    rhythm: typeof rhythmTab === "function" ? rhythmTab : null,
-    runner: typeof runnerTab === "function" ? runnerTab : null,
-    build: typeof buildTab === "function" ? buildTab : null,
-    tuner: typeof tunerTab === "function" ? tunerTab : null,
+    rhythm: sharedGames && typeof sharedGames.rhythmTab === "function" ? sharedGames.rhythmTab : (typeof rhythmTab === "function" ? rhythmTab : null),
+    runner: sharedGames && typeof sharedGames.runnerTab === "function" ? sharedGames.runnerTab : (typeof runnerTab === "function" ? runnerTab : null),
+    build: sharedGames && typeof sharedGames.buildTab === "function" ? sharedGames.buildTab : (typeof buildTab === "function" ? buildTab : null),
+    tuner: sharedTools && typeof sharedTools.tunerTab === "function" ? sharedTools.tunerTab : (typeof tunerTab === "function" ? tunerTab : null),
     dual: typeof dualTab === "function" ? dualTab : null,
-    stats: typeof statsTab === "function" ? statsTab : null,
-    guide: typeof guideTab === "function" ? guideTab : null,
+    stats: sharedTools && typeof sharedTools.statsTab === "function" ? sharedTools.statsTab : (typeof statsTab === "function" ? statsTab : null),
+    guide: sharedTools && typeof sharedTools.guideTab === "function" ? sharedTools.guideTab : (typeof guideTab === "function" ? guideTab : null),
     games: typeof gamesTab === "function" ? gamesTab : null,
     tools: typeof toolsTab === "function" ? toolsTab : null
   };
@@ -380,12 +430,11 @@ function sv2HomeDashboard() {
   var currentXp = normalizePracticeDisplayCount(S.xp, 0);
   var currentStreak = normalizePracticeDisplayCount(S.streak, 0);
   var levelName = levelNames[currentLevel] || ("Level " + currentLevel);
-  var chordCount = D.ALL_CHORDS ? D.ALL_CHORDS.length : 0;
-  var masteredCount = getPracticeMasteredChordCount(D.ALL_CHORDS);
+  var heroProgress = getPracticeHeroProgress(inst, D);
 
   var goalMetrics = getPracticeGoalMetrics();
   var h = '';
-  h += renderSv2HomeHero(inst, levelName, currentLevel, currentXp, currentStreak, masteredCount, chordCount);
+  h += renderSv2HomeHero(inst, levelName, currentLevel, currentXp, currentStreak, heroProgress);
   h += renderSv2InstrumentRow(inst.id, allInstruments);
   h += renderSv2DailyGoal(goalMetrics);
 
@@ -510,13 +559,13 @@ function renderPracticeGuidedSessionCard(D) {
     : (gs.targetDurationMin > 0 ? ("Start " + gs.targetDurationMin + "-Min Session") : "Start Session");
   h += '<div class="card mb12" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);border:none;text-align:center;padding:16px">';
   h += '<div style="font-size:24px;margin-bottom:4px">&#127919;</div>';
-  h += '<div style="font-size:15px;font-weight:900;color:#fff">Guided Session '+gs.num+'</div>';
+  h += '<div class="practice-quick-title" style="font-size:15px">Guided Session '+gs.num+'</div>';
   h += '<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 10px">'+escHTML(gs.title)+' &bull; Level '+gs.level+' &bull; '+gsDone+'/'+totalSessions+' done</div>';
   if (statusLabel) {
-    h += '<div style="font-size:12px;font-weight:900;color:#fff;margin:-2px 0 8px">' + escHTML(statusLabel) + '</div>';
+    h += '<div class="guided-status-line" style="color:#fff;margin:-2px 0 8px">' + escHTML(statusLabel) + '</div>';
   }
   if (shellBits.length) {
-    h += '<div style="font-size:12px;font-weight:800;color:#fff;margin:-2px 0 8px">' + escHTML(shellBits.join(' • ')) + '</div>';
+    h += '<div class="guided-status-line" style="color:#fff;margin:-2px 0 8px">' + escHTML(shellBits.join(' • ')) + '</div>';
   }
   if (gs.focusSong) {
     h += '<div style="font-size:12px;color:rgba(255,255,255,.92);margin:0 0 6px">Song hook: ' + escHTML(gs.focusSong) + '</div>';
@@ -764,14 +813,14 @@ function renderPracticePlanSummaryCard(plan) {
   if(hasRenderablePracticeSummaryItems(plan)){
     planProgress = getPracticeSummaryProgress(plan);
     h += '<div class="card mb20" style="border:2px solid '+(planProgress.completedItems>=planProgress.totalItems?"#4ECDC4":"#45B7D1")+'">';
-    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-    h += '<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Today\'s Practice Plan</h3>';
+    h += '<div class="split-row" style="margin-bottom:8px">';
+    h += '<h3 class="practice-card-heading">&#128221; Today\'s Practice Plan</h3>';
     h += '<span style="font-size:12px;font-weight:700;color:var(--text-muted)">'+planProgress.completedItems+'/'+planProgress.totalItems+'</span>';
     h += '</div>';
     if (activeGuided) {
       h += '<div style="margin-bottom:10px;padding:10px 12px;border-radius:14px;background:rgba(78,205,196,.12);color:var(--text-primary)">';
-      h += '<div style="font-size:11px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#2f8f89">Guided Session Live</div>';
-      h += '<div style="font-size:13px;font-weight:800;margin-top:4px">' + escHTML(activeGuided.title) + '</div>';
+      h += '<div class="metric-label" style="font-size:11px;text-transform:uppercase;color:#2f8f89">Guided Session Live</div>';
+      h += '<div class="card-micro-heading" style="margin-top:4px">' + escHTML(activeGuided.title) + '</div>';
       h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">' + escHTML(activeGuided.statusLabel + " - Resume when you're ready.") + '</div>';
       h += '</div>';
     } else if (activeShell) {
@@ -787,9 +836,9 @@ function renderPracticePlanSummaryCard(plan) {
       item = plan.items[pi];
       if(!isRenderablePracticeSummaryItem(item)) continue;
       isCompleted = isCompletedPracticeSummaryItem(item);
-      h += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--border)">';
+      h += '<div class="practice-summary-item">';
       h += '<span style="font-size:16px">'+(isCompleted?"&#9989;":"&#9744;")+'</span>';
-      h += '<div style="flex:1"><div style="font-size:13px;font-weight:700;color:'+(isCompleted?"var(--text-muted)":"var(--text-primary)")+';'+(isCompleted?"text-decoration:line-through":"")+'">'+escHTML(getPracticeSummaryItemLabel(item))+'</div>';
+      h += '<div class="practice-summary-copy"><div style="font-size:13px;font-weight:700;color:'+(isCompleted?"var(--text-muted)":"var(--text-primary)")+';'+(isCompleted?"text-decoration:line-through":"")+'">'+escHTML(getPracticeSummaryItemLabel(item))+'</div>';
       h += '<div style="font-size:11px;color:var(--text-dim)">'+escHTML(getPracticeSummaryItemDesc(item))+'</div></div>';
       if(!isCompleted){
         itemId = normalizePracticeSummaryItemId(item ? item.id : null);
@@ -806,13 +855,13 @@ function renderPracticePlanSummaryCard(plan) {
   }
   if (activeGuided) {
     h += '<div class="card mb20" style="border:2px solid #4ECDC4">';
-    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-    h += '<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Guided Session Flow</h3>';
+    h += '<div class="split-row" style="margin-bottom:8px">';
+    h += '<h3 class="practice-card-heading">&#128221; Guided Session Flow</h3>';
     h += '<span style="font-size:12px;font-weight:700;color:var(--text-muted)">' + escHTML(getPracticeGuidedShellLabel(activeGuided, "Guided shell")) + '</span>';
     h += '</div>';
     h += '<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Your live guided shell is the plan right now.</div>';
     h += '<div style="padding:10px 12px;border-radius:14px;background:rgba(78,205,196,.12);margin-bottom:10px">';
-    h += '<div style="font-size:13px;font-weight:800;color:var(--text-primary)">' + escHTML(activeGuided.title) + '</div>';
+    h += '<div class="card-micro-heading">' + escHTML(activeGuided.title) + '</div>';
     h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px">' + escHTML(activeGuided.statusLabel) + '</div>';
     h += '<div style="font-size:12px;color:var(--text-secondary);margin-top:3px">' + escHTML(getPracticeGuidedShellLabel(activeGuided, "Shell details loading")) + '</div>';
     h += '</div>';
@@ -822,8 +871,8 @@ function renderPracticePlanSummaryCard(plan) {
   }
   if (activeShell) {
     h += '<div class="card mb20" style="border:2px solid #45B7D1">';
-    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-    h += '<h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Practice Session Live</h3>';
+    h += '<div class="split-row" style="margin-bottom:8px">';
+    h += '<h3 class="practice-card-heading">&#128221; Practice Session Live</h3>';
     h += '<span style="font-size:12px;font-weight:700;color:var(--text-muted)">' + escHTML("Block " + (activeShell.activeIndex + 1) + "/" + activeShell.blockCount) + '</span>';
     h += '</div>';
     h += '<div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">The shared session shell is already in motion.</div>';
@@ -840,7 +889,7 @@ function renderPracticePlanSummaryCard(plan) {
     return h;
   }
   h += '<div class="card mb20">';
-  h += '<h3 style="margin:0 0 8px;font-size:15px;font-weight:800;color:var(--text-primary)">&#128221; Today\'s Practice Plan</h3>';
+  h += '<h3 class="practice-card-heading" style="margin-bottom:8px">&#128221; Today\'s Practice Plan</h3>';
   h += '<div style="font-size:12px;color:var(--text-dim)">No practice plan yet.</div>';
   h += '</div>';
   return h;
@@ -852,7 +901,7 @@ function renderPracticeQuickStartCard() {
   var h = '<div class="card mb12" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);border:none;text-align:center;padding:20px">';
   h += '<div style="font-size:28px;margin-bottom:4px">&#9889;</div>';
   if (activeGuided) {
-    h += '<div style="font-size:16px;font-weight:900;color:#fff">Guided Session Live</div>';
+    h += '<div class="practice-quick-title">Guided Session Live</div>';
     h += '<div style="font-size:12px;color:rgba(255,255,255,.88);margin:4px 0 6px">' + escHTML(activeGuided.title) + '</div>';
     h += '<div style="font-size:12px;color:rgba(255,255,255,.82);margin:0 0 12px">' + escHTML(getPracticeGuidedStatusWithShell(activeGuided, { shellFallback: "" })) + '</div>';
     h += '<div style="display:flex;gap:8px;justify-content:center">';
@@ -860,7 +909,7 @@ function renderPracticeQuickStartCard() {
     h += '<button onclick="act(\'quickStart\')" style="background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:rgba(255,255,255,.85);cursor:pointer">Quick Chord</button>';
     h += '</div>';
   } else if (activeShell) {
-    h += '<div style="font-size:16px;font-weight:900;color:#fff">Practice Session Live</div>';
+    h += '<div class="practice-quick-title">Practice Session Live</div>';
     h += '<div style="font-size:12px;color:rgba(255,255,255,.88);margin:4px 0 6px">' + escHTML(activeShell.title) + '</div>';
     h += '<div style="font-size:12px;color:rgba(255,255,255,.82);margin:0 0 12px">' + escHTML(activeShell.statusLabel + " • Block " + (activeShell.activeIndex + 1) + " of " + activeShell.blockCount) + '</div>';
     h += '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">';
@@ -868,14 +917,14 @@ function renderPracticeQuickStartCard() {
     h += '<button onclick="act(\'openPlan\')" style="background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:rgba(255,255,255,.85);cursor:pointer">Open Plan</button>';
     h += '</div>';
   } else if(S.lastChordName){
-    h += '<div style="font-size:16px;font-weight:900;color:#fff">Pick Up Where You Left Off</div>';
+    h += '<div class="practice-quick-title">Pick Up Where You Left Off</div>';
     h += '<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 12px">Continue practicing: <strong>'+escHTML(S.lastChordName)+'</strong></div>';
     h += '<div style="display:flex;gap:8px;justify-content:center">';
     h += '<button onclick="act(\'resumeSession\')" style="background:rgba(255,255,255,.35);border:2px solid rgba(255,255,255,.6);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:#fff;cursor:pointer">Continue</button>';
     h += '<button onclick="act(\'quickStart\')" style="background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);border-radius:14px;padding:10px 24px;font-size:15px;font-weight:800;color:rgba(255,255,255,.85);cursor:pointer">Random</button>';
     h += '</div>';
   } else {
-    h += '<div style="font-size:16px;font-weight:900;color:#fff">Quick Start</div>';
+    h += '<div class="practice-quick-title">Quick Start</div>';
     h += '<div style="font-size:12px;color:rgba(255,255,255,.85);margin:4px 0 12px">Jump right in &mdash; we\'ll pick a chord for you!</div>';
     h += '<button onclick="act(\'quickStart\')" style="background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.5);border-radius:14px;padding:10px 32px;font-size:16px;font-weight:800;color:#fff;cursor:pointer">Let\'s Go!</button>';
   }
@@ -892,7 +941,7 @@ function renderPracticeChordPicker(D, UI) {
     h += '<button class="lvl-tab" onclick="act(\'selLevel\',\''+l+'\')" style="background:'+(sel?D.LC[l]:"var(--tab-bg)")+';color:'+(sel?"#fff":"var(--tab-inactive)")+';opacity:'+(lk?0.4:1)+'" aria-label="Level '+l+' '+D.LN[l]+'">'+(lk?"&#128274; ":"")+l+'</button>';
   }
   h += '</div>';
-  h += '<div style="text-align:center;margin-bottom:12px"><span style="font-size:14px;font-weight:800;color:'+D.LC[S.selectedLevel]+'">'+D.LN[S.selectedLevel]+'</span>';
+  h += '<div style="text-align:center;margin-bottom:12px"><span class="card-section-heading" style="display:inline;color:'+D.LC[S.selectedLevel]+'">'+D.LN[S.selectedLevel]+'</span>';
   if(D.CURRICULUM&&D.CURRICULUM[S.selectedLevel-1]) h += '<span style="font-size:12px;color:var(--text-muted);margin-left:8px">'+D.CURRICULUM[S.selectedLevel-1].sub+'</span>';
   h += '</div>';
   h += '<div class="flex-col">';
@@ -912,11 +961,11 @@ function renderPracticeProgressAndLibrary(currentLevel) {
   var earnedBadges = normalizePracticeArray(S.earnedBadges);
   var sessionCount = normalizePracticeDisplayCount(S.sessions, 0);
   var mas = getPracticeMasteredChordCount();
-  var h = '<div class="card mt16"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#128202; Progress</h3><div style="display:flex;justify-content:space-around;text-align:center"><div><div style="font-size:24px;font-weight:900;color:#FF6B6B">'+sessionCount+'</div><div style="font-size:10px;color:var(--text-muted)">Sessions</div></div><div><div style="font-size:24px;font-weight:900;color:#4ECDC4">'+mas+'</div><div style="font-size:10px;color:var(--text-muted)">Mastered</div></div><div><div style="font-size:24px;font-weight:900;color:#45B7D1">Lvl '+currentLevel+'</div><div style="font-size:10px;color:var(--text-muted)">Current</div></div></div></div>';
+  var h = '<div class="card mt16"><h3 class="practice-card-heading" style="margin-bottom:10px">&#128202; Progress</h3><div style="display:flex;justify-content:space-around;text-align:center"><div><div class="metric-value" style="font-size:24px;color:#FF6B6B">'+sessionCount+'</div><div class="metric-label" style="font-size:10px">Sessions</div></div><div><div class="metric-value" style="font-size:24px;color:#4ECDC4">'+mas+'</div><div class="metric-label" style="font-size:10px">Mastered</div></div><div><div class="metric-value" style="font-size:24px;color:#45B7D1">Lvl '+currentLevel+'</div><div class="metric-label" style="font-size:10px">Current</div></div></div></div>';
   h += strumTrackCard();
   h += fingerExerciseCard();
   h += customSetsSection();
-  h += '<div class="card" style="margin-top:12px"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127942; Badges</h3><div style="display:flex;flex-wrap:wrap;gap:8px">';
+  h += '<div class="card" style="margin-top:12px"><h3 class="practice-card-heading" style="margin-bottom:10px">&#127942; Badges</h3><div style="display:flex;flex-wrap:wrap;gap:8px">';
   for(var i=0;i<BADGES.length;i++){
     var b=BADGES[i],e=earnedBadges.indexOf(b.id)!==-1;
     h += '<div style="width:56px;text-align:center;opacity:'+(e?1:0.3)+'" aria-label="Badge: '+b.label+(e?" (earned)":" (locked)")+'"><div style="font-size:24px;filter:'+(e?"none":"grayscale(1)")+'">'+b.icon+'</div><div style="font-size:8px;color:var(--text-label);font-weight:600">'+b.label+'</div></div>';
@@ -955,7 +1004,7 @@ function renderCustomSetList(customSets) {
   } else {
     for(var i=0;i<customSets.length;i++){
       var cs=customSets[i];
-      h+='<div class="set-card mb12"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h4 style="margin:0;font-size:15px;font-weight:800;color:var(--text-primary)">'+escHTML(cs.name)+'</h4><div style="display:flex;gap:6px">';
+      h+='<div class="set-card mb12"><div class="split-row" style="margin-bottom:8px"><h4 class="card-micro-heading" style="margin:0">'+escHTML(cs.name)+'</h4><div style="display:flex;gap:6px">';
       h+='<button onclick="act(\'drillCustomSet\',\''+i+'\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;padding:6px 12px;border-radius:10px;font-size:12px;font-weight:700" aria-label="Start drill with '+escHTML(cs.name)+'">&#9889; Drill</button>';
       h+='<button onclick="act(\'editSet\',\''+i+'\')" style="background:var(--input-bg);color:var(--text-muted);padding:6px 10px;border-radius:10px;font-size:12px;font-weight:700" aria-label="Edit set">&#9998;</button>';
       h+='<button onclick="act(\'deleteSet\',\''+i+'\')" style="background:var(--input-bg);color:#FF6B6B;padding:6px 10px;border-radius:10px;font-size:12px;font-weight:700" aria-label="Delete set">&#128465;</button>';
@@ -977,7 +1026,7 @@ function renderDrillOverviewCard(drillCount) {
 
 function renderSuggestedDrillCard(hardest) {
   if(!hardest) return '';
-  return '<div class="card mt16"><h3 style="margin:0 0 8px;font-size:14px;font-weight:800;color:var(--text-primary)">&#128161; Suggested Drill</h3><p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Your hardest transition: <strong>'+hardest.from+'</strong> &#8594; <strong>'+hardest.to+'</strong> (avg '+normalizePracticePageNumber(hardest.avg, 0).toFixed(1)+'s)</p><button class="btn" onclick="act(\'drillTransition\',\''+hardest.from+'|'+hardest.to+'\')" style="padding:10px 20px;font-size:13px;background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:var(--text-primary)">&#9889; Practice This</button></div>';
+return '<div class="card mt16"><h3 class="card-section-heading" style="margin-bottom:8px">&#128161; Suggested Drill</h3><p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Your hardest transition: <strong>'+hardest.from+'</strong> &#8594; <strong>'+hardest.to+'</strong> (avg '+normalizePracticePageNumber(hardest.avg, 0).toFixed(1)+'s)</p><button class="btn" onclick="act(\'drillTransition\',\''+hardest.from+'|'+hardest.to+'\')" style="padding:10px 20px;font-size:13px;background:linear-gradient(135deg,#FFE66D,#FF8A5C);color:var(--text-primary)">&#9889; Practice This</button></div>';
 }
 
 function renderDailyChallengeCard(dc) {
@@ -1012,13 +1061,13 @@ function renderEarTrainOptions(runtime) {
 }
 
 function renderPracticeStatsCard(stats) {
-  return '<div class="card mb16"><div><b>Practice Stats</b></div><div>Streak: '+stats.streak+' days</div><div>Today: '+stats.todayMinutes+' min</div><div>Total: '+stats.totalMinutes+' min</div></div>';
+  return '<div class="card mb16"><div class="card-section-heading">Practice Stats</div><div class="split-row"><span class="metric-label">Streak</span><span class="metric-value">'+stats.streak+' days</span></div><div class="split-row"><span class="metric-label">Today</span><span class="metric-value">'+stats.todayMinutes+' min</span></div><div class="split-row"><span class="metric-label">Total</span><span class="metric-value">'+stats.totalMinutes+' min</span></div></div>';
 }
 
 function renderPracticePlanRows(plan) {
   var activeGuided = getPracticeActiveGuidedSummary();
   var activeShell = activeGuided ? null : getPracticeActiveShellSummary();
-  var h='<div class="card mb16"><div><b>' + escHTML(activeGuided ? 'Guided Session Flow' : (activeShell ? 'Practice Session Live' : 'Today\'s Practice Plan')) + '</b></div>';
+  var h='<div class="card mb16"><div class="card-section-heading">' + escHTML(activeGuided ? 'Guided Session Flow' : (activeShell ? 'Practice Session Live' : 'Today\'s Practice Plan')) + '</div>';
   if (activeGuided) {
     h += '<div class="muted" style="margin-top:6px">' + escHTML(activeGuided.statusLabel) + '</div>';
   } else if (activeShell) {
@@ -1046,8 +1095,8 @@ function renderPracticePlanRows(plan) {
         : (itemId
           ? '<button data-item-id="'+escHTML(itemId)+'" onclick="act(\'practiceStartItem\', this.getAttribute(\'data-item-id\'))">Start</button>'
           : '<span class="text-muted">Unavailable</span>');
-      h += '<div class="row">';
-      h += '<span'+done+'>'+escHTML(getPracticeSummaryItemLabel(item))+'</span>';
+      h += '<div class="split-row">';
+      h += '<span class="card-micro-heading"'+done+'>'+escHTML(getPracticeSummaryItemLabel(item))+'</span>';
       h += actionHtml;
       h += '</div>';
     }
@@ -1135,12 +1184,12 @@ function renderPracticeCurriculumV2Card(inst) {
   h += '<div style="height:100%;width:' + escHTML(String(completedPct)) + '%;background:linear-gradient(90deg,#4ECDC4,#45B7D1)"></div>';
   h += '</div>';
   h += '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px">';
-  h += '<div style="padding:10px;border-radius:14px;background:var(--input-bg)"><div style="font-size:11px;font-weight:800;color:var(--text-muted);text-transform:uppercase">Up Next</div><div style="font-size:13px;font-weight:800;color:var(--text-primary);margin-top:4px">' + escHTML(nextLabel) + '</div></div>';
-  h += '<div style="padding:10px;border-radius:14px;background:var(--input-bg)"><div style="font-size:11px;font-weight:800;color:var(--text-muted);text-transform:uppercase">Track Rhythm</div><div style="font-size:13px;font-weight:800;color:var(--text-primary);margin-top:4px">' + escHTML(shellLabel) + '</div></div>';
-  h += '<div style="padding:10px;border-radius:14px;background:var(--input-bg)"><div style="font-size:11px;font-weight:800;color:var(--text-muted);text-transform:uppercase">Unlock Path</div><div style="font-size:13px;font-weight:800;color:var(--text-primary);margin-top:4px">' + escHTML(unlockLabel) + '</div></div>';
+  h += '<div style="padding:10px;border-radius:14px;background:var(--input-bg)"><div class="metric-label">Up Next</div><div class="card-micro-heading" style="margin-top:4px">' + escHTML(nextLabel) + '</div></div>';
+  h += '<div style="padding:10px;border-radius:14px;background:var(--input-bg)"><div class="metric-label">Track Rhythm</div><div class="card-micro-heading" style="margin-top:4px">' + escHTML(shellLabel) + '</div></div>';
+  h += '<div style="padding:10px;border-radius:14px;background:var(--input-bg)"><div class="metric-label">Unlock Path</div><div class="card-micro-heading" style="margin-top:4px">' + escHTML(unlockLabel) + '</div></div>';
   h += '</div>';
-  h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px">';
-  h += '<div style="font-size:12px;font-weight:800;color:var(--text-primary)">' + escHTML(cadenceLabel) + '</div>';
+  h += '<div class="split-row" style="margin-top:10px">';
+  h += '<div class="card-micro-heading">' + escHTML(cadenceLabel) + '</div>';
   h += '<div style="font-size:12px;color:var(--text-secondary);text-align:right">' + escHTML(momentumCopy) + '</div>';
   h += '</div>';
   h += '<div style="margin-top:10px;font-size:12px;color:var(--text-secondary)">' + escHTML(upcomingLabel) + '</div>';
@@ -1186,7 +1235,7 @@ function customSetsSection(){
   var D = inst && inst.getData ? inst.getData() : {};
   var customSets = normalizePracticeArray(S.customSets);
   var customSetChords = normalizePracticeArray(S.customSetChords);
-  var h='<div class="card" style="margin-top:12px"><h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127912; My Practice Sets</h3>';
+var h='<div class="card" style="margin-top:12px"><h3 class="practice-card-heading" style="margin-bottom:10px">&#127912; My Practice Sets</h3>';
 
   if(S.editingSet){
     h+=renderCustomSetEditor(D, customSetChords);
@@ -1343,3 +1392,13 @@ function startPracticeItem(id){
     }
   }
 }
+
+(function(root){
+  if(!root)return;
+  root.SparkSharedPracticeRenderers = {
+    drillTab: drillTab,
+    dailyTab: dailyTab,
+    quizTab: quizTab,
+    earTrainTab: earTrainTab
+  };
+})(typeof window !== "undefined" ? window : (typeof global !== "undefined" ? global : null));

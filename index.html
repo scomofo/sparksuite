@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://lh3.googleusercontent.com; media-src 'self' file:; connect-src 'self' http://localhost:3456 https://localhost:3456; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com">
+<!-- Plain HTTP is limited to the bundled localhost:3456 Express service; remote endpoints must stay on HTTPS. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://lh3.googleusercontent.com; media-src 'self' file:; connect-src 'self' data: http://localhost:3456 https://localhost:3456; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com">
 <title>SparkSuite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,10 +17,7 @@
 <link rel="stylesheet" href="spark-visual-v2.css">
 </head>
 <body>
-<div id="no-js" role="alert">
-<h2>ChordSpark needs a browser</h2>
-<p>This file must be opened in <b>Safari</b> or <b>Chrome</b>.</p>
-</div>
+<div id="no-js" style="display:none"></div>
 <header class="header" id="header" style="display:none" role="banner">
 <div class="logo" onclick="S.screen='home';S.tab='practice';render()" tabindex="0" role="button" aria-label="SparkSuite home"><button id="launcher-back" onclick="SparkInstruments.deactivate();S.activeInstrument=null;saveState();render()" style="background:none;font-size:18px;padding:4px 8px;display:none" aria-label="Back to launcher">&#9664;</button><span>&#127925;</span><span class="logo-text">SparkSuite</span></div>
 <div class="hdr-stats"><button onclick="act('toggleDark')" style="background:none;font-size:16px" id="dark-btn" aria-label="Toggle dark mode">&#127769;</button><button onclick="S.soundOn=!S.soundOn;saveState();render()" style="background:none;font-size:16px" id="snd-btn" aria-label="Toggle sound">&#128266;</button><div class="stat stat-xp">&#9889;<span id="hdr-xp">0</span></div><div class="stat stat-str">&#128293;<span id="hdr-str">0</span></div></div>
@@ -71,12 +69,14 @@
   <script src="js/sparksuite/instruments/vocals/index.js"></script>
   <script src="js/instruments/vocals/register.js"></script>
 <script src="js/launcher.js?v=session-shell-1"></script>
+<script src="js/showroom/routing_state.js"></script>
 <script src="js/showroom/spark-showroom-svgs.js?v=vocals-mic-1"></script>
 <script src="js/showroom/spark-showroom.js"></script>
 <script src="js/ui/stringed_chord_svg.js"></script>
 <script src="js/ui/theme.js"></script>
 <script src="js/ui/confetti.js"></script>
 <script src="js/ui/xp-float.js"></script>
+<script src="js/core/watch_common.js"></script>
 <script src="js/boot_loader.js?v=deferred-loader-1"></script>
 <!-- Instrument Modules -->
 <!-- bass -->
@@ -121,13 +121,14 @@
 <script src="js/pages/games.js"></script>
 <script src="js/pages/songs.js?v=thin-core-fallback-1"></script>
 <script src="js/pages/tools.js"></script>
-<script src="js/pages/guided.js"></script>
+<script src="js/pages/guided.js?v=guided-stop-confirm-1"></script>
 <script src="js/pages/dual.js"></script>
 <script src="js/performance/config.js"></script>
 <script src="js/performance/difficulties.js"></script>
 <script src="js/performance/arrangements.js"></script>
 <script src="js/performance/adapters.js"></script>
 <script src="js/performance/chart_manifest.js"></script>
+<script src="js/performance/chart_data.generated.js"></script>
 <script src="js/performance/chart.js"></script>
 <script src="js/performance/transport.js"></script>
 <script src="js/performance/input.js"></script>
@@ -355,13 +356,13 @@
 <script src="js/onboarding/ui.js"></script>
 <script src="js/timers.js"></script>
 <script src="js/orchestrator-requests.js"></script>
-  <script src="js/render_registry.js?v=session-shell-1"></script>
+  <script src="js/render_registry.js?v=piano-chord-session-1"></script>
   <script src="js/render_shell.js"></script>
   <script src="js/render_showroom.js"></script>
   <script src="js/render_overlays.js"></script>
 <script src="js/render.js"></script>
   <script src="js/actions/families.js"></script>
-  <script src="js/actions/system_family.js"></script>
+  <script src="js/actions/system_family.js?v=guided-stop-confirm-1"></script>
   <script src="js/actions/shell_family.js"></script>
   <script src="js/actions/practice_family.js?v=session-shell-3"></script>
   <script src="js/actions/performance_family.js"></script>
@@ -399,7 +400,15 @@
     for (var i = 0; i < inst.length; i++) if (inst[i].id === "pianospark") piano = inst[i];
     if (piano) {
       piano.pages = piano.pages || {};
-      if (typeof pianoSessionPage === "function") piano.pages[SCR.SESSION] = pianoSessionPage;
+      if (typeof pianoSessionPage === "function") piano.pages[SCR.SESSION] = function() {
+        var useLegacy = typeof SparkSuiteSessionEngine !== "undefined"
+          && typeof SparkSuiteSessionEngine.shouldUseLegacySession === "function"
+          && SparkSuiteSessionEngine.shouldUseLegacySession(typeof S !== "undefined" ? S : null);
+        if (useLegacy && typeof legacySessionHTML === "function") {
+          return legacySessionHTML();
+        }
+        return pianoSessionPage();
+      };
       if (typeof pianoPerformPage === "function") piano.pages[SCR.PERFORM] = pianoPerformPage;
       if (typeof pianoPerformDonePage === "function") piano.pages[SCR.PERFORM_DONE] = pianoPerformDonePage;
       if (typeof pianoPerformSongPage === "function") piano.pages[SCR.PERFORM_SONG] = pianoPerformSongPage;

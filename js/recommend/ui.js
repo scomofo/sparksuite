@@ -26,10 +26,10 @@ function recommendationsPage(){
     arr = S.recommendations || [];
   }
   var h = '<div class="card">';
-  h += '<div><b>Recommended Next</b></div>';
+  h += '<div class="card-section-heading">Recommended Next</div>';
   for(var i=0;i<arr.length;i++){
     h += '<div style="margin-bottom:12px;padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:8px">';
-    h += '<div><b>' + escHTML(arr[i].title) + '</b></div>';
+    h += '<div class="card-micro-heading">' + escHTML(arr[i].title) + '</div>';
     h += '<div style="font-size:12px;color:#aaa">Type: ' + escHTML(arr[i].type) + ' | Source: ' + escHTML(arr[i].source) + '</div>';
     h += '<div style="font-size:12px;color:#aaa">Reason: ' + escHTML((arr[i].reasons || []).join(", ")) + '</div>';
     h += renderRecommendationModuleProgress(arr[i]);

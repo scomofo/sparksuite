@@ -1,12 +1,20 @@
 (function() {
-  function ProgressEngine(storage) {
+  var cachedFallbackPsychologyEngine = null;
+
+  function ProgressEngine(storage, psychologyEngine) {
     this.storage = storage || null;
+    this.psychologyEngine = psychologyEngine || null;
     this.eventBus = null;
   }
 
   ProgressEngine.prototype.setEventBus = function(eventBus) {
     this.eventBus = eventBus || null;
     return this.eventBus;
+  };
+
+  ProgressEngine.prototype.setPsychologyEngine = function(psychologyEngine) {
+    this.psychologyEngine = psychologyEngine || null;
+    return this.psychologyEngine;
   };
 
   ProgressEngine.prototype.emit = function(type, payload) {
@@ -26,6 +34,117 @@
     current = typeof current === "number" ? current : 0;
     score = typeof score === "number" ? score : 0;
     return Number((current * 0.75 + score * 0.25).toFixed(3));
+  };
+
+  ProgressEngine.prototype.buildPerformanceResultsView = function(results, options) {
+    results = results || {};
+    options = options || {};
+    var phrases = normalizePerformancePhraseResults(results.phrases || [], this, options);
+    var weakest = getWeakestPerformancePhrase(phrases);
+    return {
+      metrics: {
+        accuracyFormatted: formatResultNumber(results.accuracy) + "%",
+        scoreFormatted: formatResultNumber(results.score),
+        starsFormatted: formatResultNumber(results.stars),
+        maxComboFormatted: formatResultNumber(results.maxCombo),
+        masteryFormatted: String(options.mastery || "None")
+      },
+      phrases: phrases,
+      weakestPhraseId: weakest ? weakest.phraseId : null,
+      weakestPhraseAccuracy: weakest ? weakest.accuracy : null
+    };
+  };
+
+  ProgressEngine.prototype.hasPerformedAnyPhrase = function(results, chart) {
+    var phraseStats = results && results.phraseStats;
+    var phrases = chart && chart.phrases;
+    if (!Array.isArray(phraseStats) || !phraseStats.length || !Array.isArray(phrases) || !phrases.length) return false;
+    for (var i = 0; i < phraseStats.length; i++) {
+      if (phrases[i] && phraseStats[i] && phraseStats[i].total > 0) return true;
+    }
+    return false;
+  };
+
+  ProgressEngine.prototype.canPracticeWeakestPhrase = function(chart, results) {
+    return this.hasPerformedAnyPhrase(results, chart);
+  };
+
+  ProgressEngine.prototype.buildPerformSongState = function(results, chart) {
+    return {
+      canPracticeWeakestPhrase: this.canPracticeWeakestPhrase(chart, results),
+      showWeakestPhraseAction: this.canPracticeWeakestPhrase(chart, results)
+    };
+  };
+
+  ProgressEngine.prototype.buildPerformanceDoneState = function(results, chart, runtimeState) {
+    runtimeState = runtimeState || {};
+    if (!results) {
+      return {
+        hasResults: false,
+        action: "performDoneSongs",
+        label: "Songs"
+      };
+    }
+
+    var phrases = normalizePerformanceResultPhrases(results.phraseStats || []);
+    var bestPhrase = getBestPerformancePhrase(phrases);
+    var weakestPhrase = getWeakestPerformancePhrase(phrases);
+    var chartId = runtimeState.performanceChartId || (chart && chart.id) || "unknown";
+    var totalEvents = clampProgressNumber(results.totalEvents, 0, 999999999, 0);
+    var accuracy = clampProgressNumber(results.accuracy, 0, 100, 0);
+
+    return {
+      hasResults: true,
+      title: firstProgressTextToken(results.title, results.songTitle, chartId, "Performance"),
+      artist: firstProgressTextToken(results.artist, "Unknown Artist"),
+      chartId: chartId,
+      targetTechnique: Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
+        ? runtimeState.performanceTargetTechnique
+        : null,
+      metrics: {
+        stars: clampProgressNumber(results.stars, 0, 5, 0),
+        score: clampProgressNumber(results.score, 0, 999999999, 0),
+        accuracy: accuracy,
+        maxCombo: clampProgressNumber(results.maxCombo, 0, 999999999, 0),
+        totalEvents: totalEvents,
+        missedEvents: totalEvents - Math.round(accuracy * totalEvents / 100)
+      },
+      phrases: phrases,
+      bestPhrase: bestPhrase,
+      weakestPhrase: weakestPhrase,
+      showWeakestPhraseAction: this.canPracticeWeakestPhrase(chart, results),
+      rawResults: results
+    };
+  };
+
+  ProgressEngine.prototype.buildLegacyGuidedSessionCompletion = function(plan, options) {
+    options = options || {};
+    var rewards = getLegacyCompletionRewards(this, plan, options);
+    var outcome = {
+      completedSessionNums: [],
+      sessionsDelta: 0,
+      currentSession: null,
+      chordProgress: {},
+      xpAwarded: 0,
+      historyEntry: null,
+      lhLevel: null,
+      rewardTrigger: rewards.rewardTrigger,
+      audioCue: rewards.audioCue
+    };
+    if (!plan) return outcome;
+
+    var sessionNum = typeof plan.num === "number" && isFinite(plan.num) ? plan.num : null;
+    var chordName = plan.newMove && plan.newMove.chord ? plan.newMove.chord : null;
+    if (sessionNum != null) {
+      outcome.completedSessionNums.push(sessionNum);
+      outcome.sessionsDelta = 1;
+      outcome.currentSession = Math.min(50, sessionNum + 1);
+    }
+    if (chordName) outcome.chordProgress[chordName] = rewards.chordProgressIncrement;
+    outcome.xpAwarded = rewards.xpAwarded;
+    outcome.historyEntry = { type: "guided_session", detail: { session: sessionNum, chord: chordName } };
+    outcome.lhLevel = calculateLegacyLhLevel(options.curriculum, options.lhPatterns, options.level, options.lhLevel);
+    return outcome;
   };
 
   ProgressEngine.prototype.calculateNextReview = function(mastery) {
@@ -461,6 +580,166 @@
     var date = new Date();
     date.setDate(date.getDate() + days);
     return date.toISOString();
+  }
+
+  function formatResultNumber(value) {
+    return String(typeof value === "number" && isFinite(value) ? value : 0);
+  }
+
+  function normalizePerformancePhraseResults(phrases, engine, options) {
+    var view = [];
+    var i;
+    var phrase;
+    var accuracy;
+    var psychologyEngine = getProgressPsychologyEngine(engine, options);
+    if (!Array.isArray(phrases)) return view;
+    for (i = 0; i < phrases.length; i++) {
+      phrase = phrases[i] || {};
+      accuracy = phrase.total ? Math.round(((phrase.hits || 0) / phrase.total) * 100) : 0;
+      view.push({
+        phraseId: phrase.phraseId,
+        name: phrase.name,
+        accuracy: accuracy,
+        accuracyFormatted: accuracy + "%",
+        rating: psychologyEngine && typeof psychologyEngine.getPerformancePhraseRating === "function"
+          ? psychologyEngine.getPerformancePhraseRating(accuracy)
+          : getFallbackPerformancePhraseRating(accuracy)
+      });
+    }
+    return view;
+  }
+
+  function normalizePerformanceResultPhrases(phraseStats) {
+    var view = [];
+    var i;
+    var phrase;
+    var total;
+    var accuracy;
+    if (!Array.isArray(phraseStats)) return view;
+    for (i = 0; i < phraseStats.length; i++) {
+      phrase = phraseStats[i] || {};
+      total = clampProgressNumber(phrase.total, 0, 999999999, 0);
+      accuracy = total > 0 ? Math.round(clampProgressNumber(phrase.scoreSum, 0, 999999999, 0) / total * 100) : 0;
+      view.push({
+        phraseId: phrase.id || phrase.phraseId || null,
+        name: firstProgressTextToken(phrase.name, "Phrase " + (i + 1)),
+        total: total,
+        scoreSum: clampProgressNumber(phrase.scoreSum, 0, 999999999, 0),
+        perfects: clampProgressNumber(phrase.perfects, 0, 999999999, 0),
+        goods: clampProgressNumber(phrase.goods, 0, 999999999, 0),
+        oks: clampProgressNumber(phrase.oks, 0, 999999999, 0),
+        misses: clampProgressNumber(phrase.misses, 0, 999999999, 0),
+        accuracy: accuracy
+      });
+    }
+    return view;
+  }
+
+  function firstProgressTextToken() {
+    for (var i = 0; i < arguments.length; i++) {
+      if (typeof arguments[i] === "string" && arguments[i].trim()) return arguments[i].trim();
+    }
+    return "";
+  }
+
+  function clampProgressNumber(value, min, max, fallback) {
+    var numeric = Number(value);
+    if (!isFinite(numeric)) return fallback;
+    return Math.max(min, Math.min(max, numeric));
+  }
+
+  function getBestPerformancePhrase(phrases) {
+    var best = null;
+    var i;
+    if (!Array.isArray(phrases)) return null;
+    for (i = 0; i < phrases.length; i++) {
+      if (!best || phrases[i].accuracy > best.accuracy) best = phrases[i];
+    }
+    return best;
+  }
+
+  function getWeakestPerformancePhrase(phrases) {
+    var weakest = null;
+    var weakestAcc = Infinity;
+    var i;
+    var phrase;
+    var accuracy;
+    if (!Array.isArray(phrases)) return null;
+    for (i = 0; i < phrases.length; i++) {
+      phrase = phrases[i];
+      accuracy = phrase && typeof phrase.accuracy === "number" ? phrase.accuracy : null;
+      if (accuracy == null) continue;
+      if (accuracy < weakestAcc) {
+        weakestAcc = accuracy;
+        weakest = phrase;
+      }
+    }
+    return weakest;
+  }
+
+  function calculateLegacyLhLevel(curriculum, lhPatterns, level, currentLhLevel) {
+    if (!Array.isArray(curriculum) || !Array.isArray(lhPatterns)) return null;
+    if (!curriculum.length) return null;
+    var maxLevel = Math.min(8, curriculum.length);
+    var normalizedLevel = typeof level === "number" && isFinite(level) ? level : 1;
+    normalizedLevel = Math.max(1, Math.min(maxLevel, normalizedLevel));
+    var idx = normalizedLevel - 1;
+    var newLvl = curriculum[idx];
+    var current = typeof currentLhLevel === "number" ? currentLhLevel : 0;
+    if (!newLvl || !newLvl.lhPattern) return null;
+    for (var i = 0; i < lhPatterns.length; i++) {
+      if (lhPatterns[i] && lhPatterns[i].id === newLvl.lhPattern) {
+        return i + 1 > current ? i + 1 : null;
+      }
+    }
+    return null;
+  }
+
+  function getLegacyCompletionRewards(engine, plan, options) {
+    var defaults = {
+      rewardTrigger: "session_complete",
+      audioCue: "complete",
+      xpAwarded: 50,
+      chordProgressIncrement: 15
+    };
+    var psychologyEngine = getProgressPsychologyEngine(engine, options);
+    var rewards = psychologyEngine && typeof psychologyEngine.getSessionCompletionRewards === "function"
+      ? psychologyEngine.getSessionCompletionRewards({
+        plan: plan || null,
+        level: options.level,
+        curriculum: options.curriculum,
+        lhPatterns: options.lhPatterns,
+        rewardTrigger: defaults.rewardTrigger,
+        audioCue: defaults.audioCue,
+        xpAwarded: defaults.xpAwarded,
+        chordProgressIncrement: defaults.chordProgressIncrement
+      })
+      : null;
+    rewards = rewards || {};
+    return {
+      rewardTrigger: rewards.rewardTrigger || defaults.rewardTrigger,
+      audioCue: rewards.audioCue || defaults.audioCue,
+      xpAwarded: typeof rewards.xpAwarded === "number" ? rewards.xpAwarded : defaults.xpAwarded,
+      chordProgressIncrement: typeof rewards.chordProgressIncrement === "number" ? rewards.chordProgressIncrement : defaults.chordProgressIncrement
+    };
+  }
+
+  function getProgressPsychologyEngine(engine, options) {
+    options = options || {};
+    if (options.psychologyEngine) return options.psychologyEngine;
+    if (engine && engine.psychologyEngine) return engine.psychologyEngine;
+    if (typeof window !== "undefined" && window.sparkCore && window.sparkCore.psychologyEngine) return window.sparkCore.psychologyEngine;
+    if (typeof SparkSuitePsychologyEngine !== "undefined") {
+      if (!cachedFallbackPsychologyEngine) cachedFallbackPsychologyEngine = new SparkSuitePsychologyEngine();
+      return cachedFallbackPsychologyEngine;
+    }
+    return null;
+  }
+
+  function getFallbackPerformancePhraseRating(accuracy) {
+    if (accuracy >= 90) return "excellent";
+    if (accuracy >= 70) return "good";
+    return "poor";
   }
 
   function clone(value) {

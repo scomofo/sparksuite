@@ -79,5 +79,14 @@ S.rhythmHighwayResult = null;
 activeHtml = rhythmHighwayPage();
 assert.ok(activeHtml.indexOf(">G</div>") >= 0);
 assert.ok(activeHtml.indexOf("#117733") === -1);
+assert.ok(activeHtml.indexOf("metric-value") >= 0);
+assert.ok(activeHtml.indexOf("metric-label") >= 0);
+assert.ok(activeHtml.indexOf("action-row") >= 0);
+
+S.rhythmHighwayResult = S._resultFixture;
+var resultHtml = rhythmHighwayPage();
+assert.ok(resultHtml.indexOf("card-section-heading") >= 0);
+assert.ok(resultHtml.indexOf("metric-value") >= 0);
+assert.ok(resultHtml.indexOf("metric-label") >= 0);
 
 console.log("PASS: rhythm highway respects accessibility lane labels, palette, and reduced motion");

@@ -148,7 +148,7 @@ function getLegacySessionRuntime(D){
   var runtime = getSparkCoreRuntimeState();
   var preferCore = shouldPreferSessionCoreRuntime();
   var runtimeChord = findInstrumentChordByName(D, runtime && runtime.legacyPracticeChordName);
-  var legacyChord = S.currentChord || null;
+  var legacyChord = S.currentChord || findInstrumentChordByName(D, S && S.chord) || null;
   return {
     chord: preferCore ? (runtimeChord || legacyChord) : (legacyChord || runtimeChord),
     timer: getPreferredSessionNumber(
@@ -335,13 +335,17 @@ function renderSessionChordCheckCard(chordName){
   return h;
 }
 
-function renderSessionTipsCard(){
-  return '<div class="card mb16" style="text-align:left"><h4 style="margin:0 0 6px;color:var(--text-primary);font-size:14px">&#128161; Tips</h4><p style="margin:0;font-size:13px;color:var(--text-label);line-height:1.5">Press firmly behind the fret. Strum each string to check for buzz. Keep your thumb relaxed!</p></div>';
+function renderSessionTipsCard(inst){
+  var text = isPianoSessionInstrument(inst)
+    ? "Curve your fingers, keep your wrist loose, and press the highlighted keys together with an even sound."
+    : "Press firmly behind the fret. Strum each string to check for buzz. Keep your thumb relaxed!";
+  return '<div class="card mb16" style="text-align:left"><h4 style="margin:0 0 6px;color:var(--text-primary);font-size:14px">&#128161; Tips</h4><p style="margin:0;font-size:13px;color:var(--text-label);line-height:1.5">'+escHTML(text)+'</p></div>';
 }
 
-function renderPracticeIntentionCard(practiceIntention){
+function renderPracticeIntentionCard(practiceIntention, inst){
+  var appName = isPianoSessionInstrument(inst) ? "PianoSpark" : "ChordSpark";
   if(!practiceIntention) return '';
-  return '<div style="text-align:center;margin-bottom:12px;font-size:12px;color:var(--text-muted);font-style:italic">&#8220;When I '+escHTML(practiceIntention)+', I open ChordSpark.&#8221;</div>';
+  return '<div style="text-align:center;margin-bottom:12px;font-size:12px;color:var(--text-muted);font-style:italic">&#8220;When I '+escHTML(practiceIntention)+', I open '+appName+'.&#8221;</div>';
 }
 
 function renderSessionShellCard(shell){
@@ -377,13 +381,13 @@ function getSessionPageFallbackShell(){
 }
 
 function renderSessionActionButtons(runtime){
-  return '<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="act(\'toggleTimer\')" style="background:'+(runtime.timerActive?"#FFE66D":"#4ECDC4")+';color:'+(runtime.timerActive?"var(--text-primary)":"#fff")+'">'+(runtime.timerActive?"&#9208; Pause":"&#9654; Resume")+'</button><button class="btn" onclick="act(\'doneSession\')" style="background:#FF6B6B;color:#fff">&#10003; Done</button></div>';
+  return '<div class="action-row" style="justify-content:center"><button class="btn" onclick="act(\'toggleTimer\')" style="background:'+(runtime.timerActive?"#FFE66D":"#4ECDC4")+';color:'+(runtime.timerActive?"var(--text-primary)":"#fff")+'">'+(runtime.timerActive?"&#9208; Pause":"&#9654; Resume")+'</button><button class="btn" onclick="act(\'doneSession\')" style="background:#FF6B6B;color:#fff">&#10003; Done</button></div>';
 }
 
 function renderStrumTonePicker(selectedTone){
   var tones=["classic","nylon","steel","electric","guitar"];
   var toneLabels={"classic":"&#127928; Classic","nylon":"&#127931; Nylon","steel":"&#129529; Steel","electric":"&#9889; Electric","guitar":"&#127930; Guitar"};
-  var h='<div class="card mb16"><h4 style="margin:0 0 8px;font-size:13px;font-weight:800;color:var(--text-primary)">&#127928; Strum Tone</h4><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">';
+  var h='<div class="card mb16"><h4 class="card-micro-heading" style="margin-bottom:8px">&#127928; Strum Tone</h4><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">';
   for(var i=0;i<tones.length;i++){
     var t=tones[i],sel=selectedTone===t;
     h+='<button onclick="act(\'setTone\',\''+t+'\')" style="padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;background:'+(sel?"#4ECDC4":"var(--input-bg)")+';color:'+(sel?"#fff":"var(--text-muted)")+';border:2px solid '+(sel?"#4ECDC4":"var(--border)")+';transition:all .2s">'+toneLabels[t]+'</button>';
@@ -429,6 +433,42 @@ function renderSongChordChips(chords){
   }
   h+='</div>';
   return h;
+}
+
+function isPianoSessionInstrument(inst){
+  var id = inst && (inst.instrument || inst.id || inst.appId || inst.instrumentId || "");
+  id = String(id).toLowerCase();
+  return id === "piano" || id === "pianospark";
+}
+
+function buildPianoSessionVoicings(chord){
+  var defs = [
+    ["rootPosition", "Root Position"],
+    ["firstInversion", "1st Inversion"],
+    ["secondInversion", "2nd Inversion"],
+    ["thirdInversion", "3rd Inversion"]
+  ];
+  var voicings = [];
+  var part;
+  var v;
+  if (!chord) return voicings;
+  for (var i = 0; i < defs.length; i++) {
+    part = chord[defs[i][0]];
+    if (!part || !Array.isArray(part.midi)) continue;
+    v = {};
+    for (var key in chord) v[key] = chord[key];
+    v.rootPosition = part;
+    v.label = defs[i][1];
+    voicings.push(v);
+  }
+  return voicings;
+}
+
+function getSessionChordVoicings(inst, D, chord){
+  var source;
+  if (isPianoSessionInstrument(inst)) return buildPianoSessionVoicings(chord);
+  source = D && D.VOICINGS ? D.VOICINGS : (typeof VOICINGS !== "undefined" ? VOICINGS : null);
+  return source && chord && Array.isArray(source[chord.name]) ? source[chord.name] : null;
 }
 
 function renderSongProgressionCard(progression, songPlaying, songBeat){
@@ -480,7 +520,7 @@ function mapSessionCapoChords(chords, capoFret){
 
 function renderCapoModeControl(capoFret){
   var h='<div class="card mb16" style="padding:12px"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">';
-  h+='<div style="text-align:left"><div style="font-size:12px;font-weight:900;color:var(--text-primary)">Capo '+capoFret+'</div><div style="font-size:11px;color:var(--text-muted)">Shows playable shapes while keeping song chords sounding original.</div></div>';
+  h+='<div style="text-align:left"><div class="card-micro-heading" style="font-size:12px">Capo '+capoFret+'</div><div style="font-size:11px;color:var(--text-muted)">Shows playable shapes while keeping song chords sounding original.</div></div>';
   h+='<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">';
   for(var i=0;i<=5;i++){
     h+='<button onclick="act(\'setCapoMode\',\''+i+'\')" style="min-width:34px;padding:6px 8px;border-radius:9px;font-size:12px;font-weight:800;background:'+(capoFret===i?"#4ECDC4":"var(--input-bg)")+';color:'+(capoFret===i?"#fff":"var(--text-muted)")+';border:1px solid '+(capoFret===i?"#4ECDC4":"var(--border)")+'">'+i+'</button>';
@@ -505,7 +545,7 @@ function renderDailyChallengeTimer(timer, maxTimer){
 }
 
 function renderDailyChallengeComplete(dc){
-  return '<div style="font-size:56px;animation:bn .6s ease">&#127941;</div><h3 style="color:#4ECDC4;font-size:20px;font-weight:800;margin:12px 0">Challenge Complete!</h3><div class="card" style="margin:16px 0"><div style="font-size:28px;font-weight:900;color:#FFE66D">+'+dc.xp+' XP</div></div><button class="btn" onclick="act(\'dailyDoneHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button>';
+  return '<div style="font-size:56px;animation:bn .6s ease">&#127941;</div><h3 class="card-section-heading" style="color:#4ECDC4;font-size:20px;margin:12px 0">Challenge Complete!</h3><div class="card" style="margin:16px 0"><div style="font-size:28px;font-weight:900;color:#FFE66D">+'+dc.xp+' XP</div></div><button class="btn" onclick="act(\'dailyDoneHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button>';
 }
 
 // ===== SESSION PAGES =====
@@ -518,14 +558,14 @@ function sessionPage(){
   var c = runtime.chord;
   if(!c)return renderSessionShellCard(shell || getSessionPageFallbackShell());
   // Check if voicings are available
-  var voicings=VOICINGS[c.name];
+  var voicings=getSessionChordVoicings(inst, D, c);
   var displayChord=c;
   if(voicings&&S.selectedVoicing>0&&S.selectedVoicing<voicings.length){
     displayChord=voicings[S.selectedVoicing];
   }
   var timer = runtime.timer;
   var m=Math.floor(timer/60),s=timer%60;
-  var h='<div class="text-center"><button class="back-btn" onclick="act(\'back\')">&#8592; Back</button><h2 style="font-size:26px;font-weight:900;color:var(--text-primary);margin:8px 0">'+c.name+'</h2>';
+  var h='<div class="text-center legacy-session-live"><button class="back-btn" onclick="act(\'back\')">&#8592; Back</button><h2 style="font-size:26px;font-weight:900;color:var(--text-primary);margin:8px 0">'+c.name+'</h2>';
 
   // Voicing selector
   if(voicings&&voicings.length>1){
@@ -544,9 +584,9 @@ function sessionPage(){
   h+='<button onclick="act(\'previewChord\',\''+c.name+'\')" style="background:none;font-size:14px;color:var(--text-muted);margin-bottom:8px" aria-label="Preview chord sound">&#128264; Listen to this chord</button>';
   h+=renderSessionMetronomeCard(getSessionMetronomeRuntime());
   h+=renderSessionChordCheckCard(c.name);
-  h+=renderSessionTipsCard();
+  h+=renderSessionTipsCard(inst);
   var practiceIntention = _firstSessionSongTextToken(S.practiceIntention);
-  h+=renderPracticeIntentionCard(practiceIntention);
+  h+=renderPracticeIntentionCard(practiceIntention, inst);
   h+=renderSessionActionButtons(runtime);
   h+='</div>';
   return h;
@@ -560,7 +600,7 @@ function completePage(){
   var p=getSessionChordProgressValue(n);
   var xpAmount = normalizeSessionNumber(S.xpToast && S.xpToast.amount, 10);
   var streak = normalizeSessionNumber(S.streak, 0);
-  return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;margin-bottom:12px;animation:bn .6s ease">&#127881;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Awesome!</h2><p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">You practiced <strong>'+n+'</strong></p><div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center"><div><div style="font-size:28px;font-weight:900;color:#FFE66D">+'+xpAmount+'</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div><div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;'+streak+'</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div><div><div style="font-size:28px;font-weight:900;color:#4ECDC4">'+p+'%</div><div style="font-size:11px;color:var(--text-muted)">Mastery</div></div></div></div><div class="flex-col"><button class="btn" onclick="act(\'repeatLegacyPracticeSession\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128257; One More</button><button class="btn" onclick="act(\'completeSessionHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button></div></div>';
+  return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;margin-bottom:12px;animation:bn .6s ease">&#127881;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Awesome!</h2><p style="color:var(--text-dim);font-size:15px;margin-bottom:20px">You practiced <strong>'+n+'</strong></p><div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center"><div><div style="font-size:28px;font-weight:900;color:#FFE66D">+'+xpAmount+'</div><div style="font-size:11px;color:var(--text-muted)">XP</div></div><div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;'+streak+'</div><div style="font-size:11px;color:var(--text-muted)">Streak</div></div><div><div style="font-size:28px;font-weight:900;color:#4ECDC4">'+p+'%</div><div style="font-size:11px;color:var(--text-muted)">Mastery</div></div></div></div><div class="result-actions"><button class="btn" onclick="act(\'repeatLegacyPracticeSession\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128257; One More</button><button class="btn" onclick="act(\'completeSessionHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button></div></div>';
 }
 
 function drillPage(){
@@ -578,7 +618,7 @@ function drillPage(){
   var h='<div class="text-center"><button class="back-btn" onclick="act(\'back\')">&#8592; Back</button>';
   if(shell) h+=renderSessionShellCard(shell);
   h+=renderDrillHeader(drillTimer);
-  h+='<div class="card'+morphClass+'" style="display:inline-block;margin-bottom:12px;border:3px solid '+D.LC[S.level]+'">';
+  h+='<div class="card live-timer-surface'+morphClass+'" style="display:inline-block;margin-bottom:12px;border:3px solid '+D.LC[S.level]+'">';
   h+='<h3 style="margin:0 0 4px;font-size:16px;color:'+D.LC[S.level]+'">'+c.name+tierBadgeHTML(c.name,14)+'</h3>'+UI.chord(c,180,null,drillChanged)+'</div>';
   _prevChordKey=c.name;
   h+=renderDrillTransitionTip(c, nx);
@@ -588,7 +628,7 @@ function drillPage(){
 }
 
 function drillDonePage(){
-  return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;animation:bn .6s ease">&#9889;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Drill Complete!</h2><p style="color:var(--text-dim);margin-bottom:20px"><strong>'+S.drillSwitches+'</strong> switches in 60s</p><button class="btn" onclick="act(\'repeatLegacyPracticeDrill\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9889; Again</button> <button class="btn" onclick="act(\'drillDoneHome\')" style="background:#4ECDC4;color:#fff;margin-left:10px">&#127968; Home</button></div>';
+  return '<div class="text-center" style="padding-top:30px"><div style="font-size:56px;animation:bn .6s ease">&#9889;</div><h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Drill Complete!</h2><p style="color:var(--text-dim);margin-bottom:20px"><strong>'+S.drillSwitches+'</strong> switches in 60s</p><div class="result-actions"><button class="btn" onclick="act(\'repeatLegacyPracticeDrill\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9889; Again</button><button class="btn" onclick="act(\'drillDoneHome\')" style="background:#4ECDC4;color:#fff">&#127968; Home</button></div></div>';
 }
 
 function dailyPage(){
@@ -655,7 +695,7 @@ function strumDetailPage(){
   h+='<div style="display:inline-block;background:#FFF3E0;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:700;color:#E65100;margin-bottom:20px">'+strumBpm+' BPM</div>';
   // Strum hand animation
   h+='<div class="flex-center mb12">'+strumHandSVG(curDir,strumActive)+'</div>';
-  h+='<div class="card mb20" style="padding:24px"><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">'+strumHTML(sp.pattern,curBeat)+'</div></div>';
+  h+='<div class="card mb20'+(strumActive?' live-timer-surface':'')+'" style="padding:24px"><div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">'+strumHTML(sp.pattern,curBeat)+'</div></div>';
   h+=renderStrumTonePicker(S.strumTone);
   h+='<button class="btn" onclick="act(\'toggleStrum\')" style="background:'+(strumActive?"#FFE66D":"linear-gradient(135deg,#FF6B6B,#FF8A5C)")+';color:'+(strumActive?"var(--text-primary)":"#fff")+'">'+(strumActive?"&#9208; Stop":"&#9654; Play Pattern")+'</button></div>';
   return h;
@@ -683,7 +723,7 @@ function songDetailPage(){
   h+=renderSongProgressionCard(sg.progression, songPlaying, songBeat);
   if(songPlaying) h+=renderSongCurrentChordCard(sg, songBeat, D, UI);
   // Strum hand + pattern
-  h+='<div class="card mb16" style="padding:16px"><h4 style="margin:0 0 8px;font-size:14px;color:var(--text-primary)">Strum Pattern</h4>';
+  h+='<div class="card mb16'+(songPlaying?' live-timer-surface':'')+'" style="padding:16px"><h4 style="margin:0 0 8px;font-size:14px;color:var(--text-primary)">Strum Pattern</h4>';
   h+='<div class="flex-center mb12">'+strumHandSVG(curDir,songPlaying)+'</div>';
   h+='<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap">'+strumHTML(sg.pattern,patBeat)+'</div></div>';
   h+=renderStrumTonePicker(S.strumTone);

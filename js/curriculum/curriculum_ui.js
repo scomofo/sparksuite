@@ -9,7 +9,7 @@
   function curriculumPage(){
     var runtimeState = getCurriculumUiRuntimeState();
     var h = '<div class="card">';
-    h += '<div><b>Curriculum</b></div>';
+    h += '<div class="card-section-heading">Curriculum</div>';
     if(runtimeState && runtimeState.curriculumLoading){
       h += '<div>Loading curriculum...</div>';
     } else if(runtimeState && runtimeState.curriculumLastManifestPath){
@@ -25,7 +25,7 @@
       for(var rc=0;rc<runtimeCurriculums.length;rc++){
         var summary = runtimeCurriculums[rc];
         h += '<div style="margin-bottom:12px">';
-        h += '<div><b>' + escHTML(summary.title || summary.id || "Curriculum") + '</b></div>';
+        h += '<div class="card-micro-heading">' + escHTML(summary.title || summary.id || "Curriculum") + '</div>';
         h += '<div style="margin-left:12px">' + (summary.trackCount || 0) + ' tracks</div>';
         h += '</div>';
       }
@@ -38,7 +38,7 @@
       for(var c=0;c<ids.length;c++){
         var cur = curriculums[ids[c]];
         h += '<div style="margin-bottom:12px">';
-        h += '<div><b>' + escHTML(cur.title || cur.id) + '</b></div>';
+        h += '<div class="card-micro-heading">' + escHTML(cur.title || cur.id) + '</div>';
         var tracks = cur.tracks || [];
         for(var t=0;t<tracks.length;t++){
           var track = getCurriculumItem("tracks", tracks[t]);
@@ -70,7 +70,7 @@
     var packIds = Object.keys(packs);
     if((runtimePacks && runtimePacks.length) || packIds.length){
       h += '<div class="card">';
-      h += '<div><b>Content Packs</b></div>';
+      h += '<div class="card-section-heading">Content Packs</div>';
       if(runtimeState && runtimeState.contentLoading){
         h += '<div>Loading content...</div>';
       } else if(runtimeState && runtimeState.contentLastManifestPath){

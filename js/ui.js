@@ -134,8 +134,8 @@ function shuffle(arr){
 
 // Helper for accessible clickable divs
 function clickableDiv(onclick,extra){
-  var guard='if(event.target&&event.target.closest&&event.target.closest("button,input,select,textarea,a")){return;}';
-  var k='if(event.key==="Enter"||event.key===" "){event.preventDefault();'+onclick+'}';
+  var guard='if(event.target&&event.target.closest&&event.target.closest(&quot;button,input,select,textarea,a&quot;)){return;}';
+  var k="if(event.key==='Enter'||event.key===' '){event.preventDefault();"+onclick+"}";
   return ' tabindex="0" role="button" onclick="'+guard+onclick+'" onkeydown="'+k+'"'+(extra?' '+extra:'');
 }
 
@@ -194,6 +194,7 @@ function scaleSVG(positions,keyName,scaleName){
     s+='<text x="'+(pL+(f-0.5)*fW)+'" y="'+(h-2)+'" text-anchor="middle" font-size="8" fill="var(--text-muted)">'+f+'</text>';
   return s+'</svg>';
 }
+if(typeof window!=="undefined")window.stringedScaleSVG=scaleSVG;
 
 // ===== ANIMATED STRUM HAND =====
 function strumHandSVG(direction,active){
