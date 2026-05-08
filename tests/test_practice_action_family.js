@@ -75,6 +75,8 @@ function resetEnvironment() {
 function test(name, fn) {
   try {
     var env = resetEnvironment();
+    global.eval(loadJS("js/sparksuite/core/practice_engine.js"));
+    global.sparkCore.practiceEngine = new SparkSuitePracticeEngine(null);
     global.eval(loadJS("js/actions/families.js"));
     global.eval(loadJS("js/actions/practice_family.js"));
     fn(env);

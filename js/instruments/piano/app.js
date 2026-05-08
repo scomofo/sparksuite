@@ -722,28 +722,7 @@ function completeGuidedSession() {
   }
 
   if (plan) {
-    // Mark session complete
-    if (S.completedSessions.indexOf(plan.num) < 0) {
-      S.completedSessions.push(plan.num);
-    }
-    S.sessions++;
-    S.currentSession = Math.min(50, plan.num + 1);
-
-    // Progress chord
-    if (plan.newMove && plan.newMove.chord) {
-      var prog = (S.chordProg[plan.newMove.chord] || 0) + 15;
-      S.chordProg[plan.newMove.chord] = Math.min(100, prog);
-    }
-
-    addXP(50);
-    addHistory("guided_session", { session: plan.num, chord: plan.newMove ? plan.newMove.chord : null });
-
-    // Update LH level
-    var newLvl = CURRICULUM[Math.min(S.level, 8) - 1];
-    if (newLvl && newLvl.lhPattern) {
-      var patIdx = LH_PATTERNS.findIndex(function(p) { return p.id === newLvl.lhPattern; });
-      if (patIdx >= 0 && patIdx + 1 > S.lhLevel) S.lhLevel = patIdx + 1;
-    }
+    applyPianoLegacyGuidedCompletion(buildPianoLegacyGuidedCompletion(plan));
   }
 
   checkPracticeDate();
@@ -768,6 +747,49 @@ function completeGuidedSession() {
   S.newMovePhase = null;
   saveState();
   render();
+}
+
+function buildPianoLegacyGuidedCompletion(plan) {
+  var core = typeof window !== "undefined" && window.sparkCore ? window.sparkCore : null;
+  var engine = core && core.progressEngine ? core.progressEngine : null;
+  if (engine && typeof engine.buildLegacyGuidedSessionCompletion === "function") {
+    return engine.buildLegacyGuidedSessionCompletion(plan, {
+      curriculum: CURRICULUM,
+      lhPatterns: LH_PATTERNS,
+      level: S.level,
+      lhLevel: S.lhLevel
+    });
+  }
+  return {
+    completedSessionNums: [],
+    sessionsDelta: 0,
+    currentSession: null,
+    chordProgress: {},
+    xpAwarded: 0,
+    historyEntry: null,
+    lhLevel: null
+  };
+}
+
+function applyPianoLegacyGuidedCompletion(outcome) {
+  outcome = outcome || {};
+  if (!Array.isArray(S.completedSessions)) S.completedSessions = [];
+  if (!S.chordProg || typeof S.chordProg !== "object") S.chordProg = {};
+
+  var completed = Array.isArray(outcome.completedSessionNums) ? outcome.completedSessionNums : [];
+  for (var i = 0; i < completed.length; i++) {
+    if (S.completedSessions.indexOf(completed[i]) < 0) S.completedSessions.push(completed[i]);
+  }
+  S.sessions = (S.sessions || 0) + (outcome.sessionsDelta || 0);
+  if (outcome.currentSession != null) S.currentSession = outcome.currentSession;
+  if (outcome.chordProgress) {
+    for (var chordName in outcome.chordProgress) {
+      S.chordProg[chordName] = Math.min(100, (S.chordProg[chordName] || 0) + outcome.chordProgress[chordName]);
+    }
+  }
+  if (outcome.xpAwarded) addXP(outcome.xpAwarded);
+  if (outcome.historyEntry) addHistory(outcome.historyEntry.type, outcome.historyEntry.detail || {});
+  if (outcome.lhLevel != null) S.lhLevel = outcome.lhLevel;
 }
 
 function syncPianoGuidedCompletionFromCore(result, plan) {
@@ -801,12 +823,8 @@ function syncPianoGuidedCompletionFromCore(result, plan) {
     S.guidedSession = S.currentSession;
   }
 
-  if (plan) {
-    var newLvl = CURRICULUM[Math.min(S.level, 8) - 1];
-    if (newLvl && newLvl.lhPattern) {
-      var patIdx = LH_PATTERNS.findIndex(function(p) { return p.id === newLvl.lhPattern; });
-      if (patIdx >= 0 && patIdx + 1 > S.lhLevel) S.lhLevel = patIdx + 1;
-    }
+  if (guidedPatch && guidedPatch.lhLevel != null) {
+    S.lhLevel = guidedPatch.lhLevel;
   }
 }
 

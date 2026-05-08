@@ -64,6 +64,11 @@ function getGamesCoreView() {
     : null;
 }
 
+function getGamesScaleRenderer() {
+  var inst = getGamesPageInstrument();
+  return inst && typeof inst.getScaleRenderer === "function" ? inst.getScaleRenderer() : null;
+}
+
 // ===== RHYTHM GAME TAB =====
 function getLegacyRhythmRuntime(){
   var runtime = getGamesCoreView();
@@ -333,8 +338,8 @@ function buildTab(){
       }
       h+='</div>';
       var positions=getScaleFrets(scaleKey,S.selectedScale);
-      var renderScale = typeof stringedScaleSVG === "function" ? stringedScaleSVG : scaleSVG;
-      h+='<div class="flex-center">'+renderScale(positions,scaleKey,SCALE_NAMES[S.selectedScale])+'</div>';
+      var renderScale = getGamesScaleRenderer();
+      h+='<div class="flex-center">'+(renderScale ? renderScale(positions,scaleKey,SCALE_NAMES[S.selectedScale]) : "")+'</div>';
       h+='</div>';
     }
   }

@@ -85,6 +85,7 @@ function resetEnvironment() {
 function test(name, fn) {
   try {
     resetEnvironment();
+    global.eval(loadJS("js/sparksuite/core/psychology_engine.js"));
     global.eval(loadJS("js/instruments/piano/pages/games.js"));
     fn();
     console.log("  PASS: " + name);
@@ -161,6 +162,10 @@ test("drill tab ignores stale transition tip text", function() {
 });
 
 test("active timed piano game cards suppress entrance animations during timer ticks", function() {
+  var psychology = new SparkSuitePsychologyEngine();
+  assert.strictEqual(psychology.isIntenseFlowState({ mode: "drill" }), true);
+  assert.strictEqual(psychology.isIntenseFlowState({ mode: "daily", type: "daily" }), true);
+  assert.strictEqual(psychology.isIntenseFlowState({ mode: "daily" }), false);
   S.drillActive = true;
   S.drillChords = ["C", "G"];
   S.drillIdx = 0;

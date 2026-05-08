@@ -129,7 +129,7 @@ function _renderSongsSubTabs(songsSubTab){
   h += '<button class="community-tab'+(songsSubTab==="community"?" active":"")+'" onclick="act(\'songsSubTab\',\'community\')">&#127760; Community</button>';
   h += '<button class="community-tab'+(songsSubTab==="import"?" active":"")+'" onclick="act(\'songsSubTab\',\'import\')">&#128196; Import</button>';
   h += '<button class="community-tab'+(songsSubTab==="stems"?" active":"")+'" onclick="act(\'songsSubTab\',\'stems\')">&#127911; Stems</button>';
-  h += '<button class="songs-subtab'+(songsSubTab==="perform"?" active":"")+'" onclick="act(\'songsSubTab\',\'perform\')">&#127918; Perform</button>';
+  h += '<button class="community-tab'+(songsSubTab==="perform"?" active":"")+'" onclick="act(\'songsSubTab\',\'perform\')">&#127918; Perform</button>';
   h += '</div>';
   return h;
 }
@@ -515,7 +515,8 @@ function _renderCommunitySongCard(cs){
   var chords=[];
   var communityTitle = _firstSongsTextToken(cs.title, cs.songTitle, cs.id, "Community song");
   var communityArtist = _firstSongsTextToken(cs.artist, "Unknown Artist");
-  var h='<div class="card"><div class="split-row" style="gap:12px"><div><h3 class="card-section-heading">'+escHTML(communityTitle)+'</h3><p class="metric-label" style="margin:2px 0 0">'+escHTML(communityArtist)+' | '+escHTML(_formatSongsBpm(cs.bpm, "--"))+' BPM</p></div><div style="display:flex;gap:8px;align-items:center"><button class="vote-btn" onclick="act(\'voteSong\',\''+escHTML(cs.id)+'\')">&#9650; '+escHTML(String(cs.votes))+'</button></div></div>';
+  var communityIdArg = escHTML(JSON.stringify(cs && cs.id != null ? String(cs.id) : ""));
+  var h='<div class="card"><div class="split-row" style="gap:12px"><div><h3 class="card-section-heading">'+escHTML(communityTitle)+'</h3><p class="metric-label" style="margin:2px 0 0">'+escHTML(communityArtist)+' | '+escHTML(_formatSongsBpm(cs.bpm, "--"))+' BPM</p></div><div style="display:flex;gap:8px;align-items:center"><button class="vote-btn" onclick="act(\'voteSong\','+communityIdArg+')">&#9650; '+escHTML(String(cs.votes))+'</button></div></div>';
   try{chords=JSON.parse(cs.chords);}catch(e){console.error("ChordSpark: failed to parse community song chords",e);}
   if(chords.length){
     h+='<div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap">';

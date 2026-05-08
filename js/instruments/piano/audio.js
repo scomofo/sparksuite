@@ -68,7 +68,7 @@ var wavBuffers = {};
 var wavsAvailable = false;
 
 function canPreloadWavs() {
-  if (typeof window === "undefined" || !window.location) return true;
+  if (typeof window === "undefined" || !window.location) return false;
   return window.location.protocol !== "file:";
 }
 

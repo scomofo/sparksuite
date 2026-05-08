@@ -112,12 +112,36 @@
     return true;
   }
 
+  function buildBassLegacyPracticeSession(options) {
+    var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+    var plan;
+    var legacy;
+    options = options || {};
+    if (core && typeof core.startSession === "function") {
+      plan = core.startSession(options);
+      legacy = plan && plan.context ? plan.context.legacyPractice : null;
+      if (legacy) {
+        return {
+          chordName: legacy.chordName,
+          chord: legacy.chord || null,
+          chords: legacy.chords || null,
+          duration: legacy.durationSec || 120,
+          plan: plan
+        };
+      }
+    }
+    if (typeof SparkSession !== "undefined" && SparkSession && typeof SparkSession.buildSession === "function") {
+      return SparkSession.buildSession(options);
+    }
+    return null;
+  }
+
   function bassAct(a, v) {
     var inst = getBassAppInstrument();
     var D = inst && inst.getData ? inst.getData() : {};
 
     if (a === "quickStart") {
-      var session = SparkSession.buildSession({ mode: "quickStart", level: S.level });
+      var session = buildBassLegacyPracticeSession({ mode: "quickStart", level: S.level });
       if (!session) return true;
       if (typeof window.openLegacyPracticeSessionRequest === "function") {
         window.openLegacyPracticeSessionRequest({
@@ -141,7 +165,7 @@
     }
 
     if (a === "resumeSession") {
-      var session = SparkSession.buildSession({ mode: "chord", chordName: S.lastChordName });
+      var session = buildBassLegacyPracticeSession({ mode: "chord", chordName: S.lastChordName });
       if (!session) { act("quickStart"); return true; }
       if (typeof window.openLegacyPracticeSessionRequest === "function") {
         window.openLegacyPracticeSessionRequest({
@@ -164,7 +188,7 @@
     }
 
     if (a === "startSession") {
-      var session = SparkSession.buildSession({ mode: "chord", chordName: v });
+      var session = buildBassLegacyPracticeSession({ mode: "chord", chordName: v });
       if (!session) return true;
       if (typeof window.openLegacyPracticeSessionRequest === "function") {
         window.openLegacyPracticeSessionRequest({
@@ -188,7 +212,7 @@
     }
 
     if (a === "startDrill") {
-      var session = SparkSession.buildSession({ mode: "drill", level: S.level });
+      var session = buildBassLegacyPracticeSession({ mode: "drill", level: S.level });
       if (!session) return true;
       if (typeof window.openLegacyPracticeDrillRequest === "function") {
         window.openLegacyPracticeDrillRequest({

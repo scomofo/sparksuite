@@ -79,5 +79,42 @@
     return typeof SparkPsychology !== "undefined" ? SparkPsychology.shouldReward(sessionCount) : false;
   };
 
+  PsychologyEngine.prototype.getPerformancePhraseRating = function(accuracy) {
+    accuracy = typeof accuracy === "number" && isFinite(accuracy) ? accuracy : 0;
+    if (accuracy > 1) accuracy = accuracy / 100;
+    if (accuracy >= 0.9) return "excellent";
+    if (accuracy >= 0.7) return "good";
+    return "poor";
+  };
+
+  PsychologyEngine.prototype.getSessionCompletionRewards = function(context) {
+    context = context || {};
+    var performanceScore = typeof context.performanceScore === "number" && isFinite(context.performanceScore)
+      ? Math.max(0, Math.min(1, context.performanceScore > 1 ? context.performanceScore / 100 : context.performanceScore))
+      : null;
+    var difficultyLevel = context.difficultyLevel || context.difficulty || "normal";
+    var difficultyBonus = difficultyLevel === "hard" || difficultyLevel === "pro" ? 10 : (difficultyLevel === "easy" ? -5 : 0);
+    var explicitXp = Number(context.xpAwarded);
+    var explicitChordIncrement = Number(context.chordProgressIncrement);
+    var earnedXp = isFinite(explicitXp)
+      ? Math.max(0, Math.min(1000, explicitXp))
+      : Math.max(20, 50 + difficultyBonus + (performanceScore == null ? 0 : Math.round(performanceScore * 10)));
+    var chordIncrement = isFinite(explicitChordIncrement)
+      ? Math.max(0, Math.min(100, explicitChordIncrement))
+      : Math.max(10, Math.min(25, 15 + (performanceScore == null ? 0 : Math.round(performanceScore * 5))));
+    return {
+      rewardTrigger: context.rewardTrigger || "session_complete",
+      audioCue: context.audioCue || (performanceScore != null && performanceScore >= 0.95 ? "levelup" : "complete"),
+      xpAwarded: earnedXp,
+      chordProgressIncrement: chordIncrement
+    };
+  };
+
+  PsychologyEngine.prototype.isIntenseFlowState = function(sessionState) {
+    sessionState = sessionState || {};
+    return sessionState.mode === "drill"
+      || (sessionState.mode === "daily" && sessionState.type === "daily");
+  };
+
   window.SparkSuitePsychologyEngine = PsychologyEngine;
 })();

@@ -60,7 +60,9 @@ function createWindow() {
 
   mainWindow.loadFile('index.html');
 
-  // Enforce Content Security Policy headers
+  // Enforce Content Security Policy headers. The plain HTTP localhost entry
+  // supports the bundled Express dev service on port 3456; remote connections
+  // must stay on HTTPS.
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {

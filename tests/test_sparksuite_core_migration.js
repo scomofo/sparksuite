@@ -307,6 +307,23 @@ test("SparkCore exposes engine-owned runtime state for active session context", 
   assert.strictEqual(view.lastSessionOutcome, null);
 });
 
+test("SparkCore tab changes can request a shell scroll reset without DOM access", function() {
+  var core = createDefaultSparkCore({ state: { activeScreen: "home", activeTab: "songs" } });
+
+  core.updateRuntimeState({
+    activeScreen: "home",
+    activeTab: "practice",
+    shellEffects: []
+  });
+
+  var request = core.buildShellTabChangeRequest("songs");
+
+  assert.deepStrictEqual(request.runtimeState.activeScreen, "home");
+  assert.strictEqual(request.runtimeState.activeTab, "songs");
+  assert.deepStrictEqual(request.runtimeState.transport, { status: "idle", positionMs: 0 });
+  assert.deepStrictEqual(request.runtimeState.shellEffects, [{ type: "scrollToTop" }]);
+});
+
 test("startPracticeFromLesson prefers the active instrument type over the app id for rhythm launches", function() {
   var core = createDefaultSparkCore();
   var captured = null;
@@ -1907,6 +1924,16 @@ test("action families can resolve sparkCore from the global binding", function()
     updateRuntimeState: function(payload) {
       shellUpdates.push(payload);
       return payload;
+    },
+    buildShellTabChangeRequest: function(tabId) {
+      return {
+        runtimeState: {
+          activeScreen: "home",
+          activeTab: tabId || null,
+          transport: { status: "idle", positionMs: 0 },
+          shellEffects: []
+        }
+      };
     }
   };
   global.__actionFamilies = {};
@@ -4335,6 +4362,28 @@ test("SparkCore can track guided runtime step and phase state explicitly", funct
   assert.strictEqual(state.activeSegmentId, plan.segments[0].id);
   assert.strictEqual(state.transport.status, "running");
   assert.strictEqual(state.transport.positionMs, 18000);
+});
+
+test("SparkCore resolves guided active block view state when segment state is stale", function() {
+  var core = createDefaultSparkCore();
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: 1 });
+  plan.segments = [
+    { id: "guided_warm", label: "Warm", durationSec: 60, meta: { guidedBlockType: "warm_engine" } },
+    { id: "guided_drill", label: "Drill", durationSec: 120, meta: { guidedBlockType: "drill" } }
+  ];
+  var drillSegment = plan.segments[1];
+
+  core.updateRuntimeState({
+    guidedStep: "review",
+    activeSegmentId: plan.segments[0].id,
+    guidedActivityId: "stale-guided-activity"
+  });
+
+  var view = core.getActiveSessionView();
+  assert.strictEqual(view.activeBlockType, "drill");
+  assert.strictEqual(view.runtimeState.guidedBlockType, "drill");
+  assert.strictEqual(view.runtimeState.activeSegmentId, drillSegment.id);
+  assert.strictEqual(view.activeSegment.id, drillSegment.id);
 });
 
 test("SparkCore can open, sync, navigate, and complete song sessions explicitly", function() {

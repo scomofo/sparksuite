@@ -103,8 +103,7 @@
   }
 
   function startDrumLesson(lessonId) {
-    openDrumPracticePlan(lessonId);
-    return false;
+    return openDrumPracticePlan(lessonId);
   }
 
   window.startDrumLesson = startDrumLesson;
@@ -132,6 +131,11 @@
     }
     html += "</div>";
     return html;
+  }
+
+  function drumStatsTab() {
+    var lessons = getDrumLessons();
+    return '<div class="card"><div class="card-section-heading">DrumSpark Stats</div><p class="metric-label">Lessons available: ' + lessons.length + '</p></div>';
   }
 
   ensureDrumRuntime();
@@ -186,7 +190,7 @@
       { id: "practice", label: "Practice" },
       { id: "stats", label: "Stats" }
     ],
-    tabRenderers: { practice: drumPracticeTab },
+    tabRenderers: { practice: drumPracticeTab, stats: drumStatsTab },
     act: function(action) {
       var next;
       if (action !== "quickStart") return false;

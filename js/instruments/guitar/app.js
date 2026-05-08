@@ -38,9 +38,10 @@ function getGuitarActiveGuidedView() {
 }
 
 function clearGuitarShowroomRoute() {
-  S._showroomOverride = null;
-  S._showroomLessonId = null;
-  S.launcherView = null;
+  var core = typeof window !== "undefined" && window.sparkCore ? window.sparkCore : null;
+  if (core && typeof core.clearShowroomRoutingState === "function") return core.clearShowroomRoutingState(S);
+  if (window.SparkShowroomRoutingState && typeof SparkShowroomRoutingState.clear === "function") return SparkShowroomRoutingState.clear(S);
+  return false;
 }
 
 function syncGuitarGuidedViewToState(view) {

@@ -3,7 +3,13 @@ var fs = require("fs");
 var path = require("path");
 
 function loadJS(file) {
-  return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
+  var fullPath = path.join(__dirname, "..", file);
+  if (!fs.existsSync(fullPath)) throw new Error("Failed to load " + file + ": file does not exist");
+  try {
+    return fs.readFileSync(fullPath, "utf8");
+  } catch (err) {
+    throw new Error("Failed to load " + file + ": " + err.message);
+  }
 }
 
 function test(name, fn) {
@@ -25,6 +31,10 @@ function assertNotIncludes(source, needle) {
   assert.strictEqual(source.indexOf(needle), -1, "Expected source to omit: " + needle);
 }
 
+function assertNotMatches(source, regex, label) {
+  assert.strictEqual(regex.test(source), false, "Expected source to omit " + label + ": " + regex);
+}
+
 console.log("\n--- Song Page Visual Contracts ---");
 
 test("shared song renderers use visual contract classes", function() {
@@ -42,11 +52,9 @@ test("shared song renderers use visual contract classes", function() {
 test("shared song renderers avoid representative raw heavy card headings and no-gap split rows", function() {
   var source = loadJS("js/pages/songs.js");
 
-  assertNotIncludes(source, '<h3 style="margin:0;font-size:16px;font-weight:800;color:var(--text-primary)"');
-  assertNotIncludes(source, '<h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:var(--text-primary)"');
-  assertNotIncludes(source, '<h3 style="margin:0 0 6px;font-size:18px;font-weight:900;color:var(--text-primary)"');
-  assertNotIncludes(source, 'display:flex;justify-content:space-between;align-items:center"');
-  assertNotIncludes(source, 'display:flex;align-items:center;justify-content:space-between;padding');
+  assertNotMatches(source, /<h[34][^>]*style=["'][^"']*font-size\s*:\s*1[468]px[^"']*font-weight\s*:\s*(?:800|900)/i, "heavy inline song headings");
+  assertNotMatches(source, /display\s*:\s*flex\s*;\s*justify-content\s*:\s*space-between\s*;\s*align-items\s*:\s*center(?![^"']*gap)/i, "no-gap split rows");
+  assertNotMatches(source, /display\s*:\s*flex\s*;\s*align-items\s*:\s*center\s*;\s*justify-content\s*:\s*space-between(?![^"']*gap)/i, "no-gap reversed split rows");
 });
 
 test("piano song renderers use shared classes for card headings, meta, controls, and split rows", function() {
@@ -61,8 +69,8 @@ test("piano song renderers use shared classes for card headings, meta, controls,
   assertIncludes(source, "song-controls");
   assertNotIncludes(source, '<div class="card"><h2>Song Library</h2>');
   assertNotIncludes(source, '<h3>Stem Separator</h3>');
-  assertNotIncludes(source, 'display:flex;justify-content:space-between;align-items:center"');
-  assertNotIncludes(source, 'display:flex;align-items:center;justify-content:space-between;padding');
+  assertNotMatches(source, /display\s*:\s*flex\s*;\s*justify-content\s*:\s*space-between\s*;\s*align-items\s*:\s*center(?![^"']*gap)/i, "no-gap split rows");
+  assertNotMatches(source, /display\s*:\s*flex\s*;\s*align-items\s*:\s*center\s*;\s*justify-content\s*:\s*space-between(?![^"']*gap)/i, "no-gap reversed split rows");
 });
 
 if (process.exitCode) process.exit(process.exitCode);

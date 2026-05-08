@@ -40,12 +40,13 @@
   }
 
   function setGuidedLegacyState(setFields, save) {
+    setFields = setFields || {};
     setLegacyFields(Object.assign({
-      guidedStopConfirm: false,
-      _showroomOverride: null,
-      _showroomLessonId: null,
-      launcherView: null
-    }, setFields || {}), save);
+      guidedStopConfirm: !!S.guidedStopConfirm,
+      _showroomOverride: Object.prototype.hasOwnProperty.call(S, "_showroomOverride") ? S._showroomOverride : null,
+      _showroomLessonId: Object.prototype.hasOwnProperty.call(S, "_showroomLessonId") ? S._showroomLessonId : null,
+      launcherView: Object.prototype.hasOwnProperty.call(S, "launcherView") ? S.launcherView : null
+    }, setFields), save);
   }
 
   function getSparkCoreHandle() {

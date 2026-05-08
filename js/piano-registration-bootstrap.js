@@ -8,7 +8,10 @@
 
   var pages = piano.pages || {};
   if (typeof pianoSessionPage === "function") pages[SCR.SESSION] = function() {
-    if (typeof S !== "undefined" && S && S.active && S.chord && !S.sessionPlan && typeof legacySessionHTML === "function") {
+    var useLegacy = typeof SparkSuiteSessionEngine !== "undefined"
+      && typeof SparkSuiteSessionEngine.shouldUseLegacySession === "function"
+      && SparkSuiteSessionEngine.shouldUseLegacySession(typeof S !== "undefined" ? S : null);
+    if (useLegacy && typeof legacySessionHTML === "function") {
       return legacySessionHTML();
     }
     return pianoSessionPage();

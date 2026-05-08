@@ -592,6 +592,39 @@ test("complete_victory_lap delegates to sparkCore and syncs piano completion ali
   assert.strictEqual(confettiCalls, 1);
 });
 
+test("piano legacy guided completion uses the shared core progress engine only", function() {
+  var calls = 0;
+  delete global.completeGuidedSessionRequest;
+  S.sessionPlan = { num: 4, newMove: { chord: "C Major" } };
+  S.sessionStep = "victoryLap";
+  S.screen = "session";
+  global.window.sparkCore = {
+    progressEngine: {
+      buildLegacyGuidedSessionCompletion: function(plan, options) {
+        calls++;
+        assert.strictEqual(plan.num, 4);
+        assert.strictEqual(options.level, S.level);
+        assert.strictEqual(options.lhLevel, S.lhLevel);
+        return {
+          completedSessionNums: [4],
+          sessionsDelta: 1,
+          currentSession: 5,
+          chordProgress: { "C Major": 15 },
+          xpAwarded: 50,
+          historyEntry: { type: "guided_session", detail: { session: 4, chord: "C Major" } },
+          lhLevel: 2
+        };
+      }
+    }
+  };
+
+  pianoAct("complete_victory_lap");
+
+  assert.strictEqual(calls, 1);
+  assert.strictEqual(S.currentSession, 5);
+  assert.strictEqual(S.lhLevel, 2);
+});
+
 test("open_perform_song delegates to sparkCore and syncs piano performance aliases", function() {
   pianoAct("open_perform_song", "1");
 

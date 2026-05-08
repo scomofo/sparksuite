@@ -173,8 +173,7 @@ test("legacy chord sessions suppress card entrance animations during timer ticks
   var styles = loadJS("styles.css");
 
   assert.ok(html.indexOf("legacy-session-live") >= 0);
-  assert.ok(styles.indexOf(".legacy-session-live .card") >= 0);
-  assert.ok(styles.indexOf("animation:none") >= 0);
+  assert.ok(/\.legacy-session-live \.card[\s\S]*animation:none/.test(styles));
 });
 
 test("legacy drill sessions suppress card entrance animations during timer ticks", function() {
@@ -182,12 +181,11 @@ test("legacy drill sessions suppress card entrance animations during timer ticks
   var styles = loadJS("styles.css");
 
   assert.ok(html.indexOf("live-timer-surface") >= 0);
-  assert.ok(styles.indexOf(".live-timer-surface.card") >= 0);
-  assert.ok(styles.indexOf("animation:none") >= 0);
+  assert.ok(/\.live-timer-surface\.card[\s\S]*animation:none/.test(styles));
 });
 
 test("legacy strum playback suppresses card entrance animations during beat ticks", function() {
-  S.selectedStrum = "Groove";
+  S.selectedStrum = { name: "Groove", desc: "Steady", level: 1, bpm: 72, pattern: ["D", "U"] };
   S.strumActive = true;
   S.strumBeat = 1;
 
@@ -254,6 +252,7 @@ test("session shell and legacy session controls use shared visual classes", func
   };
   var compact = SparkSessionShellUI.renderCompactSummary(shell);
   var live = SparkSessionShellUI.renderLiveCard(shell);
+  assert.strictEqual(typeof renderSessionActionButtons, "function", "renderSessionActionButtons must be a top-level export of js/pages/session.js");
   var controls = renderSessionActionButtons({ timerActive: true });
   var source = loadJS("js/pages/session.js");
 
@@ -261,6 +260,8 @@ test("session shell and legacy session controls use shared visual classes", func
   assert.ok(compact.indexOf("metric-label") >= 0);
   assert.ok(live.indexOf("split-row") >= 0);
   assert.ok(live.indexOf("card-section-heading") >= 0);
+  assert.ok(compact.indexOf('data-action="sessionPauseBlock"') >= 0);
+  assert.strictEqual(compact.indexOf("onclick=\"act('sessionPauseBlock')\""), -1);
   assert.ok(controls.indexOf("action-row") >= 0);
   assert.ok(source.indexOf("card-micro-heading") >= 0);
   assert.ok(source.indexOf("result-actions") >= 0);

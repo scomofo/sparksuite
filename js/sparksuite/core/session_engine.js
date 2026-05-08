@@ -44,6 +44,14 @@
     return this.performanceMonitor;
   };
 
+  SessionEngine.shouldUseLegacySession = function(state) {
+    return !!(state && state.active && state.chord && !state.sessionPlan);
+  };
+
+  SessionEngine.prototype.shouldUseLegacySession = function(state) {
+    return SessionEngine.shouldUseLegacySession(state);
+  };
+
   SessionEngine.prototype.buildSession = function(flow, context) {
     var self = this;
     if (this.performanceMonitor && typeof this.performanceMonitor.measure === "function") {
