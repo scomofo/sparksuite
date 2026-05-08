@@ -80,6 +80,7 @@
     }
 
     var curriculumContext = this.curriculumEngine.getDailyPracticeContext(context.instrumentContext || {});
+    if (context.lessonId) curriculumContext.nextLessonId = context.lessonId;
     var difficulty = brainAnalysis && brainAnalysis.recommendedDifficultyId
       ? brainAnalysis.recommendedDifficultyId
       : "easy";

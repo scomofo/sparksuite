@@ -9,6 +9,7 @@
     context = context || {};
 
     var curriculumContext = this.curriculumEngine.getDailyPracticeContext(context.instrumentContext || {});
+    if (context.lessonId) curriculumContext.nextLessonId = context.lessonId;
     var difficulty = getDifficulty(this.psychologyEngine, context.user || {});
 
     var practicePlan = this.practiceEngine.buildDailyPracticePlan({
