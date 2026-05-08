@@ -15,6 +15,8 @@ function loadJS(file) {
 global.window = global.window || global;
 var _testEval = eval;
 _testEval(loadJS("js/utils/normalize.js"));
+_testEval(loadJS("js/sparksuite/core/psychology_engine.js"));
+_testEval(loadJS("js/sparksuite/core/progress_engine.js"));
 
 
 function test(name, fn) {
@@ -43,6 +45,7 @@ function resetEnv() {
     songAudioData: {}
   };
   global.sparkCore = {
+    progressEngine: new SparkSuiteProgressEngine(null, new SparkSuitePsychologyEngine()),
     getActiveSessionView: function() {
       return null;
     }
@@ -234,6 +237,162 @@ test("performSongPage can resolve sparkCore from the global binding", function()
   assert.ok(html.indexOf("Tap-note consistency") >= 0);
   assert.ok(html.indexOf('onclick="act(\'performArrangement\',\'lead\')"') >= 0);
   assert.ok(html.indexOf('onclick="act(\'performDifficulty\',\'easy\')"') >= 0);
+});
+
+test("performSongPage does not render dead weakest-phrase action before results exist", function() {
+  global.sparkCore.getActiveSessionView = function() {
+    return {
+      runtimeState: {
+        performanceSongData: {
+          title: "The Beat Goes On",
+          artist: "Sonny & Cher",
+          bpm: 130,
+          chords: ["Em"],
+          progression: ["Em", "Em"]
+        }
+      }
+    };
+  };
+
+  global.eval(loadJS("js/pages/perform_song.js"));
+
+  var html = performSongPage();
+  assert.strictEqual(html.indexOf("performRetryPhrase"), -1);
+  assert.ok(html.indexOf("Finish a run to unlock weakest-phrase practice") >= 0);
+});
+
+test("performSongPage renders weakest-phrase action when phrase results exist", function() {
+  global.sparkCore.getActiveSessionView = function() {
+    return {
+      runtimeState: {
+        showWeakestPhraseAction: true,
+        performanceSongData: {
+          title: "The Beat Goes On",
+          artist: "Sonny & Cher",
+          bpm: 130,
+          chords: ["Em"],
+          progression: ["Em", "Em"]
+        }
+      }
+    };
+  };
+
+  global.eval(loadJS("js/pages/perform_song.js"));
+
+  var html = performSongPage();
+  assert.ok(html.indexOf("performRetryPhrase") >= 0);
+  assert.ok(html.indexOf("Practice Weakest Phrase") >= 0);
+});
+
+test("performSongPage play actions share the calmer play-button typography class", function() {
+  global.S.performChart = {
+    phrases: [{ id: "p1", startSec: 0, endSec: 8 }]
+  };
+  global.S.performResults = {
+    phraseStats: [{ total: 1, scoreSum: 60 }]
+  };
+  global.sparkCore.getActiveSessionView = function() {
+    return {
+      runtimeState: {
+        performanceSongData: {
+          title: "The Beat Goes On",
+          artist: "Sonny & Cher",
+          bpm: 130,
+          chords: ["Em"],
+          progression: ["Em", "Em"]
+        }
+      }
+    };
+  };
+
+  global.eval(loadJS("js/pages/perform_song.js"));
+
+  var html = performSongPage();
+  assert.ok(html.indexOf("perform-song-play-btn-primary") >= 0);
+  assert.ok(html.indexOf("perform-song-play-btn-secondary") >= 0);
+  assert.ok(html.indexOf("perform-song-play-btn-utility") >= 0);
+  assert.strictEqual(html.indexOf("box-shadow:0 14px 28px rgba(255,107,107,.22)\">&#127918; Start Performance"), -1);
+});
+
+test("performSongPage uses shared card, metric, and action classes", function() {
+  global.getPerformanceStats = function() {
+    return {
+      mastery: "solid",
+      runs: 2,
+      bestScore: 1800,
+      bestAccuracy: 88,
+      bestStars: 3
+    };
+  };
+  global.sparkCore.getActiveSessionView = function() {
+    return {
+      runtimeState: {
+        performanceSongData: {
+          title: "The Beat Goes On",
+          artist: "Sonny & Cher",
+          bpm: 130,
+          chords: ["Em"],
+          progression: ["Em", "Em"]
+        }
+      }
+    };
+  };
+
+  global.eval(loadJS("js/pages/perform_song.js"));
+
+  var html = performSongPage();
+  assert.ok(html.indexOf("card-section-heading") >= 0);
+  assert.ok(html.indexOf("metric-value") >= 0);
+  assert.ok(html.indexOf("metric-label") >= 0);
+  assert.ok(html.indexOf("action-row") >= 0);
+  assert.strictEqual(html.indexOf("font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase"), -1);
+});
+
+test("piano performance result and song detail surfaces avoid raw bold secondary labels", function() {
+  global.getPerformanceBest = function() {
+    return { bestAccuracy: 86, bestStars: 3 };
+  };
+  global.getPerformanceMasteryLabel = function() {
+    return "Solid";
+  };
+  global.normalizeSongId = function() {
+    return "moonlight";
+  };
+  global.S = {
+    performSongId: "moonlight",
+    performSongData: {
+      title: "Moonlight",
+      artist: "Claude",
+      id: "moonlight"
+    },
+    performArrangementType: "block_chords",
+    performDifficulty: "normal",
+    songAudioData: {},
+    performResults: {
+      songId: "moonlight",
+      title: "Moonlight",
+      accuracy: 86,
+      score: 1200,
+      stars: 3,
+      maxCombo: 9,
+      arrangementType: "block_chords",
+      difficultyId: "normal",
+      phrases: [{ phraseId: "a", name: "Intro", hits: 4, total: 5 }]
+    }
+  };
+
+  global.eval(loadJS("js/instruments/piano/pages/perform_results.js"));
+  global.eval(loadJS("js/instruments/piano/pages/perform_song.js"));
+
+  var resultsHtml = pianoPerformanceResultsPage();
+  var songHtml = pianoPerformSongPage();
+  assert.strictEqual(resultsHtml.indexOf("<b>"), -1);
+  assert.strictEqual(songHtml.indexOf("<b>"), -1);
+  assert.ok(resultsHtml.indexOf("card-section-heading") >= 0);
+  assert.ok(resultsHtml.indexOf("split-row") >= 0);
+  assert.ok(songHtml.indexOf("card-section-heading") >= 0);
+  assert.ok(songHtml.indexOf("metric-label") >= 0);
+  assert.ok(songHtml.indexOf("action-row") >= 0);
 });
 
 console.log("\n" + passed + " passed, " + failed + " failed");

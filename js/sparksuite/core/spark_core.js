@@ -7,7 +7,7 @@
     this.psychologyEngine = options.psychologyEngine || new SparkSuitePsychologyEngine();
     this.curriculumEngine = options.curriculumEngine || new SparkSuiteCurriculumEngine();
     this.practiceEngine = options.practiceEngine || new SparkSuitePracticeEngine(this.psychologyEngine);
-    this.progressEngine = options.progressEngine || new SparkSuiteProgressEngine();
+    this.progressEngine = options.progressEngine || new SparkSuiteProgressEngine(null, this.psychologyEngine);
     this.sessionEngine = options.sessionEngine || new SparkSuiteSessionEngine(this.practiceEngine, this.curriculumEngine);
     this.currentPlan = null;
     this.currentStateMachine = null;
@@ -33,6 +33,9 @@
     this.errorBoundary = options.errorBoundary || this.createErrorBoundary();
     if (this.progressEngine && typeof this.progressEngine.setEventBus === "function") {
       this.progressEngine.setEventBus(this.eventBus);
+    }
+    if (this.progressEngine && typeof this.progressEngine.setPsychologyEngine === "function") {
+      this.progressEngine.setPsychologyEngine(this.psychologyEngine);
     }
     if (this.storage && typeof this.storage.setPerformanceMonitor === "function") {
       this.storage.setPerformanceMonitor(this.performanceMonitor);
@@ -622,6 +625,29 @@
     return this.runtimeState;
   };
 
+  SparkCore.prototype.buildShellTabChangeRequest = function(tabId, options) {
+    var shellEffects = [{ type: "scrollToTop" }];
+    options = options || {};
+    if (tabId === "songs" && options.songsSubTab === "community") {
+      shellEffects.push({ type: "fetchCommunity" });
+    }
+    return {
+      runtimeState: {
+        activeScreen: "home",
+        activeTab: tabId || null,
+        transport: { status: "idle", positionMs: 0 },
+        shellEffects: shellEffects
+      }
+    };
+  };
+
+  SparkCore.prototype.clearShowroomRoutingState = function(state) {
+    if (typeof SparkShowroomRoutingState !== "undefined" && SparkShowroomRoutingState && typeof SparkShowroomRoutingState.clear === "function") {
+      return SparkShowroomRoutingState.clear(state || this.runtimeState || {});
+    }
+    return false;
+  };
+
   SparkCore.prototype.getGameplayTimingConfig = function() {
     var config = this.runtimeState && this.runtimeState.gameplayTimingConfig
       ? this.runtimeState.gameplayTimingConfig
@@ -690,6 +716,15 @@
     if (type === "challenge") return "challenge";
     return "practice";
   }
+
+  function getGuidedBlockTypeForStep(step) {
+    if (step === "spark") return "warm_engine";
+    if (step === "review" || step === "newMove") return "drill";
+    if (step === "songSlice") return "song";
+    if (step === "victoryLap") return "cooldown";
+    return null;
+  }
+
   SparkCore.prototype.deriveRuntimeScreen = function(flow) {
     if (flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return "guided_session";
     if (flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return "performance_song";
@@ -734,6 +769,52 @@
       }
     }
     return null;
+  };
+
+  SparkCore.prototype.resolveGuidedSessionViewState = function(plan, runtimeState) {
+    runtimeState = runtimeState || this.runtimeState || {};
+    var guidedStep = runtimeState.guidedStep || "spark";
+    var guidedActivity = this.resolveGuidedRuntimeActivity(guidedStep, plan);
+    var blockType = runtimeState.guidedBlockType || guidedActivity.guidedBlockType || getGuidedBlockTypeForStep(guidedStep);
+    var segments = plan && Array.isArray(plan.segments) ? plan.segments : [];
+    var activeSegmentId = runtimeState.activeSegmentId || null;
+    var activeSegment = null;
+    var i;
+
+    if (activeSegmentId && blockType) {
+      for (i = 0; i < segments.length; i++) {
+        if (segments[i] && segments[i].id === activeSegmentId) {
+          if (segments[i].meta && segments[i].meta.guidedBlockType && segments[i].meta.guidedBlockType !== blockType) {
+            activeSegmentId = null;
+          }
+          break;
+        }
+      }
+    }
+    if (!activeSegmentId && blockType) {
+      for (i = 0; i < segments.length; i++) {
+        if (segments[i] && segments[i].meta && segments[i].meta.guidedBlockType === blockType) {
+          activeSegmentId = segments[i].id;
+          break;
+        }
+      }
+    }
+    for (i = 0; i < segments.length; i++) {
+      if (segments[i] && segments[i].id === activeSegmentId) {
+        activeSegment = segments[i];
+        if (!blockType && activeSegment.meta) blockType = activeSegment.meta.guidedBlockType || null;
+        break;
+      }
+    }
+
+    return {
+      guidedStep: guidedStep,
+      guidedActivityId: guidedActivity.guidedActivityId || runtimeState.guidedActivityId || null,
+      guidedActivityKind: guidedActivity.guidedActivityKind || runtimeState.guidedActivityKind || null,
+      guidedBlockType: blockType || null,
+      activeSegmentId: activeSegmentId,
+      activeSegment: activeSegment
+    };
   };
 
   SparkCore.prototype.getNextGuidedStep = function(step) {
@@ -2482,8 +2563,24 @@
     var segment = null;
     var exercise = null;
     var runtime = this.getSessionRuntimeHandle();
+    var runtimeState = this.getRuntimeState();
+    var guidedViewState = null;
+    var shellPrimaryAction = "sessionPauseBlock";
+    var performSongState = null;
+    var performanceDoneState = null;
     var segments;
     var i;
+    if (this.currentPlan && this.currentPlan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION) {
+      guidedViewState = this.resolveGuidedSessionViewState(this.currentPlan, runtimeState);
+      if (guidedViewState.activeSegment) segment = guidedViewState.activeSegment;
+      runtimeState = Object.assign({}, runtimeState, {
+        guidedStep: guidedViewState.guidedStep,
+        guidedActivityId: guidedViewState.guidedActivityId,
+        guidedActivityKind: guidedViewState.guidedActivityKind,
+        guidedBlockType: guidedViewState.guidedBlockType,
+        activeSegmentId: guidedViewState.activeSegmentId
+      });
+    }
     if (runtime && typeof runtime.getActiveSession === "function" && runtime.getActiveSession() === this.currentPlan) {
       if (typeof runtime.getActiveSegment === "function") segment = runtime.getActiveSegment();
       if (typeof runtime.getActiveExercise === "function") exercise = runtime.getActiveExercise();
@@ -2505,12 +2602,32 @@
         }
       }
     }
+    if (runtimeState && runtimeState.transport && runtimeState.transport.status === "paused") {
+      shellPrimaryAction = "sessionResumeBlock";
+    }
+    if (this.practiceEngine && typeof this.practiceEngine.getValidatedShellAction === "function") {
+      shellPrimaryAction = this.practiceEngine.getValidatedShellAction(shellPrimaryAction);
+    }
+    if (this.progressEngine && typeof this.progressEngine.buildPerformSongState === "function") {
+      performSongState = this.progressEngine.buildPerformSongState(runtimeState.performanceResults, runtimeState.performanceChart);
+    }
+    if (this.progressEngine && typeof this.progressEngine.buildPerformanceDoneState === "function") {
+      performanceDoneState = this.progressEngine.buildPerformanceDoneState(
+        runtimeState.performanceResults,
+        runtimeState.performanceChart,
+        runtimeState
+      );
+    }
     return {
       plan: this.currentPlan,
       activeSegment: segment,
       activeExercise: exercise,
+      activeBlockType: guidedViewState ? guidedViewState.guidedBlockType : null,
+      shellPrimaryAction: shellPrimaryAction,
+      showWeakestPhraseAction: !!(performSongState && performSongState.showWeakestPhraseAction),
+      performanceDoneState: performanceDoneState,
       stateMachine: this.getSessionStateMachineSnapshot(),
-      runtimeState: this.getRuntimeState(),
+      runtimeState: runtimeState,
       lastSessionOutcome: this.getLastSessionOutcome(),
       recovery: this.getRecoveryState()
     };
@@ -3123,7 +3240,7 @@
     };
 
     if (request.target === "return_after_stop") {
-      if (runtimeState.performanceChartId || runtimeState.performanceSongTitle || runtimeState.performanceSongIndex != null) {
+      if (runtimeState.performanceSongData || runtimeState.performanceSongTitle || runtimeState.performanceSongIndex != null) {
         request.target = "song_detail";
       } else {
         request.target = "songs_home";

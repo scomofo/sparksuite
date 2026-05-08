@@ -73,7 +73,7 @@ function performanceEditorPage() {
   h += '<div class="perform-title"><strong>Chart Editor</strong>';
   h += '<span class="perform-artist">' + escHTML(editorTitle) + ' | ' + escHTML(editorSource) + ' | ' + editorEventCount + ' events</span>';
   h += '</div>';
-  if (editorDirty) h += '<span style="color:#FF6B6B;font-size:11px;font-weight:700">unsaved</span>';
+  if (editorDirty) h += '<span class="metric-label" style="color:#FF6B6B">unsaved</span>';
   h += '</div>';
 
   // Toolbar
@@ -98,7 +98,7 @@ function performanceEditorPage() {
   if (!chart) {
     // New chart or load existing
     h += '<div class="card mb20" style="text-align:center;padding:24px">';
-    h += '<h3 style="font-size:18px;font-weight:900;color:var(--text-primary)">Start a New Chart</h3>';
+    h += '<h3 class="card-section-heading">Start a New Chart</h3>';
     h += '<div class="flex-col" style="gap:8px;margin-top:16px">';
     h += '<button class="btn" onclick="act(\'editorNew\')" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff">&#10133; Blank Chart</button>';
     h += '<button class="btn" onclick="act(\'editorFromSong\')" style="background:#FF8A5C;color:#fff">&#127925; From Current Song</button>';
@@ -106,14 +106,14 @@ function performanceEditorPage() {
 
     // Library
     if (editorLibrary && editorLibrary.length) {
-      h += '<h4 style="margin-top:20px;font-size:14px;font-weight:800;color:var(--text-primary)">Saved Charts</h4>';
+      h += '<h4 class="card-section-heading" style="margin-top:20px">Saved Charts</h4>';
       for (var li = 0; li < editorLibrary.length; li++) {
         var lc = editorLibrary[li];
         var libraryTitle = _firstPerformanceEditorTextToken(lc.title, lc.id, "Untitled");
         var libraryArrangement = _firstPerformanceEditorTextToken(lc.arrangementType, "chords");
         h += '<div class="card" role="button" tabindex="0" style="cursor:pointer;margin-top:8px" onclick="if(event.target&&event.target.closest&&event.target.closest(\'button,input,select,textarea,a\')){return;}act(\'editorLoad\',' + li + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'editorLoad\',' + li + ')}">';
-        h += '<div style="display:flex;justify-content:space-between;align-items:center">';
-        h += '<div><strong>' + escHTML(libraryTitle) + '</strong><br><span style="font-size:11px;color:var(--text-muted)">' + (lc.events ? lc.events.length : 0) + ' events &bull; ' + escHTML(libraryArrangement) + '</span></div>';
+        h += '<div class="split-row">';
+        h += '<div><span class="card-micro-heading">' + escHTML(libraryTitle) + '</span><br><span class="metric-label">' + (lc.events ? lc.events.length : 0) + ' events &bull; ' + escHTML(libraryArrangement) + '</span></div>';
         h += '<button class="btn btn-sm" onclick="act(\'editorDelete\',' + li + ')" style="color:#FF6B6B;background:none;font-size:16px">&times;</button>';
         h += '</div></div>';
       }
@@ -128,32 +128,32 @@ function performanceEditorPage() {
 
     // Phrases
     if (editorPhraseCount) {
-      h += '<div class="card mb20"><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Phrases</div>';
+      h += '<div class="card mb20"><div class="card-section-heading" style="margin-bottom:6px">Phrases</div>';
       for (var pi = 0; pi < chart.phrases.length; pi++) {
         var p = chart.phrases[pi];
         var phraseSelected = selectedPhraseId === p.id;
         var phraseName = _firstPerformanceEditorTextToken(p.name, "Phrase " + (pi + 1));
         var phraseStart = _normalizePerformanceEditorNumber(p.startSec, 0);
         var phraseEnd = _normalizePerformanceEditorNumber(p.endSec, 0);
-        h += '<div role="button" tabindex="0" style="display:flex;justify-content:space-between;align-items:center;padding:3px 6px;font-size:12px;border-radius:6px;cursor:pointer;background:'+(phraseSelected?"#45B7D122":"transparent")+';border:1px solid '+(phraseSelected?"#45B7D1":"transparent")+'" onclick="act(\'editorSelectPhrase\','+p.id+')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'editorSelectPhrase\','+p.id+')}">';
-        h += '<span style="font-weight:700;color:var(--text-primary)">' + escHTML(phraseName) + '</span>';
-        h += '<span style="color:var(--text-muted)">' + phraseStart.toFixed(1) + 's - ' + phraseEnd.toFixed(1) + 's</span>';
+        h += '<div class="split-row" role="button" tabindex="0" style="padding:3px 6px;font-size:12px;border-radius:6px;cursor:pointer;background:'+(phraseSelected?"#45B7D122":"transparent")+';border:1px solid '+(phraseSelected?"#45B7D1":"transparent")+'" onclick="act(\'editorSelectPhrase\','+p.id+')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'editorSelectPhrase\','+p.id+')}">';
+        h += '<span class="card-micro-heading">' + escHTML(phraseName) + '</span>';
+        h += '<span class="metric-value" style="font-size:12px">' + phraseStart.toFixed(1) + 's - ' + phraseEnd.toFixed(1) + 's</span>';
         h += '</div>';
       }
       h += '</div>';
       if (selectedPhraseId != null) {
         h += '<div class="card mb20" style="border:2px solid #45B7D1">';
-        h += '<div style="font-size:12px;font-weight:700;color:#45B7D1;margin-bottom:8px">Selected Phrase</div>';
-        h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
-        h += '<div><label style="font-size:10px;color:var(--text-muted)">Name</label>'
+        h += '<div class="card-section-heading" style="color:#45B7D1;margin-bottom:8px">Selected Phrase</div>';
+        h += '<div class="action-row">';
+        h += '<div><label class="metric-label" style="display:block">Name</label>'
           + '<input type="text" class="set-input" value="' + escHTML(_firstPerformanceEditorTextToken(selectedPhraseName, "Phrase " + (selectedPhraseId + 1))) + '"'
           + ' onchange="act(\'editorPhrase\',JSON.stringify({id:' + selectedPhraseId + ',prop:\'name\',val:this.value}))"'
           + ' style="width:120px"></div>';
-        h += '<div><label style="font-size:10px;color:var(--text-muted)">Start (s)</label>'
+        h += '<div><label class="metric-label" style="display:block">Start (s)</label>'
           + '<input type="number" class="set-input" value="' + displayPhraseStart + '"'
           + ' onchange="act(\'editorPhrase\',JSON.stringify({id:' + selectedPhraseId + ',prop:\'startSec\',val:this.value}))"'
           + ' style="width:80px" step="0.25"></div>';
-        h += '<div><label style="font-size:10px;color:var(--text-muted)">End (s)</label>'
+        h += '<div><label class="metric-label" style="display:block">End (s)</label>'
           + '<input type="number" class="set-input" value="' + displayPhraseEnd + '"'
           + ' onchange="act(\'editorPhrase\',JSON.stringify({id:' + selectedPhraseId + ',prop:\'endSec\',val:this.value}))"'
           + ' style="width:80px" step="0.25"></div>';
@@ -164,7 +164,7 @@ function performanceEditorPage() {
     }
 
     // Event list
-    h += '<div class="card mb20"><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Events (' + editorEventCount + ')</div>';
+    h += '<div class="card mb20"><div class="card-section-heading" style="margin-bottom:6px">Events (' + editorEventCount + ')</div>';
     if (chart.events) {
       for (var ei = 0; ei < chart.events.length; ei++) {
         var evt = chart.events[ei];
@@ -172,9 +172,9 @@ function performanceEditorPage() {
         var eventLabel = _firstPerformanceEditorTextToken(evt.laneLabel, evt.chord, evt.note, "?");
         var listEventTime = _normalizePerformanceEditorNumber(evt.t, 0);
         var listEventDuration = _normalizePerformanceEditorNumber(evt.dur, 0);
-        h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 6px;margin:2px 0;border-radius:6px;background:' + (sel ? "#4ECDC422" : "transparent") + ';border:1px solid ' + (sel ? "#4ECDC4" : "transparent") + ';cursor:pointer" role="button" tabindex="0" onclick="if(event.target&&event.target.closest&&event.target.closest(\'button,input,select,textarea,a\')){return;}act(\'editorSelectEvent\',' + evt.id + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'editorSelectEvent\',' + evt.id + ')}">';
-        h += '<div><span style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(eventLabel) + '</span>';
-        h += ' <span style="font-size:11px;color:var(--text-muted)">' + listEventTime.toFixed(2) + 's / ' + listEventDuration.toFixed(2) + 's</span></div>';
+        h += '<div class="split-row" style="padding:4px 6px;margin:2px 0;border-radius:6px;background:' + (sel ? "#4ECDC422" : "transparent") + ';border:1px solid ' + (sel ? "#4ECDC4" : "transparent") + ';cursor:pointer" role="button" tabindex="0" onclick="if(event.target&&event.target.closest&&event.target.closest(\'button,input,select,textarea,a\')){return;}act(\'editorSelectEvent\',' + evt.id + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'editorSelectEvent\',' + evt.id + ')}">';
+        h += '<div><span class="card-micro-heading">' + escHTML(eventLabel) + '</span>';
+        h += ' <span class="metric-value" style="font-size:11px">' + listEventTime.toFixed(2) + 's / ' + listEventDuration.toFixed(2) + 's</span></div>';
         h += '<button class="btn btn-sm" onclick="act(\'editorDeleteEvent\',' + evt.id + ')" style="color:#FF6B6B;background:none;padding:2px 6px">&times;</button>';
         h += '</div>';
       }
@@ -195,22 +195,22 @@ function performanceEditorPage() {
         var eventTimeValue = _normalizePerformanceEditorNumber(selEvt.t, 0);
         var eventDurationValue = _normalizePerformanceEditorNumber(selEvt.dur, 0);
         h += '<div class="card mb20" style="border:2px solid #4ECDC4">';
-        h += '<div style="font-size:12px;font-weight:700;color:#4ECDC4;margin-bottom:8px">Edit Event #' + eid + '</div>';
+        h += '<div class="card-section-heading" style="color:#4ECDC4;margin-bottom:8px">Edit Event #' + eid + '</div>';
         h += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Selected: '
           + escHTML(selectedDisplayLabel)
           + ' @ ' + displayEventTime.toFixed(2)
           + 's for ' + displayEventDuration.toFixed(2)
           + 's</div>';
-        h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
-        h += '<div><label style="font-size:10px;color:var(--text-muted)">Chord/Note</label>'
+        h += '<div class="action-row">';
+        h += '<div><label class="metric-label" style="display:block">Chord/Note</label>'
           + '<input type="text" class="set-input" value="' + escHTML(_firstPerformanceEditorTextToken(selEvt.laneLabel)) + '"'
           + ' onchange="act(\'editorEvt\',JSON.stringify({id:' + eid + ',prop:\'label\',val:this.value}))"'
           + ' style="width:80px"></div>';
-        h += '<div><label style="font-size:10px;color:var(--text-muted)">Time (s)</label>'
+        h += '<div><label class="metric-label" style="display:block">Time (s)</label>'
           + '<input type="number" class="set-input" value="' + eventTimeValue + '"'
           + ' onchange="act(\'editorEvt\',JSON.stringify({id:' + eid + ',prop:\'t\',val:this.value}))"'
           + ' style="width:70px" step="0.25"></div>';
-        h += '<div><label style="font-size:10px;color:var(--text-muted)">Duration (s)</label>'
+        h += '<div><label class="metric-label" style="display:block">Duration (s)</label>'
           + '<input type="number" class="set-input" value="' + eventDurationValue + '"'
           + ' onchange="act(\'editorEvt\',JSON.stringify({id:' + eid + ',prop:\'dur\',val:this.value}))"'
           + ' style="width:70px" step="0.25"></div>';
@@ -219,7 +219,7 @@ function performanceEditorPage() {
     }
 
     // Save/Export controls
-    h += '<div class="flex-col" style="gap:8px">';
+    h += '<div class="action-row">';
     h += '<button class="btn" onclick="act(\'editorSave\')" style="background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff">&#128190; Save to Library</button>';
     h += '<button class="btn" onclick="act(\'editorExport\')" style="background:var(--input-bg);color:var(--text-primary)">&#128228; Export JSON</button>';
     h += '</div>';

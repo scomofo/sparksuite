@@ -67,7 +67,13 @@ function setVolume(v) {
 var wavBuffers = {};
 var wavsAvailable = false;
 
+function canPreloadWavs() {
+  if (typeof window === "undefined" || !window.location) return false;
+  return window.location.protocol !== "file:";
+}
+
 function preloadWavs() {
+  if (!canPreloadWavs()) return;
   var ctx = ensureAudio();
   var chordNames = allChordKeys();
   var loaded = 0;

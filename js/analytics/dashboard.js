@@ -1,7 +1,7 @@
 function analyticsDashboardPage(){
   var report = generatePracticeReport();
   var h = '<div class="card">';
-  h += '<div><b>Analytics Dashboard</b></div>';
+  h += '<div class="card-section-heading">Analytics Dashboard</div>';
   h += '<div>Total Practice Minutes: '+report.totalPracticeMinutes+'</div>';
   h += '<div>Practice Sessions: '+report.sessions+'</div>';
   h += '<div>Average Accuracy: '+Math.round(report.avgAccuracy*100)+'%</div>';
@@ -11,17 +11,17 @@ function analyticsDashboardPage(){
 
   var analytics = S.analytics || {};
   h += '<div class="card">';
-  h += '<div><b>Accuracy Trend</b></div>';
+  h += '<div class="card-section-heading">Accuracy Trend</div>';
   h += renderLineChart(analytics.accuracyHistory || [], "accuracy", 300, 120);
   h += '</div>';
 
   h += '<div class="card">';
-  h += '<div><b>Practice Minutes</b></div>';
+  h += '<div class="card-section-heading">Practice Minutes</div>';
   h += renderLineChart(analytics.practiceHistory || [], "minutes", 300, 120);
   h += '</div>';
 
   h += '<div class="card">';
-  h += '<div><b>XP Progress</b></div>';
+  h += '<div class="card-section-heading">XP Progress</div>';
   h += renderLineChart(analytics.xpHistory || [], "xp", 300, 120);
   h += '</div>';
 

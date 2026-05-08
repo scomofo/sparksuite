@@ -95,6 +95,16 @@ function getPlanPageShellLabel(summary, fallbackLabel) {
   return bits.length ? bits.join(" - ") : fallback;
 }
 
+function getAllowedPlanShellAction(action) {
+  var allowed = {
+    sessionPauseBlock: true,
+    sessionResumeBlock: true,
+    sessionSkipBlock: true,
+    openPracticePlan: true
+  };
+  return allowed[action] ? action : "openPracticePlan";
+}
+
 function planPage(){
   function isCompletedPlanItem(item){
     var value = item ? item.completed : null;
@@ -160,6 +170,7 @@ function planPage(){
   if(!plan) plan = S.practicePlan;
   var activeGuided = getPlanPageActiveGuidedSummary();
   var activeShell = activeGuided ? null : getPlanPageActiveShellSummary();
+  var shellPrimaryAction = activeShell ? getAllowedPlanShellAction(activeShell.primaryAction) : "";
   var renderableItems = getRenderablePlanItems(plan);
   var hasPlanItems = hasRenderablePlanItems(plan);
   var planCompleted = isPlanCompleteFlag(coreView && coreView.lastSessionOutcome && coreView.lastSessionOutcome.planCompleted)
@@ -174,12 +185,12 @@ function planPage(){
   var h = '';
 
   h += '<div class="card mb16">';
-  h += '<h2>' + escHTML(activeGuided && !hasPlanItems ? 'Guided Session Flow' : 'Today\'s Practice Plan') + '</h2>';
+  h += '<h2 class="card-section-heading">' + escHTML(activeGuided && !hasPlanItems ? 'Guided Session Flow' : 'Today\'s Practice Plan') + '</h2>';
   h += '<div class="muted">'+escHTML(headerFocusLabel)+'</div>';
   if(activeGuided){
     h += '<div style="margin-top:8px;padding:10px 12px;border-radius:14px;background:rgba(78,205,196,.12);color:var(--text-primary)">';
-    h += '<div style="font-size:11px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;color:#2f8f89">Guided Session Live</div>';
-    h += '<div style="font-size:13px;font-weight:800;margin-top:4px">' + escHTML(activeGuided.title) + '</div>';
+    h += '<div class="metric-label" style="color:#2f8f89">Guided Session Live</div>';
+    h += '<div class="card-micro-heading" style="margin-top:4px">' + escHTML(activeGuided.title) + '</div>';
       h += '<div style="font-size:12px;color:var(--text-muted);margin-top:3px">' + escHTML(activeGuided.statusLabel) + '</div>';
       h += '</div>';
   } else if(activeShell){
@@ -203,14 +214,14 @@ function planPage(){
     } else {
       h += '<div class="card mb16"><div class="muted">No practice plan yet.</div></div>';
     }
-    h += '<div class="card mb16" style="text-align:center">';
+    h += '<div class="card mb16"><div class="plan-actions">';
     h += activeGuided
-      ? '<button class="btn" onclick="act(\'resume_guided_session\')">Resume Guided Session</button> '
+      ? '<button class="btn" onclick="act(\'resume_guided_session\')">Resume Guided Session</button>'
       : activeShell
-        ? '<button class="btn" onclick="act(\'' + activeShell.primaryAction + '\')">' + escHTML(activeShell.primaryLabel) + '</button> '
-      : '<button class="btn" onclick="act(\'regeneratePlan\')">Regenerate Plan</button> ';
+        ? '<button class="btn" data-action="' + escHTML(shellPrimaryAction) + '" onclick="act(this.getAttribute(\'data-action\'))">' + escHTML(activeShell.primaryLabel) + '</button>'
+      : '<button class="btn" onclick="act(\'regeneratePlan\')">Regenerate Plan</button>';
     h += '<button class="btn" onclick="act(\'back\')">Back</button>';
-    h += '</div>';
+    h += '</div></div>';
     return h;
   }
 
@@ -228,9 +239,9 @@ function planPage(){
         ? '<button class="btn btn-sm" data-item-id="'+escHTML(itemId)+'" onclick="act(\'practiceStartItem\', this.getAttribute(\'data-item-id\'))" style="background:var(--accent);color:#fff">Go</button>'
         : '<span class="text-muted">Unavailable</span>');
     h += '<div class="card mb16" style="border-left:4px solid '+planItemColor(getPlanDisplayType(item))+'">';
-    h += '<div style="display:flex;justify-content:space-between;align-items:center">';
-    h += '<div>';
-    h += '<div style="font-weight:700;font-size:14px"'+done+'>'+escHTML(getPlanItemLabel(item))+'</div>';
+    h += '<div class="plan-item-row">';
+    h += '<div class="plan-item-copy">';
+    h += '<div class="card-micro-heading"'+done+'>'+escHTML(getPlanItemLabel(item))+'</div>';
     h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(formatPlanItemSubtitle(item))+(durationMinutes != null ? ' \u2022 '+durationMinutes+'m' : '')+'</div>';
     h += '</div>';
     h += actionHtml;
@@ -239,15 +250,15 @@ function planPage(){
   }
 
   if(!planCompleted){
-    h += '<div class="card mb16" style="text-align:center">';
+    h += '<div class="card mb16"><div class="plan-actions action-row">';
     h += '<button class="btn btn-primary" onclick="act(\'completePlan\')">Mark Plan Complete</button>';
-    h += '</div>';
+    h += '</div></div>';
   }
 
-  h += '<div class="card mb16" style="text-align:center">';
-  h += '<button class="btn" onclick="act(\'regeneratePlan\')">Regenerate Plan</button> ';
+  h += '<div class="card mb16"><div class="plan-actions action-row">';
+  h += '<button class="btn" onclick="act(\'regeneratePlan\')">Regenerate Plan</button>';
   h += '<button class="btn" onclick="act(\'back\')">Back</button>';
-  h += '</div>';
+  h += '</div></div>';
 
   return h;
 }

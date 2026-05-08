@@ -25,6 +25,29 @@
     return window.SparkSessionRuntime || (typeof SparkSessionRuntime !== "undefined" ? SparkSessionRuntime : null);
   }
 
+  function getActivePracticeInstrumentData() {
+    var active = (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function")
+      ? SparkInstruments.getActive()
+      : null;
+    if (active && typeof active.getData === "function") return active.getData() || {};
+    return {
+      CHORDS: typeof CHORDS !== "undefined" ? CHORDS : {},
+      ALL_CHORDS: typeof ALL_CHORDS !== "undefined" ? ALL_CHORDS : []
+    };
+  }
+
+  function buildEarTrainingQuestion() {
+    var core = getPracticeActionCore();
+    var engine = core && core.practiceEngine && typeof core.practiceEngine.generateEarTrainingQuestion === "function"
+      ? core.practiceEngine
+      : (typeof SparkSuitePracticeEngine !== "undefined" ? new SparkSuitePracticeEngine(null) : null);
+    if (!engine || typeof engine.generateEarTrainingQuestion !== "function") return null;
+    return engine.generateEarTrainingQuestion({
+      level: S.level,
+      instrumentData: getActivePracticeInstrumentData()
+    });
+  }
+
   function clearPracticeFamilyTimeout(timeoutKey, fallback) {
     return applyPracticeFamilyRuntimeUpdate({
       clearTimeouts: timeoutKey ? [timeoutKey] : []
@@ -314,6 +337,55 @@
     if (a === "dailyDoneHome") {
       returnFromLegacyDailyChallengeRequest({ activeTab: "daily" });
       act("tab", "daily");
+      return true;
+    }
+
+    if (a === "startEarTrain") {
+      var earTrainingQuestion = buildEarTrainingQuestion();
+      if (!earTrainingQuestion) {
+        render();
+        return true;
+      }
+      var nextEarTrainState = {
+        earTrainQ: earTrainingQuestion.question,
+        earTrainOpts: earTrainingQuestion.options,
+        earTrainAns: null,
+        earTrainScore: S.earTrainScore || 0,
+        earTrainTotal: S.earTrainTotal || 0,
+        earTrainStreak: S.earTrainStreak || 0
+      };
+      applyPracticeFamilyRuntimeUpdate({
+        setFields: nextEarTrainState
+      }, function() {
+        S.earTrainQ = nextEarTrainState.earTrainQ;
+        S.earTrainOpts = nextEarTrainState.earTrainOpts;
+        S.earTrainAns = nextEarTrainState.earTrainAns;
+        S.earTrainScore = nextEarTrainState.earTrainScore;
+        S.earTrainTotal = nextEarTrainState.earTrainTotal;
+        S.earTrainStreak = nextEarTrainState.earTrainStreak;
+      });
+      var earCore = getPracticeActionCore();
+      if (earCore && typeof earCore.openLegacyEarTraining === "function") {
+        earCore.openLegacyEarTraining({
+          question: nextEarTrainState.earTrainQ,
+          options: nextEarTrainState.earTrainOpts,
+          answer: null,
+          score: nextEarTrainState.earTrainScore,
+          total: nextEarTrainState.earTrainTotal,
+          streak: nextEarTrainState.earTrainStreak
+        });
+      } else if (earCore && typeof earCore.syncLegacyEarTrainingRuntimeState === "function") {
+        earCore.syncLegacyEarTrainingRuntimeState({
+          question: nextEarTrainState.earTrainQ,
+          options: nextEarTrainState.earTrainOpts,
+          answer: null,
+          score: nextEarTrainState.earTrainScore,
+          total: nextEarTrainState.earTrainTotal,
+          streak: nextEarTrainState.earTrainStreak
+        });
+      }
+      strumChord(nextEarTrainState.earTrainQ);
+      render();
       return true;
     }
 

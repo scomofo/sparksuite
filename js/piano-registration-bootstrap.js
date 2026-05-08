@@ -7,7 +7,15 @@
   if (!piano) return;
 
   var pages = piano.pages || {};
-  if (typeof pianoSessionPage === "function") pages[SCR.SESSION] = pianoSessionPage;
+  if (typeof pianoSessionPage === "function") pages[SCR.SESSION] = function() {
+    var useLegacy = typeof SparkSuiteSessionEngine !== "undefined"
+      && typeof SparkSuiteSessionEngine.shouldUseLegacySession === "function"
+      && SparkSuiteSessionEngine.shouldUseLegacySession(typeof S !== "undefined" ? S : null);
+    if (useLegacy && typeof legacySessionHTML === "function") {
+      return legacySessionHTML();
+    }
+    return pianoSessionPage();
+  };
   if (typeof pianoPerformPage === "function") pages[SCR.PERFORM] = pianoPerformPage;
   if (typeof pianoPerformDonePage === "function") pages[SCR.PERFORM_DONE] = pianoPerformDonePage;
   if (typeof pianoPerformSongPage === "function") pages[SCR.PERFORM_SONG] = pianoPerformSongPage;

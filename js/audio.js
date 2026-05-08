@@ -8,6 +8,16 @@ function getAudioCore(){
   return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
 }
 
+function getAudioPracticeEngine(){
+  var core = getAudioCore();
+  if (core && core.practiceEngine && typeof core.practiceEngine.resolveStrumChordNotes === "function") return core.practiceEngine;
+  if (typeof SparkSuitePracticeEngine !== "undefined") {
+    if (!window.__sparkAudioPracticeEngine) window.__sparkAudioPracticeEngine = new SparkSuitePracticeEngine(null);
+    return window.__sparkAudioPracticeEngine;
+  }
+  return null;
+}
+
 // ===== GUITAR WAV AUDIO =====
 // Maps chord names (full) to WAV file stems for real guitar samples
 var CHORD_FILE_MAP={
@@ -128,11 +138,25 @@ function makeDistortionCurve(amount){
 }
 
 // ===== CHORD SOUND PREVIEW =====
+function resolveStrumChordNotes(chordName){
+  var active = (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getActive === "function")
+    ? SparkInstruments.getActive()
+    : null;
+  var activeData = active && typeof active.getData === "function" ? active.getData() : null;
+  var engine = getAudioPracticeEngine();
+  return engine && typeof engine.resolveStrumChordNotes === "function"
+    ? engine.resolveStrumChordNotes(chordName, {
+      activeInstrumentData: activeData,
+      chordNotes: typeof CHORD_NOTES !== "undefined" ? CHORD_NOTES : null
+    })
+    : null;
+}
+
 function strumChord(chordName){
   try{
     if(!audioCtx&&AC)audioCtx=new AC();
     if(audioCtx&&audioCtx.state==="suspended")audioCtx.resume();
-    var notes=CHORD_NOTES[chordName];
+    var notes=resolveStrumChordNotes(chordName);
     if(!notes||notes.length===0){console.warn("ChordSpark: No notes for chord:",chordName);return;}
     sendMIDINotes(chordName);
     // Use real guitar WAV when "guitar" tone is selected

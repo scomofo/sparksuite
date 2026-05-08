@@ -209,6 +209,28 @@ test("piano interactive surface tiles expose keyboard handlers", function() {
   assert.ok(toolsSource.indexOf('onclick="act(\\\'pianoConfirmResetProgress\\\')"') >= 0);
 });
 
+test("older shared surfaces use classed headings instead of raw bold labels", function() {
+  [
+    "js/analytics/dashboard.js",
+    "js/home/home_cards.js",
+    "js/insights/ui.js",
+    "js/settings/settings_ui.js",
+    "js/curriculum/curriculum_ui.js",
+    "js/import/midi_ui.js",
+    "js/progression/progress_ui.js",
+    "js/instruments/piano/pages/analytics.js"
+  ].forEach(function(file) {
+    var source = loadJS(file);
+    assert.strictEqual(source.indexOf("<b>"), -1, file);
+    assert.strictEqual(source.indexOf("</b>"), -1, file);
+  });
+
+  assert.ok(loadJS("js/analytics/dashboard.js").indexOf('class="card-section-heading"') >= 0);
+  assert.ok(loadJS("js/home/home_cards.js").indexOf('class="card-section-heading"') >= 0);
+  assert.ok(loadJS("js/insights/ui.js").indexOf('class="card-micro-heading"') >= 0);
+  assert.ok(loadJS("js/instruments/piano/pages/analytics.js").indexOf('class="card-micro-heading"') >= 0);
+});
+
 test("piano practice tab ignores stale curriculum and custom set labels", function() {
   resetEnvironment("pianospark");
   global.getPianoPageInstrument = function() {
@@ -878,6 +900,7 @@ test("shared session helpers can resolve sparkCore from the global binding", fun
   assert.ok(fingerHtml.indexOf("Spider Walk") >= 0);
   assert.ok(fingerHtml.indexOf("0:45") >= 0);
   assert.ok(fingerHtml.indexOf("Completed 2x") >= 0);
+  assert.ok(fingerHtml.indexOf("card live-timer-surface") >= 0);
 });
 
 test("songs surfaces can resolve sparkCore from the global binding", function() {

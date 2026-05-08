@@ -98,4 +98,15 @@ test("skillDashboardPage uses active instrument lane labels instead of guitar-on
   assert.strictEqual(html.indexOf(">O<"), -1);
 });
 
+test("skillDashboardPage uses shared heading, metric, and split row classes", function() {
+  var html = skillDashboardPage();
+
+  assert.ok(html.indexOf("card-section-heading") >= 0);
+  assert.ok(html.indexOf("card-micro-heading") >= 0);
+  assert.ok(html.indexOf("metric-label") >= 0);
+  assert.ok(html.indexOf("metric-value") >= 0);
+  assert.ok(html.indexOf("split-row") >= 0);
+  assert.strictEqual(html.indexOf("display:flex;justify-content:space-between;font-size:12px"), -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

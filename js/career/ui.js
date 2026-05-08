@@ -1,6 +1,6 @@
 function careerPage(){
   var h = '<div class="card">';
-  h += '<div><b>Career Mode</b></div>';
+  h += '<div class="card-section-heading">Career Mode</div>';
   var career = getCareerItem("careers", S.activeCareerId);
   if(!career){
     h += '<div>No career loaded.</div></div>';
@@ -9,7 +9,7 @@ function careerPage(){
   for(var t=0;t<career.tiers.length;t++){
     var tier = getCareerItem("tiers", career.tiers[t]);
     if(!tier) continue;
-    h += '<div style="margin-top:16px"><b>'+escHTML(tier.title)+'</b></div>';
+    h += '<div class="card-micro-heading" style="margin-top:16px">'+escHTML(tier.title)+'</div>';
     for(var s=0;s<tier.stages.length;s++){
       var stage = getCareerItem("stages", tier.stages[s]);
       if(!stage) continue;

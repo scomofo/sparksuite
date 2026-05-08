@@ -179,8 +179,8 @@ test("practice surfaces ignore malformed legacy progress counters", function() {
   var quizHtml = quizTab();
   var earHtml = earTrainTab();
 
-  assert.ok(practiceHtml.indexOf(">0</div><div style=\"font-size:10px;color:var(--text-muted)\">Sessions</div>") >= 0);
-  assert.ok(practiceHtml.indexOf(">1</div><div style=\"font-size:10px;color:var(--text-muted)\">Mastered</div>") >= 0);
+  assert.ok(practiceHtml.indexOf(">0</div><div class=\"metric-label\" style=\"font-size:10px\">Sessions</div>") >= 0);
+  assert.ok(practiceHtml.indexOf(">1</div><div class=\"metric-label\" style=\"font-size:10px\">Mastered</div>") >= 0);
   assert.ok(practiceHtml.indexOf("Lvl 1") >= 0);
   assert.ok(drillHtml.indexOf("Completed: <strong>0</strong>") >= 0);
   assert.ok(quizHtml.indexOf("Correct: <strong>0</strong>") >= 0);
@@ -261,6 +261,99 @@ test("homePage games and tools tabs render real loaded sections instead of stub 
   assert.strictEqual(toolsHtml.indexOf("Tuner, metronome, and utilities."), -1);
 });
 
+test("shared practice tab renderers survive piano page globals for guitar tabs", function() {
+  global.sparkCore = null;
+  global.window.sparkCore = null;
+  global.S.quizQ = null;
+  global.S.earTrainQ = null;
+  global.S.dailyChallenge = { id: "switch", icon: "D", title: "Daily Switch", desc: "Move cleanly", xp: 10 };
+  global.eval(loadJS("js/instruments/piano/pages/games.js"));
+
+  var renderers = getSharedHomeTabRenderers();
+
+  assert.ok(typeof SparkSharedPracticeRenderers.drillTab === "function");
+  assert.ok(drillTab().indexOf("Chord Drill") >= 0);
+  assert.ok(renderers.drill().indexOf("Chord Switching") >= 0);
+  assert.strictEqual(renderers.drill().indexOf("Chord Drill"), -1);
+  assert.ok(dailyTab().indexOf("Daily Challenges") >= 0);
+  assert.ok(renderers.daily().indexOf("Daily Challenge") >= 0);
+  assert.strictEqual(renderers.daily().indexOf("Daily Challenges"), -1);
+  assert.ok(quizTab().indexOf("start_quiz") >= 0);
+  assert.ok(renderers.quiz().indexOf("startQuiz") >= 0);
+  assert.strictEqual(renderers.quiz().indexOf("start_quiz"), -1);
+  assert.ok(earTrainTab().indexOf("start_ear") >= 0);
+  assert.ok(renderers.ear().indexOf("startEarTrain") >= 0);
+  assert.strictEqual(renderers.ear().indexOf("start_ear"), -1);
+});
+
+test("shared tool tab renderers survive piano page globals for guitar tabs", function() {
+  global.eval(loadJS("js/pages/tools.js"));
+  global.eval(loadJS("js/instruments/piano/pages/tools.js"));
+
+  var renderers = getSharedHomeTabRenderers();
+
+  assert.ok(typeof SparkSharedToolRenderers.statsTab === "function");
+  assert.strictEqual(renderers.stats, SparkSharedToolRenderers.statsTab);
+  assert.strictEqual(renderers.guide, SparkSharedToolRenderers.guideTab);
+});
+
+test("shared tool renderers use shared card and metric typography classes", function() {
+  global.eval(loadJS("js/pages/tools.js"));
+  global.getChordTier = function(name) {
+    return name === "C" ? { tier: "gold" } : { tier: "none" };
+  };
+  global.tierBadgeHTML = function() { return ""; };
+  global.SparkTransitionStats = {
+    all: function() {
+      return { "C->G": { attempts: 3, avgTime: 1.8, best: 1.2 } };
+    }
+  };
+  global.localStorage = {
+    getItem: function() {
+      return JSON.stringify({ xp: 8, level: 2, sessions: 1, streak: 2 });
+    }
+  };
+  global.S.history = [
+    { date: new Date().toISOString().split("T")[0], type: "session", detail: "C", xp: 5 },
+    { date: new Date().toISOString().split("T")[0], type: "quiz", detail: "C", xp: 3 }
+  ];
+  global.S.quizCorrect = 1;
+  global.S.quizTotal = 1;
+  global.S.midiEnabled = true;
+  global.S.midiDevices = [{ id: "midi_1", name: "Virtual Synth" }];
+  global.S.midiOutput = true;
+  global.S.midiOutputId = "midi_1";
+
+  var tunerHtml = SparkSharedToolRenderers.tunerTab();
+  var statsHtml = SparkSharedToolRenderers.statsTab();
+  var guideHtml = SparkSharedToolRenderers.guideTab();
+
+  assert.ok(tunerHtml.indexOf("card-section-heading") >= 0);
+  assert.ok(tunerHtml.indexOf("action-row") >= 0);
+  assert.ok(statsHtml.indexOf("card-section-heading") >= 0);
+  assert.ok(statsHtml.indexOf("metric-value") >= 0);
+  assert.ok(statsHtml.indexOf("metric-label") >= 0);
+  assert.ok(statsHtml.indexOf("action-row") >= 0);
+  assert.ok(guideHtml.indexOf("card-section-heading") >= 0);
+  assert.ok(guideHtml.indexOf("card-micro-heading") >= 0);
+  assert.ok(guideHtml.indexOf("split-row") >= 0);
+});
+
+test("shared tool renderers avoid representative raw heavy heading strings", function() {
+  global.eval(loadJS("js/pages/tools.js"));
+  global.S.midiEnabled = false;
+
+  var tunerHtml = SparkSharedToolRenderers.tunerTab();
+  var statsHtml = SparkSharedToolRenderers.statsTab();
+  var guideHtml = SparkSharedToolRenderers.guideTab();
+
+  assert.strictEqual(tunerHtml.indexOf('font-size:20px;font-weight:800;color:var(--text-primary);margin:0 0 8px'), -1);
+  assert.strictEqual(statsHtml.indexOf('font-size:22px;font-weight:900;color:var(--text-primary)">&#128202; Practice Stats'), -1);
+  assert.strictEqual(statsHtml.indexOf('font-size:15px;font-weight:800;color:var(--text-primary)">&#128197; Last 30 Days'), -1);
+  assert.strictEqual(guideHtml.indexOf('font-size:16px;font-weight:800;color:var(--text-primary)">&#127912; Chart Legend'), -1);
+  assert.strictEqual(guideHtml.indexOf('font-size:22px;font-weight:900;color:var(--text-primary)">&#128214; How to Read Chord Charts'), -1);
+});
+
 test("practice instrument switcher rows expose keyboard handlers", function() {
   var source = loadJS("js/pages/practice.js");
   var uiSource = loadJS("js/ui.js");
@@ -268,7 +361,9 @@ test("practice instrument switcher rows expose keyboard handlers", function() {
   assert.ok(source.indexOf('onclick="act(\\\'reset\\\')"') >= 0);
   assert.ok(source.indexOf('onclick="act(\\\'previewChord\\\',\\\'') >= 0);
   assert.strictEqual(source.indexOf("event.stopPropagation();act('previewChord'"), -1);
-  assert.ok(uiSource.indexOf('if(event.target&&event.target.closest&&event.target.closest("button,input,select,textarea,a")){return;}') >= 0);
+  assert.ok(uiSource.indexOf('if(event.target&&event.target.closest&&event.target.closest(&quot;button,input,select,textarea,a&quot;)){return;}') >= 0);
+  assert.strictEqual(uiSource.indexOf('onclick="'+
+    'if(event.target&&event.target.closest&&event.target.closest("button,input,select,textarea,a")){return;}'), -1);
   assert.ok(loadJS("js/pages/plan.js").indexOf('onclick="act(\\\'practiceStartItem\\\', this.getAttribute(\\\'data-item-id\\\'))"') >= 0);
 });
 
@@ -571,6 +666,8 @@ test("planPage keeps daily shell metadata honest when duration is missing from t
   var html = planPage();
   assert.ok(html.indexOf("Practice Session Live") >= 0);
   assert.ok(html.indexOf("2 blocks") >= 0);
+  assert.ok(html.indexOf('data-action="sessionResumeBlock"') >= 0);
+  assert.strictEqual(html.indexOf("onclick=\"act('sessionResumeBlock')\""), -1);
   assert.strictEqual(html.indexOf("10 min shell"), -1);
   assert.strictEqual(html.indexOf("0 min shell"), -1);
 });
@@ -2368,6 +2465,72 @@ test("practiceTab prefers the active core plan when the practice bridge is unava
   var html = practiceTab();
   assert.ok(html.indexOf("Core Warmup") >= 0);
   assert.strictEqual(html.indexOf("Cached Warmup"), -1);
+});
+
+test("practiceTab embedded plan rows keep action buttons from crowding item copy", function() {
+  global.S.practicePlan = {
+    focus: "Long labels",
+    completedItems: 0,
+    totalItems: 1,
+    items: [{
+      id: "long_1",
+      label: "Replay the performance phrase with an unusually long title",
+      desc: "Low recent performance accuracy",
+      completed: false
+    }]
+  };
+
+  var html = practiceTab();
+  var styles = loadJS("styles.css");
+
+  assert.ok(html.indexOf("practice-summary-item") >= 0);
+  assert.ok(html.indexOf("practice-summary-copy") >= 0);
+  assert.ok(styles.indexOf(".practice-summary-item") >= 0);
+  assert.ok(styles.indexOf(".practice-summary-copy") >= 0);
+  assert.ok(styles.indexOf(".practice-summary-item .btn") >= 0);
+  assert.ok(styles.indexOf("flex-wrap:wrap") >= 0);
+});
+
+test("practiceTab card micro-headings use lighter dashboard typography", function() {
+  global.S.lastChordName = "Em";
+  global.S.practicePlan = {
+    focus: "Song mastery",
+    completedItems: 0,
+    totalItems: 1,
+    items: [{ id: "plan_1", label: "Warmup", desc: "Start light", completed: false }]
+  };
+
+  var html = practiceTab();
+  var styles = loadJS("styles.css");
+
+  assert.ok(html.indexOf("practice-card-heading") >= 0);
+  assert.ok(html.indexOf("practice-quick-title") >= 0);
+  assert.ok(styles.indexOf(".practice-card-heading") >= 0);
+  assert.ok(styles.indexOf(".practice-quick-title") >= 0);
+  assert.ok(styles.indexOf("font-weight:700") >= 0);
+  assert.strictEqual(html.indexOf("font-size:16px;font-weight:900;color:#fff\">Pick Up Where You Left Off"), -1);
+  assert.strictEqual(html.indexOf("font-size:15px;font-weight:800;color:var(--text-primary)\">&#128221; Today"), -1);
+});
+
+test("legacy practice helper cards use shared visual contract classes", function() {
+  var statsHtml = renderPracticeStatsCard({
+    streak: 3,
+    todayMinutes: 12,
+    totalMinutes: 90
+  });
+  var rowsHtml = renderPracticePlanRows({
+    items: [
+      { id: "plan_1", label: "Warmup", desc: "Start light", completed: false }
+    ]
+  });
+
+  assert.ok(statsHtml.indexOf("card-section-heading") >= 0);
+  assert.ok(statsHtml.indexOf("metric-label") >= 0);
+  assert.ok(statsHtml.indexOf("metric-value") >= 0);
+  assert.ok(rowsHtml.indexOf("card-section-heading") >= 0);
+  assert.ok(rowsHtml.indexOf("split-row") >= 0);
+  assert.strictEqual(statsHtml.indexOf("<b>Practice Stats</b>"), -1);
+  assert.strictEqual(rowsHtml.indexOf("<b>Today's Practice Plan</b>"), -1);
 });
 
 test("practiceTab treats malformed cached plan shells without array items as empty state", function() {

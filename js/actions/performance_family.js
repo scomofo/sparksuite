@@ -253,8 +253,19 @@
     }
 
     if (a === "openPerformCalibration") {
+      var calibrationCore = getPerformanceActionCore();
+      var calibrationRuntime = calibrationCore && typeof calibrationCore.getRuntimeState === "function"
+        ? calibrationCore.getRuntimeState()
+        : null;
+      var calibrationReturnScreen = S.screen === SCR.PERFORM_SONG ||
+          (calibrationRuntime && calibrationRuntime.activeScreen === "performance_song")
+        ? SCR.PERFORM_SONG
+        : null;
       openPerformanceCalibrationRequest();
-      setLegacyFields({ screen: SCR.PERFORM_CALIBRATE });
+      setLegacyFields({
+        screen: SCR.PERFORM_CALIBRATE,
+        performCalibrationReturnScreen: calibrationReturnScreen
+      });
       render();
       return true;
     }
@@ -333,9 +344,11 @@
     }
 
     if (a === "performCalibrationBack") {
+      var returnToPerformanceSong = S.performCalibrationReturnScreen === SCR.PERFORM_SONG;
       if (typeof stopPerformanceCalibration === "function") stopPerformanceCalibration();
-      applyPerformanceNavigationRequest("songs_home", { performanceCalibrationMode: false });
-      goHomeSongs();
+      applyPerformanceNavigationRequest(returnToPerformanceSong ? "song_detail" : "songs_home", { performanceCalibrationMode: false });
+      setLegacyFields({ performCalibrationReturnScreen: null }, false);
+      goHomeSongs(returnToPerformanceSong ? SCR.PERFORM_SONG : SCR.HOME);
       render();
       return true;
     }
@@ -500,6 +513,10 @@
         }
       }
       openPerformanceDailyChallengeRequest({});
+      setLegacyFields({ songsSubTab: "perform" }, false);
+      if (typeof applySongBrowserRequest === "function") {
+        applySongBrowserRequest("songs_subtab", { songsSubTab: "perform" });
+      }
       goHomeSongs(SCR.HOME);
       render();
       return true;
@@ -682,7 +699,13 @@
     }
 
     if (a === "performCalibrate") {
-      startCalibration();
+      if (typeof S !== "undefined" && S && typeof SCR !== "undefined" && S.screen === SCR.PERFORM &&
+          typeof SparkPerformanceRunCalibration !== "undefined" && SparkPerformanceRunCalibration &&
+          typeof SparkPerformanceRunCalibration.start === "function") {
+        SparkPerformanceRunCalibration.start();
+      } else if (typeof startCalibration === "function") {
+        startCalibration();
+      }
       return true;
     }
 
@@ -692,18 +715,27 @@
     }
 
     if (a === "performCalibrationTap") {
-      if (typeof recordCalibrationTap === "function") recordCalibrationTap();
+      if (typeof S !== "undefined" && S && typeof SCR !== "undefined" && S.screen === SCR.PERFORM &&
+          typeof SparkPerformanceRunCalibration !== "undefined" && SparkPerformanceRunCalibration &&
+          typeof SparkPerformanceRunCalibration.tap === "function") {
+        SparkPerformanceRunCalibration.tap();
+      } else if (typeof recordCalibrationTap === "function") recordCalibrationTap();
       return true;
     }
 
     if (a === "performCalibrationCancel") {
-      if (typeof cancelCalibration === "function") cancelCalibration();
+      if (typeof S !== "undefined" && S && typeof SCR !== "undefined" && S.screen === SCR.PERFORM &&
+          typeof SparkPerformanceRunCalibration !== "undefined" && SparkPerformanceRunCalibration &&
+          typeof SparkPerformanceRunCalibration.cancel === "function") {
+        SparkPerformanceRunCalibration.cancel();
+      } else if (typeof cancelCalibration === "function") cancelCalibration();
       return true;
     }
 
     if (a === "performRetry") {
       var retryRequest = getPerformanceRetryRequest({
-        chartId: S.performChartId
+        chartId: S.performChartId,
+        targetTechnique: S.performTargetTechnique || null
       });
       startPerformance(retryRequest.chartId, {
         difficulty: retryRequest.difficulty,
@@ -722,7 +754,8 @@
     }
 
     if (a === "performRetryPhrase") {
-      if (S.performChart && S.performResults && S.performResults.phraseStats) {
+      if (S.performChart && S.performChart.phrases && S.performChart.phrases.length &&
+          S.performResults && S.performResults.phraseStats && S.performResults.phraseStats.length) {
         var targetTechniqueRetry = null;
         var retryCore = getPerformanceActionCore();
         if (retryCore && typeof retryCore.getActiveSessionView === "function") {
@@ -776,7 +809,12 @@
 
     if (a === "performDoneSongs") {
       applyPerformanceNavigationRequest("songs_home");
-      act("tab", "songs");
+      setLegacyFields({ songsSubTab: "perform" }, false);
+      if (typeof applySongBrowserRequest === "function") {
+        applySongBrowserRequest("songs_subtab", { songsSubTab: "perform" });
+      }
+      goHomeSongs(SCR.HOME);
+      render();
       return true;
     }
 

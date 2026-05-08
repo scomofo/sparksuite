@@ -40,11 +40,13 @@
   }
 
   function setGuidedLegacyState(setFields, save) {
+    setFields = setFields || {};
     setLegacyFields(Object.assign({
-      _showroomOverride: null,
-      _showroomLessonId: null,
-      launcherView: null
-    }, setFields || {}), save);
+      guidedStopConfirm: !!S.guidedStopConfirm,
+      _showroomOverride: Object.prototype.hasOwnProperty.call(S, "_showroomOverride") ? S._showroomOverride : null,
+      _showroomLessonId: Object.prototype.hasOwnProperty.call(S, "_showroomLessonId") ? S._showroomLessonId : null,
+      launcherView: Object.prototype.hasOwnProperty.call(S, "launcherView") ? S.launcherView : null
+    }, setFields), save);
   }
 
   function getSparkCoreHandle() {
@@ -853,13 +855,19 @@
     }
 
     if (a === "guidedConfirmStop") {
-      if (typeof confirm !== "function" || confirm("End session early?")) {
-        act("guidedStop");
-      }
+      setLegacyFields({ guidedStopConfirm: true }, false);
+      render();
+      return true;
+    }
+
+    if (a === "guidedCancelStop") {
+      setLegacyFields({ guidedStopConfirm: false }, false);
+      render();
       return true;
     }
 
     if (a === "guidedStop") {
+      setLegacyFields({ guidedStopConfirm: false }, false);
       clearTimeout(T.session);
       clearTimeout(T.drill);
       clearTimeout(T.daily);

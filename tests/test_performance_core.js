@@ -117,6 +117,7 @@ eval(loadJS('js/sparksuite/instruments/guitar/guitar_rhythm_adapter.js'));
 eval(loadJS('js/performance/arrangements.js'));
 eval(loadJS('js/performance/adapters.js'));
 eval(loadJS('js/performance/chart_manifest.js'));
+eval(loadJS('js/performance/chart_data.generated.js'));
 eval(loadJS('js/performance/chart.js'));
 eval(loadJS('js/performance/scoring.js'));
 eval(loadJS('js/performance/highway.js'));
@@ -262,6 +263,21 @@ test('getPerformanceChartLibrary includes package-backed entries for the perform
   assert.ok(library.length >= 3);
   assert.strictEqual(getPerformanceChartMeta('demo_imported_package').sourceType, 'imported_package');
   assert.strictEqual(getPerformanceChartMeta('demo_progression').sourceType, 'built_in');
+});
+
+test('performance chart engine accepts generated preloads without loader reading registry globals', function() {
+  var engine = createPerformanceChartEngine();
+  engine.preloadChart('generated_song', {
+    id: 'generated_song',
+    title: 'Generated Song',
+    artist: 'Spark',
+    events: [{ t: 0, type: 'chord', chord: 'C' }]
+  });
+
+  var loaded = engine.getPreloadedChart('generated_song');
+
+  assert.strictEqual(loaded.id, 'generated_song');
+  assert.notStrictEqual(loaded, engine.getPreloadedChart('generated_song'));
 });
 
 test('getPerformanceChartLibrary synthesizes catalog-backed chart entries that are not hand-authored in the manifest', function() {
@@ -449,6 +465,22 @@ test('loadPerformanceChart can build generated catalog variants from instrument 
     assert.strictEqual(chart.songId, 'all_of_me');
     assert.ok(chart.events.length > 0);
     assert.deepStrictEqual(chart.events[0].notes, ['E4', 'G4', 'B4']);
+  });
+});
+
+test('loadPerformanceChart uses embedded chart data when fetch is unavailable', function() {
+  var originalFetch = global.fetch;
+  global.fetch = function() {
+    return Promise.reject(new Error('fetch unavailable for file URLs'));
+  };
+  return loadPerformanceChart('stand_by_me_bass_chords').then(function(chart) {
+    global.fetch = originalFetch;
+    assert.strictEqual(chart.id, 'stand_by_me_bass_chords');
+    assert.strictEqual(chart.instrument, 'bass');
+    assert.ok(chart.events.length > 0);
+  }).catch(function(err) {
+    global.fetch = originalFetch;
+    throw err;
   });
 });
 

@@ -86,6 +86,18 @@ test("pianoPlanPage prefers the active core-backed practice plan and launches by
   assert.ok(html.indexOf("piano - left hand - finger") >= 0);
 });
 
+test("shared plan page render uses shared heading and action row classes", function() {
+  var source = loadJS("js/pages/plan.js");
+  global.eval(source);
+
+  var html = planPage();
+
+  assert.ok(html.indexOf("card-section-heading") >= 0);
+  assert.ok(html.indexOf("card-micro-heading") >= 0);
+  assert.ok(html.indexOf("action-row") >= 0);
+  assert.strictEqual(html.indexOf('style="font-weight:700;font-size:14px"'), -1);
+});
+
 test("pianoPlanPage pivots into guided resume mode with V2 shell details when a guided session is active and no daily plan exists", function() {
   global.S = {
     practicePlanComplete: false,
@@ -174,9 +186,15 @@ test("piano practice plan section reads the active core-backed plan without gene
   global.eval(loadJS("js/instruments/piano/pages/practice.js"));
 
   var html = practicePlanSection();
+  var styles = loadJS("styles.css");
   assert.strictEqual(generateCalls, 0);
   assert.ok(html.indexOf("Replay Island Strum") >= 0);
   assert.ok(html.indexOf("Quick warmup") >= 0);
+  assert.ok(html.indexOf("practice-card-heading") >= 0);
+  assert.ok(styles.indexOf(".practice-card-heading") >= 0);
+  assert.strictEqual(html.indexOf("<b>Practice Stats</b>"), -1);
+  assert.strictEqual(html.indexOf("<b>Today's Practice Plan</b>"), -1);
+  assert.strictEqual(html.indexOf("<b>Mastery</b>"), -1);
   assert.strictEqual(html.indexOf("Old Stale Song"), -1);
 });
 
@@ -275,9 +293,16 @@ test("piano practice plan section pivots into guided resume mode with V2 shell d
   global.eval(loadJS("js/instruments/piano/pages/practice.js"));
 
   var html = practicePlanSection();
+  var styles = loadJS("styles.css");
   assert.ok(html.indexOf("Guided Session Flow") >= 0);
   assert.ok(html.indexOf("Guided Session Live") >= 0);
   assert.ok(html.indexOf("How guitars get tuned") >= 0);
+  assert.ok(html.indexOf("practice-card-heading") >= 0);
+  assert.ok(html.indexOf("guided-status-line") >= 0);
+  assert.ok(styles.indexOf(".practice-card-heading") >= 0);
+  assert.ok(styles.indexOf(".guided-status-line") >= 0);
+  assert.strictEqual(html.indexOf("font-size:15px;font-weight:800\">Guided Session Flow"), -1);
+  assert.strictEqual(html.indexOf("font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent)\">Guided Session Live"), -1);
   assert.ok(html.indexOf("In progress - Song block") >= 0);
   assert.ok(html.indexOf("4 blocks") >= 0);
   assert.ok(html.indexOf("10 min shell") >= 0);

@@ -213,6 +213,26 @@ test('renderLauncher wires hero and launcher utility actions', function() {
   assert.ok(html.indexOf("onkeydown=\"if(event.key==='Enter'||event.key===' '){event.preventDefault();act('launcherSelectInstrument','test_guitar')}\"") >= 0);
 });
 
+test('selectInstrument resets scroll after launching an instrument', function() {
+  var calls = [];
+  global.window.scrollTo = function(x, y) { calls.push([x, y]); };
+  global.window.requestAnimationFrame = function(fn) { fn(); };
+  global.S = { activeInstrument: null, launcherView: 'home', _showroomOverride: null };
+  global.SCR = { HOME: 'home' };
+  global.TAB = { PRACTICE: 'practice' };
+  global.render = function() {};
+  global.saveState = function() {};
+
+  SparkInstruments.register({
+    id: 'scroll_test_inst', instrument: 'guitar', name: 'Scroll Test', icon: 'S',
+    available: true, getData: function() { return {}; },
+    pages: {}, tabs: [], stemMutePreset: {}, init: function() {}
+  });
+  SparkInstruments.selectInstrument('scroll_test_inst');
+
+  assert.deepStrictEqual(calls[calls.length - 1], [0, 0]);
+});
+
 test('piano songs build helper stays namespaced so shared build tab is not shadowed', function() {
   var source = loadJS('js/instruments/piano/pages/songs.js');
   assert.ok(source.indexOf('case "build":   html += pianoBuildTab(); break;') >= 0);
@@ -240,6 +260,7 @@ test('piano bootstrap preserves existing pages while adding deferred registratio
     STEMS: 'stems'
   };
   global.pianoSessionPage = function() { return '<div>Session</div>'; };
+  eval(loadJS('js/sparksuite/core/session_engine.js'));
   eval(loadJS('js/piano-registration-bootstrap.js'));
 
   var all = SparkInstruments.getAll();
@@ -251,6 +272,27 @@ test('piano bootstrap preserves existing pages while adding deferred registratio
   assert.ok(piano);
   assert.strictEqual(typeof piano.pages.legacy, 'function');
   assert.strictEqual(typeof piano.pages.session, 'function');
+});
+
+test('piano bootstrap routes legacy active chord sessions to the legacy renderer', function() {
+  SparkInstruments.register({
+    id: 'pianospark', instrument: 'piano', name: 'PianoSpark', icon: 'P',
+    skin: SparkHighway.PIANO_SKIN, available: true,
+    getData: function() { return {}; },
+    pages: {},
+    tabs: ['practice'], stemMutePreset: {}, init: function() {}
+  });
+  global.SCR = { SESSION: 'session' };
+  global.S = { active: true, chord: 'C', sessionPlan: null };
+  global.pianoSessionPage = function() { return '<div>Guided Session</div>'; };
+  global.legacySessionHTML = function() { return '<div>Legacy Chord Session</div>'; };
+  eval(loadJS('js/sparksuite/core/session_engine.js'));
+  eval(loadJS('js/piano-registration-bootstrap.js'));
+  SparkInstruments.activate('pianospark');
+
+  assert.strictEqual(SparkInstruments.getPage('session')(), '<div>Legacy Chord Session</div>');
+  S.active = false;
+  assert.strictEqual(SparkInstruments.getPage('session')(), '<div>Guided Session</div>');
 });
 
 test('renderLauncher respects launcherView showroom routes', function() {
@@ -399,6 +441,23 @@ test('render_showroom routes performance overrides to SparkPerformance', functio
 });
 
 test('ukulele register adds a selectable launcher instrument', function() {
+  var planCalls = [];
+  var quizSyncCalls = [];
+  global.S = { completedLessons: [], mastery: { rhythm: {} }, screen: 'home', level: 1 };
+  global.SCR = { PLAN: 'plan', DRILL: 'drill', QUIZ: 'quiz' };
+  global.openPracticePlanScreenRequest = function(payload) {
+    planCalls.push(payload || {});
+    return payload || {};
+  };
+  global.render = function() {};
+  global.T = {};
+  global.tickD = function() {};
+  global.sparkCore = {
+    syncLegacyQuizRuntimeState: function(payload) {
+      quizSyncCalls.push(payload || {});
+      return payload || {};
+    }
+  };
   eval(loadJS('js/ui/stringed_chord_svg.js'));
   eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_skill_tree.js'));
   eval(loadJS('js/sparksuite/instruments/ukulele/ukulele_lessons.js'));
@@ -421,6 +480,7 @@ test('ukulele register adds a selectable launcher instrument', function() {
 
   assert.ok(ukulele);
   assert.strictEqual(ukulele.instrument, 'ukulele');
+  assert.strictEqual(typeof ukulele.act, 'function');
   assert.strictEqual(typeof ukulele.tabRenderers.practice, 'function');
   var practiceHtml = ukulele.tabRenderers.practice();
   assert.ok(practiceHtml.indexOf("Quick Win 10") >= 0);
@@ -428,6 +488,39 @@ test('ukulele register adds a selectable launcher instrument', function() {
   assert.ok(practiceHtml.indexOf("Reset Focus 10") >= 0);
   assert.ok(practiceHtml.indexOf("Uke Set A") >= 0);
   assert.ok(practiceHtml.indexOf("openUkuleleMiniSession") >= 0);
+
+  assert.strictEqual(ukulele.act("quickStart"), true);
+  assert.strictEqual(S.screen, "plan");
+  assert.strictEqual(S.activeInstrument, "ukespark");
+  assert.strictEqual(planCalls.length, 1);
+  assert.strictEqual(planCalls[0].instrumentId, "ukespark");
+  assert.strictEqual(planCalls[0].instrumentType, "ukulele");
+  assert.ok(planCalls[0].lessonId);
+
+  S.screen = 'home';
+  assert.strictEqual(ukulele.act("startDrill"), true);
+  assert.strictEqual(S.screen, "drill");
+  assert.strictEqual(S.activeInstrument, "ukespark");
+  assert.ok(Array.isArray(S.drillChords));
+  assert.ok(S.drillChords.length >= 2);
+
+  S.screen = 'home';
+  assert.strictEqual(ukulele.act("startQuiz"), true);
+  assert.strictEqual(S.screen, "quiz");
+  assert.ok(S.quizQ);
+  assert.ok(Array.isArray(S.quizOpts));
+  assert.ok(S.quizOpts.length >= 2);
+
+  var answeredQuizName = S.quizQ.name;
+  assert.strictEqual(ukulele.act("answerQuiz", answeredQuizName), true);
+  assert.strictEqual(S.quizTotal, 1);
+  assert.strictEqual(S.quizScore, 1);
+  assert.ok(S.quizQ);
+  if (S.quizOpts.length > 1) assert.notStrictEqual(S.quizQ.name, answeredQuizName);
+  assert.strictEqual(quizSyncCalls.length >= 2, true);
+  assert.strictEqual(quizSyncCalls[quizSyncCalls.length - 1].answer, answeredQuizName);
+  assert.strictEqual(quizSyncCalls[quizSyncCalls.length - 1].question, S.quizQ);
+  assert.strictEqual(quizSyncCalls[quizSyncCalls.length - 1].total, 1);
 });
 
 test('showroom svg provides a microphone silhouette for VocalSpark', function() {
@@ -442,7 +535,15 @@ test('showroom svg provides a microphone silhouette for VocalSpark', function() 
 });
 
 test('vocals register adds a selectable launcher instrument', function() {
+  var planCalls = [];
   installMinimalDocument();
+  global.S = { completedLessons: [], mastery: { rhythm: {} }, screen: 'home' };
+  global.SCR = { PLAN: 'plan' };
+  global.openPracticePlanScreenRequest = function(payload) {
+    planCalls.push(payload || {});
+    return payload || {};
+  };
+  global.render = function() {};
   eval(loadJS('js/sparksuite/instruments/vocals/vocals_skill_tree.js'));
   eval(loadJS('js/sparksuite/instruments/vocals/vocals_curriculum.js'));
   eval(loadJS('js/sparksuite/instruments/vocals/vocals_lessons.js'));
@@ -460,14 +561,59 @@ test('vocals register adds a selectable launcher instrument', function() {
   assert.strictEqual(vocals.instrument, 'vocals');
   assert.strictEqual(vocals.iconImage, 'resources/instruments/vocals/card.png');
   assert.strictEqual(vocals.heroImage, 'resources/instruments/vocals/hero.jpg');
+  assert.strictEqual(typeof vocals.getExercises, 'function');
+  assert.strictEqual(typeof vocals.act, 'function');
   assert.strictEqual(typeof vocals.tabRenderers.practice, 'function');
+
+  assert.strictEqual(vocals.act("quickStart"), true);
+  assert.strictEqual(S.screen, "plan");
+  assert.strictEqual(S.activeInstrument, "vocalspark");
+  assert.strictEqual(planCalls.length, 1);
+  assert.strictEqual(planCalls[0].instrumentId, "vocalspark");
+  assert.strictEqual(planCalls[0].instrumentType, "vocals");
+  assert.ok(planCalls[0].lessonId);
 });
 
-test('vocals lesson start dispatches openPracticePlan with the lesson id', function() {
-  var actCalls = [];
+test('vocals register upserts existing app-id catalog entries', function() {
   installMinimalDocument();
-  global.S = { completedLessons: [], mastery: { rhythm: {} }, screen: 'home', activeInstrument: null, tab: null };
-  global.act = function(action, value) { actCalls.push([action, value]); };
+  global.SPARK_INSTRUMENTS = [{ id: 'vocalspark', instrument: 'vocals', name: 'Existing VocalSpark' }];
+  eval(loadJS('js/instruments/vocals/register.js'));
+
+  assert.strictEqual(SPARK_INSTRUMENTS.length, 1);
+  assert.strictEqual(SPARK_INSTRUMENTS[0].id, 'vocalspark');
+  assert.strictEqual(SPARK_INSTRUMENTS[0].instrumentId, 'vocals');
+});
+
+test('vocals register upserts existing instrument-type catalog entries', function() {
+  installMinimalDocument();
+  global.SPARK_INSTRUMENTS = [{ id: 'legacy_voice_entry', instrument: 'vocals', name: 'Existing Vocals' }];
+  eval(loadJS('js/instruments/vocals/register.js'));
+
+  assert.strictEqual(SPARK_INSTRUMENTS.length, 1);
+  assert.strictEqual(SPARK_INSTRUMENTS[0].id, 'vocalspark');
+  assert.strictEqual(SPARK_INSTRUMENTS[0].instrument, 'vocals');
+});
+
+test('vocals register writes Map-style registries with a stable key', function() {
+  installMinimalDocument();
+  global.SparkInstrumentRegistry = new Map();
+  eval(loadJS('js/instruments/vocals/register.js'));
+
+  assert.strictEqual(SparkInstrumentRegistry.size, 1);
+  assert.ok(SparkInstrumentRegistry.has('vocals'));
+  assert.strictEqual(SparkInstrumentRegistry.get('vocals').id, 'vocalspark');
+});
+
+test('vocals lesson start opens the practice plan screen', function() {
+  var planCalls = [];
+  installMinimalDocument();
+  global.S = { completedLessons: [], mastery: { rhythm: {} }, screen: 'home' };
+  global.openPracticePlanScreenRequest = function(payload) {
+    planCalls.push(payload || {});
+    return payload || {};
+  };
+  global.SCR = { PLAN: 'plan' };
+  global.render = function() {};
   eval(loadJS('js/sparksuite/instruments/vocals/vocals_skill_tree.js'));
   eval(loadJS('js/sparksuite/instruments/vocals/vocals_curriculum.js'));
   eval(loadJS('js/sparksuite/instruments/vocals/vocals_lessons.js'));
@@ -477,10 +623,58 @@ test('vocals lesson start dispatches openPracticePlan with the lesson id', funct
 
   startVocalsLesson('lesson_vocal_setup_comfort_01');
 
+  assert.strictEqual(S.screen, 'plan');
   assert.strictEqual(S.activeInstrument, 'vocalspark');
-  assert.strictEqual(S.tab, 'practice');
-  assert.strictEqual(actCalls.length, 1);
-  assert.deepStrictEqual(actCalls[0], ['openPracticePlan', 'lesson_vocal_setup_comfort_01']);
+  assert.strictEqual(S.instrument, 'vocals');
+  assert.strictEqual(planCalls.length, 1);
+  assert.strictEqual(planCalls[0].lessonId, 'lesson_vocal_setup_comfort_01');
+  assert.strictEqual(planCalls[0].instrumentId, 'vocalspark');
+  assert.strictEqual(planCalls[0].instrumentType, 'vocals');
+  assert.strictEqual(planCalls[0].appId, 'vocalspark');
+});
+
+test('drums register routes hero quick start into the practice plan', function() {
+  var planCalls = [];
+  installMinimalDocument();
+  global.S = { completedLessons: [], mastery: { rhythm: {} }, screen: 'home' };
+  global.SCR = { PLAN: 'plan' };
+  global.openPracticePlanScreenRequest = function(payload) {
+    planCalls.push(payload || {});
+    return payload || {};
+  };
+  global.render = function() {};
+  eval(loadJS('js/sparksuite/instruments/drums/drums_skill_tree.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_curriculum.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_lessons.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_exercises.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_patterns.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_songs.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_kits.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_mapping.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_notation.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_progression.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_packs.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_chart_library.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_runtime_adapter.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_rhythm_adapter.js'));
+  eval(loadJS('js/sparksuite/instruments/drums/drums_module.js'));
+  eval(loadJS('js/instruments/drums/register.js'));
+
+  var all = SparkInstruments.getAll();
+  var drums = null;
+  for (var i = 0; i < all.length; i++) {
+    if (all[i].id === 'drumspark') drums = all[i];
+  }
+
+  assert.ok(drums);
+  assert.strictEqual(typeof drums.act, 'function');
+  assert.strictEqual(drums.act('quickStart'), true);
+  assert.strictEqual(S.screen, 'plan');
+  assert.strictEqual(S.activeInstrument, 'drumspark');
+  assert.strictEqual(planCalls.length, 1);
+  assert.strictEqual(planCalls[0].instrumentId, 'drumspark');
+  assert.strictEqual(planCalls[0].instrumentType, 'drums');
+  assert.ok(planCalls[0].lessonId);
 });
 
 test('bass register exposes a dedicated songs tab renderer', function() {
@@ -549,6 +743,15 @@ test('index loads boot loader before deferred instrument placeholders', function
   assert.ok(bootIndex >= 0);
   assert.ok(deferredIndex >= 0);
   assert.ok(bootIndex < deferredIndex);
+});
+
+test('index loads shared watch helpers before deferred piano watch runtime', function() {
+  var source = loadJS('index.html');
+  var commonIndex = source.indexOf('src="js/core/watch_common.js"');
+  var pianoWatchIndex = source.indexOf('data-deferred-src="js/instruments/piano/watch.js"');
+  assert.ok(commonIndex >= 0);
+  assert.ok(pianoWatchIndex >= 0);
+  assert.ok(commonIndex < pianoWatchIndex);
 });
 
 test('boot loader schedules deferred scripts after the page has parsed', function() {

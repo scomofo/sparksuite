@@ -21,6 +21,24 @@
     });
   }
 
+  function applyShellEffects(effects) {
+    var i;
+    if (!Array.isArray(effects)) return;
+    for (i = 0; i < effects.length; i++) {
+      if (!effects[i]) continue;
+      if (effects[i].type === "scrollToTop") {
+        if (typeof window === "undefined" || typeof window.scrollTo !== "function") continue;
+        if (typeof window.requestAnimationFrame === "function") {
+          window.requestAnimationFrame(function() { window.scrollTo(0, 0); });
+        } else {
+          setTimeout(function() { window.scrollTo(0, 0); }, 0);
+        }
+      } else if (effects[i].type === "fetchCommunity" && typeof fetchCommunity === "function") {
+        fetchCommunity();
+      }
+    }
+  }
+
   function handleShellAction(a, v) {
     if (a === "openLauncherView") {
       if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.openLauncherView === "function") {
@@ -81,16 +99,16 @@
         selectedVoicing: 0
       });
       var core = getShellCore();
+      if (!core || typeof core.buildShellTabChangeRequest !== "function") return false;
+      var shellRequest = core.buildShellTabChangeRequest(v, {
+        songsSubTab: S.songsSubTab
+      });
       if (core && typeof core.updateRuntimeState === "function") {
-        core.updateRuntimeState({
-          activeScreen: "home",
-          activeTab: v || null,
-          transport: { status: "idle", positionMs: 0 }
-        });
+        core.updateRuntimeState(shellRequest.runtimeState);
       }
       stopAllTimers();
-      if (v === TAB.SONGS && S.songsSubTab === "community") fetchCommunity();
       render();
+      applyShellEffects(shellRequest && shellRequest.runtimeState ? shellRequest.runtimeState.shellEffects : []);
       return true;
     }
 

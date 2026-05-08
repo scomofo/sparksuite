@@ -63,6 +63,8 @@ for (const src of expectedOrder) {
 const manifest = fs.readFileSync("js/instruments/instrument_manifest.generated.js", "utf8");
 assert(manifest.includes("Regenerate with: node scripts/apply_generated_instrument.js"), "manifest header must reference canonical apply script");
 assert(manifest.includes("js/instruments/piano/watch.js"), "manifest must include piano watch runtime module");
+assert(manifest.includes('{ id: "vocalspark", instrument: "vocals"'), "manifest must preserve VocalSpark app id when register.js uses constants");
+assert(!manifest.includes('{ id: "vocals", instrument: "vocals"'), "manifest must not collapse VocalSpark app id to the generic instrument id");
 assert(
   manifest.indexOf("js/sparksuite/instruments/bass/bass_module.js") < manifest.indexOf("js/sparksuite/instruments/bass/bass_curriculum_integration.js"),
   "manifest must load bass module before bass curriculum integration"

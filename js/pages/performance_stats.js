@@ -26,8 +26,8 @@ function performanceStatsPage(){
   h+='<div class="perform-header"><button class="back-btn" onclick="act(\'performStatsBack\')">&larr; Back</button>';
   h+='<div class="perform-title"><strong>Performance Stats</strong></div></div>';
   h+='<div class="card mb20" style="padding:12px;border-radius:18px;border:1px solid rgba(69,183,209,.16);background:linear-gradient(180deg,rgba(15,19,30,.94),rgba(8,10,16,.94))">';
-  h+='<div style="font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">View</div>';
-  h+='<div class="perform-toggle-group" style="justify-content:flex-start;gap:6px;margin:0">';
+  h+='<div class="card-section-heading" style="margin-bottom:10px">View</div>';
+  h+='<div class="perform-toggle-group action-row" style="justify-content:flex-start;gap:6px;margin:0">';
   var focuses=["overview","recent","top","weak","daily"];
   for(var fi=0;fi<focuses.length;fi++){
     var focusId=focuses[fi];
@@ -38,29 +38,29 @@ function performanceStatsPage(){
   // Overview
   var totals=typeof getPerformanceTotals==="function"?getPerformanceTotals():{runs:0,songsPlayed:0,masteredSongs:0,avgAccuracy:0,totalStars:0};
   if(focus==="overview"){
-    h+='<div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center;flex-wrap:wrap">';
-    h+='<div><div style="font-size:22px;font-weight:900;color:#FFE66D">'+totals.runs+'</div><div style="font-size:10px;color:var(--text-muted)">Total Runs</div></div>';
-    h+='<div><div style="font-size:22px;font-weight:900;color:#4ECDC4">'+totals.songsPlayed+'</div><div style="font-size:10px;color:var(--text-muted)">Songs Played</div></div>';
-    h+='<div><div style="font-size:22px;font-weight:900;color:#FF6B6B">'+totals.masteredSongs+'</div><div style="font-size:10px;color:var(--text-muted)">Mastered</div></div>';
-    h+='<div><div style="font-size:22px;font-weight:900;color:#45B7D1">'+totals.avgAccuracy+'%</div><div style="font-size:10px;color:var(--text-muted)">Avg Accuracy</div></div>';
+    h+='<div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center;flex-wrap:wrap;gap:12px">';
+    h+='<div><div class="metric-value" style="color:#FFE66D">'+totals.runs+'</div><div class="metric-label">Total Runs</div></div>';
+    h+='<div><div class="metric-value" style="color:#4ECDC4">'+totals.songsPlayed+'</div><div class="metric-label">Songs Played</div></div>';
+    h+='<div><div class="metric-value" style="color:#FF6B6B">'+totals.masteredSongs+'</div><div class="metric-label">Mastered</div></div>';
+    h+='<div><div class="metric-value" style="color:#45B7D1">'+totals.avgAccuracy+'%</div><div class="metric-label">Avg Accuracy</div></div>';
     h+='</div></div>';
   }
 
   // Recent runs
   var recent=typeof getPerformanceRecentRuns==="function"?getPerformanceRecentRuns():[];
   if((focus==="recent"||focus==="overview")&&recent.length){
-    h+='<div class="card mb20"><h3 style="font-size:14px;font-weight:800;margin:0 0 10px;color:var(--text-primary)">Recent Runs</h3>';
+    h+='<div class="card mb20"><div class="card-section-heading" style="margin-bottom:10px">Recent Runs</div>';
     for(var i=0;i<recent.length;i++){
       var r=recent[i];
       var mColor=typeof getMasteryColor==="function"?getMasteryColor(r.mastery):"var(--text-muted)";
       var songLabel = prettyPerformanceStatsToken(r.songId) || "song";
       var arrangementLabel = prettyPerformanceStatsToken(r.arrangement) || "chords";
       var difficultyLabel = prettyPerformanceStatsToken(r.difficulty) || "normal";
-      h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">';
-      h+='<div><span style="font-size:13px;font-weight:700;color:var(--text-primary)">'+escHTML(songLabel)+'</span>';
-      h+=' <span style="font-size:11px;color:var(--text-muted)">'+escHTML(arrangementLabel)+' / '+escHTML(difficultyLabel)+'</span></div>';
-      h+='<div style="text-align:right"><span style="font-size:12px;font-weight:700;color:'+mColor+'">'+r.bestAccuracy+'%</span>';
-      h+=' <span style="font-size:11px;color:var(--text-muted)">'+r.bestStars+'&#11088;</span></div>';
+      h+='<div class="split-row" style="align-items:center;padding:6px 0;border-bottom:1px solid var(--border);gap:12px">';
+      h+='<div><span class="card-micro-heading">'+escHTML(songLabel)+'</span>';
+      h+=' <span class="metric-label">'+escHTML(arrangementLabel)+' / '+escHTML(difficultyLabel)+'</span></div>';
+      h+='<div style="text-align:right"><span class="metric-value" style="font-size:12px;color:'+mColor+'">'+r.bestAccuracy+'%</span>';
+      h+=' <span class="metric-label">'+r.bestStars+'&#11088;</span></div>';
       h+='</div>';
     }
     h+='</div>';
@@ -69,13 +69,13 @@ function performanceStatsPage(){
   // Top songs
   var top=typeof getPerformanceTopSongs==="function"?getPerformanceTopSongs():[];
   if((focus==="top"||focus==="overview")&&top.length){
-    h+='<div class="card mb20"><h3 style="font-size:14px;font-weight:800;margin:0 0 10px;color:var(--text-primary)">Top Scores</h3>';
+    h+='<div class="card mb20"><div class="card-section-heading" style="margin-bottom:10px">Top Scores</div>';
     for(var t=0;t<top.length;t++){
       var ts=top[t];
       var topSongLabel = prettyPerformanceStatsToken(ts.songId) || "song";
-      h+='<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)">';
-      h+='<span style="font-size:13px;font-weight:700;color:var(--text-primary)">'+escHTML(topSongLabel)+'</span>';
-      h+='<span style="font-size:13px;font-weight:800;color:#FFE66D">'+ts.bestScore+' pts</span>';
+      h+='<div class="split-row" style="padding:4px 0;border-bottom:1px solid var(--border);gap:12px">';
+      h+='<span class="card-micro-heading">'+escHTML(topSongLabel)+'</span>';
+      h+='<span class="metric-value" style="font-size:13px;color:#FFE66D">'+ts.bestScore+' pts</span>';
       h+='</div>';
     }
     h+='</div>';
@@ -84,13 +84,13 @@ function performanceStatsPage(){
   // Weak songs
   var weak=typeof getPerformanceWeakSongs==="function"?getPerformanceWeakSongs():[];
   if((focus==="weak"||focus==="overview")&&weak.length){
-    h+='<div class="card mb20"><h3 style="font-size:14px;font-weight:800;margin:0 0 10px;color:var(--text-primary)">Needs Work</h3>';
+    h+='<div class="card mb20"><div class="card-section-heading" style="margin-bottom:10px">Needs Work</div>';
     for(var w=0;w<weak.length;w++){
       var ws=weak[w];
       var weakSongLabel = prettyPerformanceStatsToken(ws.songId) || "song";
-      h+='<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)">';
-      h+='<span style="font-size:13px;font-weight:700;color:var(--text-primary)">'+escHTML(weakSongLabel)+'</span>';
-      h+='<span style="font-size:13px;font-weight:700;color:#FF6B6B">'+ws.bestAccuracy+'%</span>';
+      h+='<div class="split-row" style="padding:4px 0;border-bottom:1px solid var(--border);gap:12px">';
+      h+='<span class="card-micro-heading">'+escHTML(weakSongLabel)+'</span>';
+      h+='<span class="metric-value" style="font-size:13px;color:#FF6B6B">'+ws.bestAccuracy+'%</span>';
       h+='</div>';
     }
     h+='</div>';
@@ -98,7 +98,7 @@ function performanceStatsPage(){
 
   // Daily challenge history
   if((focus==="daily"||focus==="overview")&&Array.isArray(S.performanceDailyHistory)&&S.performanceDailyHistory.length){
-    h+='<div class="card mb20"><h3 style="font-size:14px;font-weight:800;margin:0 0 10px;color:var(--text-primary)">Daily Challenges ('+S.performanceDailyHistory.length+' completed)</h3>';
+    h+='<div class="card mb20"><div class="card-section-heading" style="margin-bottom:10px">Daily Challenges ('+S.performanceDailyHistory.length+' completed)</div>';
     var dh=S.performanceDailyHistory.slice(-5).reverse();
     for(var di=0;di<dh.length;di++){
       var dateLabel = prettyPerformanceStatsToken(dh[di].date) || "unknown date";

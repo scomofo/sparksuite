@@ -60,12 +60,14 @@ function createWindow() {
 
   mainWindow.loadFile('index.html');
 
-  // Enforce Content Security Policy headers
+  // Enforce Content Security Policy headers. The plain HTTP localhost entry
+  // supports the bundled Express dev service on port 3456; remote connections
+  // must stay on HTTPS.
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
-        'Content-Security-Policy': ["default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; media-src 'self' file:; connect-src 'self' http://localhost:3456 https://localhost:3456; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com"]
+        'Content-Security-Policy': ["default-src 'self'; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; media-src 'self' file:; connect-src 'self' data: http://localhost:3456 https://localhost:3456; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com"]
       }
     });
   });
