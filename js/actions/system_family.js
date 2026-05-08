@@ -571,7 +571,7 @@
       if (isGuidedSessionActive()) {
         openScreen(SCR.GUIDED);
       } else {
-        openPracticePlanScreenRequest();
+        openPracticePlanScreenRequest(v ? { lessonId: v, forceRebuild: true } : undefined);
         openScreen(SCR.PLAN);
       }
       render();
