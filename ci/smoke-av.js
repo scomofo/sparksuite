@@ -18,6 +18,9 @@ const lessonsRoot = path.join(repoRoot, 'lessons');
 const DURATION_TOLERANCE_SECONDS = 2;
 const SRT_END_TOLERANCE_SECONDS = 0.5;
 const SILENCE_PEAK_THRESHOLD_DBFS = -40;
+const CLIP_PEAK_THRESHOLD_DBFS = -0.1;
+const DC_OFFSET_THRESHOLD = 0.02;
+const TEMPO_TOLERANCE_BPM = 2;
 
 const failures = [];
 
@@ -30,6 +33,12 @@ function fail(message, artifactPath, hint) {
   console.error(`❌ ${message}`);
   if (artifactPath) console.error(`   Open: ${rel(artifactPath)}`);
   if (hint) console.error(`   Hint: ${hint}`);
+}
+
+function warn(message, artifactPath, hint) {
+  console.warn(`⚠️ ${message}`);
+  if (artifactPath) console.warn(`   Open: ${rel(artifactPath)}`);
+  if (hint) console.warn(`   Hint: ${hint}`);
 }
 
 function pass(message) {
@@ -106,6 +115,26 @@ async function ffmpegVolumedetect(filePath) {
   };
 }
 
+async function ffmpegAstats(filePath) {
+  const result = await execa(
+    'ffmpeg',
+    ['-hide_banner', '-nostats', '-i', filePath, '-af', 'astats=metadata=1:reset=0', '-f', 'null', '-'],
+    { reject: false, all: true }
+  );
+
+  const output = result.all || '';
+  const dcMatches = [...output.matchAll(/DC offset:\s*(-?\d+(?:\.\d+)?)/g)].map((match) => Number.parseFloat(match[1]));
+  const minLevelMatches = [...output.matchAll(/Min level:\s*(-?\d+(?:\.\d+)?)/g)].map((match) => Number.parseFloat(match[1]));
+  const maxLevelMatches = [...output.matchAll(/Max level:\s*(-?\d+(?:\.\d+)?)/g)].map((match) => Number.parseFloat(match[1]));
+
+  return {
+    maxAbsDcOffset: dcMatches.length ? Math.max(...dcMatches.map(Math.abs)) : null,
+    minSampleLevel: minLevelMatches.length ? Math.min(...minLevelMatches) : null,
+    maxSampleLevel: maxLevelMatches.length ? Math.max(...maxLevelMatches) : null,
+    output
+  };
+}
+
 function parseSrtTime(hh, mm, ss, ms) {
   return Number(hh) * 3600 + Number(mm) * 60 + Number(ss) + Number(ms) / 1000;
 }
@@ -147,6 +176,40 @@ function checkManifestBasics(manifest, manifestPath) {
   }
 }
 
+async function checkMuseScoreSource(baseDir, manifest) {
+  const sourceFile = manifest.source?.musescore || manifest.source?.mscz;
+  if (!sourceFile) return;
+
+  const sourcePath = path.join(baseDir, sourceFile);
+  if (!(await exists(sourcePath))) {
+    fail(`MuseScore source missing: ${sourceFile}`, sourcePath, 'Add the .mscz file or remove manifest.source.musescore');
+    return;
+  }
+
+  const outputPdf = path.join(baseDir, manifest.pdf?.file || `${manifest.lesson_id}.pdf`);
+  const candidates = ['mscore', 'musescore', 'musescore3', 'mscore3'];
+  let exported = false;
+  let lastError = '';
+
+  for (const command of candidates) {
+    const result = await execa(command, ['-o', outputPdf, sourcePath], { reject: false, all: true });
+    if (result.exitCode === 0) {
+      exported = true;
+      pass(`${rel(sourcePath)} MuseScore export OK`);
+      break;
+    }
+    lastError = result.all || result.stderr || result.stdout || result.message;
+  }
+
+  if (!exported) {
+    warn(
+      'MuseScore source export was skipped or failed',
+      sourcePath,
+      `Ensure MuseScore CLI is installed. Last output: ${lastError.slice(0, 180)}`
+    );
+  }
+}
+
 async function checkPdf(baseDir, manifest) {
   const pdfPath = await checkRequiredFile(baseDir, manifest.pdf?.file, 'PDF');
   if (!pdfPath) return;
@@ -172,6 +235,23 @@ async function checkPdf(baseDir, manifest) {
       pdfPath,
       'Update manifest.key or manifest.pdf.expected_key so they agree'
     );
+  }
+}
+
+async function checkAudioSanity(wavPath, volume) {
+  if (volume.maxDbfs !== null && volume.maxDbfs > CLIP_PEAK_THRESHOLD_DBFS) {
+    fail(`WAV peak ${volume.maxDbfs} dBFS is too hot`, wavPath, 'Leave at least 1 dB of headroom on export');
+  }
+
+  try {
+    const stats = await ffmpegAstats(wavPath);
+    if (stats.maxAbsDcOffset !== null && stats.maxAbsDcOffset > DC_OFFSET_THRESHOLD) {
+      fail(`WAV DC offset ${stats.maxAbsDcOffset.toFixed(4)} is too high`, wavPath, 'Run DC offset removal or re-export the source');
+    } else if (stats.maxAbsDcOffset !== null) {
+      pass(`${rel(wavPath)} DC offset OK`);
+    }
+  } catch (error) {
+    warn(`Could not run detailed audio sanity checks: ${error.message}`, wavPath, 'Basic audio checks still ran');
   }
 }
 
@@ -223,6 +303,7 @@ async function checkWav(baseDir, manifest) {
       pass(`${rel(wavPath)} audible peak OK`);
     }
 
+    await checkAudioSanity(wavPath, volume);
     return { path: wavPath, duration };
   } catch (error) {
     fail(`Could not inspect WAV: ${error.message}`, wavPath, 'Confirm ffmpeg is installed and the WAV is valid PCM');
@@ -292,6 +373,33 @@ async function checkSrt(baseDir, manifest, wavInfo) {
   }
 }
 
+function checkBeatGrid(manifest, manifestPath) {
+  if (!manifest.beat_grid) return;
+
+  const { bpm, time_signature: timeSignature, downbeats_s: downbeats } = manifest.beat_grid;
+  if (!bpm || !timeSignature || !Array.isArray(downbeats)) {
+    fail('manifest.beat_grid is incomplete', manifestPath, 'Set beat_grid.bpm, beat_grid.time_signature, and beat_grid.downbeats_s');
+    return;
+  }
+
+  if (Math.abs(bpm - manifest.tempo_bpm) > TEMPO_TOLERANCE_BPM) {
+    fail(`beat_grid.bpm ${bpm} does not match tempo_bpm ${manifest.tempo_bpm}`, manifestPath, 'Regenerate the beat grid or update tempo_bpm');
+  }
+
+  for (let index = 1; index < downbeats.length; index += 1) {
+    if (downbeats[index] <= downbeats[index - 1]) {
+      fail('beat_grid.downbeats_s is not strictly ascending', manifestPath, 'Regenerate beat grid downbeat timestamps');
+      return;
+    }
+  }
+
+  if (downbeats.at(-1) > manifest.duration_s + DURATION_TOLERANCE_SECONDS) {
+    fail('beat_grid.downbeats_s extends past lesson duration', manifestPath, 'Trim the beat grid or update duration_s');
+  } else {
+    pass('beat grid metadata OK');
+  }
+}
+
 async function checkLesson(baseDir) {
   console.log(`\nChecking ${rel(baseDir)}`);
   const manifestPath = path.join(baseDir, 'manifest.json');
@@ -299,10 +407,12 @@ async function checkLesson(baseDir) {
   if (!manifest) return;
 
   checkManifestBasics(manifest, manifestPath);
+  await checkMuseScoreSource(baseDir, manifest);
   await checkPdf(baseDir, manifest);
   const wavInfo = await checkWav(baseDir, manifest);
   await checkMp3(baseDir, manifest, wavInfo);
   await checkSrt(baseDir, manifest, wavInfo);
+  checkBeatGrid(manifest, manifestPath);
 }
 
 async function main() {
