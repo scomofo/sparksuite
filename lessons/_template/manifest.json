@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "lesson_id": "template-lesson-id",
+  "title": "Lesson Title",
+  "tempo_bpm": 92,
+  "time_signature": "4/4",
+  "key": "C",
+  "duration_s": 120,
+  "rms_dbfs_target": {
+    "min": -18,
+    "max": -10
+  },
+  "audio": {
+    "wav": "lesson.wav",
+    "mp3": "lesson.mp3",
+    "sample_rate_hz": 44100,
+    "bit_depth": 16
+  },
+  "pdf": {
+    "file": "lesson.pdf",
+    "expected_pages": 1,
+    "expected_key": "C"
+  },
+  "captions": {
+    "srt": "lesson.srt",
+    "language": "en"
+  },
+  "source": {
+    "musescore": "source/lesson.mscz"
+  },
+  "beat_grid": {
+    "bpm": 92,
+    "time_signature": "4/4",
+    "downbeats_s": [
+      0,
+      2.608,
+      5.217
+    ]
+  },
+  "tags": [
+    "beginner",
+    "rhythm"
+  ]
+}
