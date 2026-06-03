@@ -49,12 +49,13 @@ for (const file of files) {
     stdio: quiet ? 'pipe' : 'inherit',
   });
   const ok = run.status === 0;
-  results.push({ file, ok, code: run.status });
+  const exitInfo = run.status !== null ? `exit ${run.status}` : run.signal ? `signal ${run.signal}` : 'spawn failed';
+  results.push({ file, ok, exitInfo });
   if (!quiet) {
-    console.log(`${ok ? 'PASS' : 'FAIL'}  ${file}${ok ? '' : `  (exit ${run.status})`}`);
+    console.log(`${ok ? 'PASS' : 'FAIL'}  ${file}${ok ? '' : `  (${exitInfo})`}`);
   } else if (!ok) {
     // In quiet mode, surface failing output so the failure is debuggable.
-    console.log(`\nFAIL  ${file}  (exit ${run.status})`);
+    console.log(`\nFAIL  ${file}  (${exitInfo})`);
     if (run.stdout) process.stdout.write(run.stdout.split('\n').slice(-15).join('\n') + '\n');
     if (run.stderr) process.stderr.write(run.stderr);
   }
@@ -68,7 +69,7 @@ console.log('\n' + '='.repeat(48));
 console.log(`Test files: ${results.length} | passed: ${passed.length} | failed: ${failed.length} | ${seconds}s`);
 if (failed.length) {
   console.log('\nFailing files:');
-  for (const r of failed) console.log(`  - ${r.file} (exit ${r.code})`);
+  for (const r of failed) console.log(`  - ${r.file} (${r.exitInfo})`);
 }
 console.log('='.repeat(48));
 

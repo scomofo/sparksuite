@@ -2,7 +2,7 @@
 /*
  * SparkSuite lesson A/V smoke tests
  *
- * Validates lesson assets described by lessons/**/manifest.json.
+ * Validates lesson assets described by each lessons/<id>/manifest.json.
  * Designed to fail with teacher-friendly messages rather than raw stack traces.
  */
 

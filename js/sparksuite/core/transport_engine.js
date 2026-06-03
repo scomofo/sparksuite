@@ -170,13 +170,16 @@
     var deltaSec = Math.max(0, (nowMs - this._lastTickMs) / 1000);
     this._lastTickMs = nowMs;
 
+    var newPositionSec = this._snapshot.positionSec + deltaSec;
+    var durationSec = this._snapshot.durationSec;
+    var fallbackDone = durationSec > 0 && newPositionSec >= durationSec;
     var next = this.timingCore && typeof this.timingCore.advanceTransport === "function"
       ? this.timingCore.advanceTransport(this._snapshot, deltaSec)
       : this._createSnapshot({
-        status: "running",
+        status: fallbackDone ? "completed" : "running",
         sourceId: this._snapshot.sourceId,
-        durationSec: this._snapshot.durationSec,
-        positionSec: this._snapshot.positionSec + deltaSec,
+        durationSec: durationSec,
+        positionSec: fallbackDone ? durationSec : newPositionSec,
         beatGrid: this._snapshot.beatGrid
       });
 
