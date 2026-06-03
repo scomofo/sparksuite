@@ -52,12 +52,12 @@ test("session engine prefers instrumentContext.instrumentType for Spotify chart 
 
 test("SparkCore.startSpotifySession prefers the active instrument type when input omits instrument", function() {
   global.window = global;
-  global.SparkCore = function SparkCore() {};
-  global.SparkCore.prototype.updateRuntimeState = function() {};
+  global.SparkSuiteCore = function SparkSuiteCore() {};
+  global.SparkSuiteCore.prototype.updateRuntimeState = function() {};
   global.eval(loadJS("js/sparksuite/core/spotify_integration.js"));
 
   var captured = null;
-  var core = new SparkCore();
+  var core = new SparkSuiteCore();
   core.instrumentManager = {
     getActiveContext: function() {
       return {
