@@ -180,7 +180,7 @@ eval(loadJS("js/sparksuite/instruments/guitar/guitar_rhythm_curriculum.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/guitar_rhythm_adapter.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/guitar_adapter.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/index.js"));
-eval(loadJS("js/sparksuite/core/storage.js"));
+eval(loadJS("js/sparksuite/core/session_state.js"));
 eval(loadJS("js/sparksuite/core/ai_engine.js"));
 eval(loadJS("js/sparksuite/core/instrument_manager.js"));
 eval(loadJS("js/sparksuite/core/psychology_engine.js"));
