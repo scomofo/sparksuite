@@ -1,5 +1,9 @@
 (function(){
 
+  function createSparkChart() {
+    return { id: "", songId: "", arrangementType: "", bpm: 80, title: "", events: [], phrases: [], metadata: {} };
+  }
+
   function buildSeedChartFromImportedMidi(normalizedMidi, assignments, targetMode){
     if(!normalizedMidi) return null;
     if(targetMode==="piano_block_chords") return buildPianoBlockChordSeed(normalizedMidi, assignments);
