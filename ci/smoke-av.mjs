@@ -68,7 +68,7 @@ async function findManifestDirs(root) {
 
     await Promise.all(
       entries
-        .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'))
+        .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.') && !entry.name.startsWith('_'))
         .map((entry) => walk(path.join(dir, entry.name)))
     );
   }
