@@ -14,10 +14,21 @@
         { beat: 4, laneMask: 1, label: "G5", skillId: "gtr_power_chords" },
         { beat: 5, laneMask: 5, label: "B5", skillId: "gtr_power_chords" },
         { beat: 6, laneMask: 3, label: "A5", skillId: "gtr_power_chords" },
-        { beat: 7, laneMask: 1, label: "G5", skillId: "gtr_power_chords" }
+        { beat: 7, laneMask: 1, label: "G5", skillId: "gtr_power_chords" },
+        // Phrase B (beats 8-15). Placeholder: repeats Phrase A. Replace with
+        // the intended second-phrase pattern when finalizing this drill.
+        { beat: 8, laneMask: 1, label: "G5", skillId: "gtr_power_chords" },
+        { beat: 9, laneMask: 1, label: "G5", skillId: "gtr_power_chords" },
+        { beat: 10, laneMask: 3, label: "A5", skillId: "gtr_power_chords" },
+        { beat: 11, laneMask: 3, label: "A5", skillId: "gtr_power_chords" },
+        { beat: 12, laneMask: 1, label: "G5", skillId: "gtr_power_chords" },
+        { beat: 13, laneMask: 5, label: "B5", skillId: "gtr_power_chords" },
+        { beat: 14, laneMask: 3, label: "A5", skillId: "gtr_power_chords" },
+        { beat: 15, laneMask: 1, label: "G5", skillId: "gtr_power_chords" }
       ],
       phrases: [
-        { id: 0, name: "Phrase A", startBeat: 0, endBeat: 8, flags: { special: true } }
+        { id: 0, name: "Phrase A", startBeat: 0, endBeat: 8, flags: { special: true } },
+        { id: 1, name: "Phrase B", startBeat: 8, endBeat: 16, flags: { special: true } }
       ]
     }
   };

@@ -119,7 +119,7 @@
   };
 
   SparkTransportEngine.prototype.pause = function() {
-    this.tick();
+    this._advance();
     this._lastTickMs = null;
     this._snapshot = this._createSnapshot({
       status: "paused",
@@ -158,13 +158,13 @@
     return this._emit("seek");
   };
 
-  SparkTransportEngine.prototype.tick = function(nowMs) {
+  SparkTransportEngine.prototype._advance = function(nowMs) {
     nowMs = _num(nowMs, _nowMs(this.clock));
-    if (this._snapshot.status !== "running") return this.getSnapshot();
+    if (this._snapshot.status !== "running") return false;
 
     if (this._lastTickMs == null) {
       this._lastTickMs = nowMs;
-      return this.getSnapshot();
+      return false;
     }
 
     var deltaSec = Math.max(0, (nowMs - this._lastTickMs) / 1000);
@@ -182,7 +182,13 @@
 
     next.sourceId = this._snapshot.sourceId;
     this._snapshot = next;
-    this._emit(this._snapshot.status === "completed" ? "complete" : "tick");
+    return true;
+  };
+
+  SparkTransportEngine.prototype.tick = function(nowMs) {
+    if (this._advance(nowMs)) {
+      this._emit(this._snapshot.status === "completed" ? "complete" : "tick");
+    }
     return this.getSnapshot();
   };
 
