@@ -216,12 +216,19 @@
   };
 
   SparkTimingCore.prototype.validateBeatGrid = function(input) {
-    var grid = _normalizeBeatGrid(input || {});
+    input = input || {};
+    var grid = _normalizeBeatGrid(input);
     var issues = [];
 
-    if (grid.bpm <= 0) issues.push({ code: "invalid_bpm", message: "BPM must be greater than zero" });
-    for (var i = 1; i < grid.downbeats.length; i++) {
-      if (grid.downbeats[i] <= grid.downbeats[i - 1]) {
+    // Validate the RAW input, not the normalized grid. _normalizeBeatGrid
+    // clamps bpm to >= 1 and sorts/filters downbeats, which would mask the
+    // very problems this method exists to report.
+    var rawBpm = _num(input.bpm || input.tempo_bpm, 120);
+    if (rawBpm <= 0) issues.push({ code: "invalid_bpm", message: "BPM must be greater than zero" });
+
+    var rawDownbeats = Array.isArray(input.downbeats_s) ? input.downbeats_s : [];
+    for (var i = 1; i < rawDownbeats.length; i++) {
+      if (_num(rawDownbeats[i], 0) <= _num(rawDownbeats[i - 1], 0)) {
         issues.push({ code: "downbeats_not_ascending", message: "Downbeats must be strictly ascending" });
         break;
       }
