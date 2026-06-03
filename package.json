@@ -22,7 +22,7 @@
     "cap:sync": "npx cap sync",
     "cap:android": "npx cap open android",
     "cap:ios": "npx cap open ios",
-    "test:av": "node ci/smoke-av.js",
+    "test:av": "node ci/smoke-av.mjs",
     "test": "node tests/run-tests.js"
   },
   "author": "SparkSuite",

@@ -227,8 +227,13 @@
     if (rawBpm <= 0) issues.push({ code: "invalid_bpm", message: "BPM must be greater than zero" });
 
     var rawDownbeats = Array.isArray(input.downbeats_s) ? input.downbeats_s : [];
-    for (var i = 1; i < rawDownbeats.length; i++) {
-      if (_num(rawDownbeats[i], 0) <= _num(rawDownbeats[i - 1], 0)) {
+    for (var i = 0; i < rawDownbeats.length; i++) {
+      var dv = _num(rawDownbeats[i], null);
+      if (dv === null || dv < 0) {
+        issues.push({ code: "invalid_downbeat", message: "Downbeats must be non-negative numbers" });
+        break;
+      }
+      if (i > 0 && dv <= _num(rawDownbeats[i - 1], 0)) {
         issues.push({ code: "downbeats_not_ascending", message: "Downbeats must be strictly ascending" });
         break;
       }
