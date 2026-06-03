@@ -1,7 +1,7 @@
 (function() {
   function SparkSuiteCore(options) {
     options = options || {};
-    this.storage = options.storage || new SparkSuiteStorage();
+    this.sessionState = options.sessionState || new SparkSuiteSessionState();
     this.aiEngine = options.aiEngine || new SparkAIEngine();
     this.instrumentManager = options.instrumentManager || new SparkInstrumentManager();
     this.psychologyEngine = options.psychologyEngine || new SparkSuitePsychologyEngine();
@@ -368,7 +368,7 @@
       });
     }
     this.currentPlan = plan;
-    this.storage.setCurrentPlanId(plan.id);
+    this.sessionState.setCurrentPlanId(plan.id);
     this.updateRuntimeState({
       activeFlow: plan.flow,
       activeInstrumentId: plan.instrumentId || plan.instrumentType || null,
@@ -439,7 +439,7 @@
     var legacy = plan.context && plan.context.legacyPractice ? plan.context.legacyPractice : {};
 
     this.currentPlan = plan;
-    this.storage.setCurrentPlanId(plan.id);
+    this.sessionState.setCurrentPlanId(plan.id);
     this.updateRuntimeState({
       activeFlow: plan.flow,
       activeInstrumentId: plan.instrumentId || plan.instrumentType || null,
@@ -1702,7 +1702,7 @@
       lastCompletedFlow: result.planCompleted && this.currentPlan ? this.currentPlan.flow : this.runtimeState.lastCompletedFlow,
       lastOutcomeSummary: result.completionSummary || result.performanceSummary || result.itemResultSummary || null
     });
-    if (result.planCompleted) this.storage.setCurrentPlanId(this.currentPlan.id);
+    if (result.planCompleted) this.sessionState.setCurrentPlanId(this.currentPlan.id);
     return result;
   };
 
