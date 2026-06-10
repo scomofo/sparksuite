@@ -1,5 +1,12 @@
 (function(){
 
+  // Formerly js/core/contracts.js; relocated here (its only consumer) when
+  // js/core/ was retired. The bare `createAnalyticsSummaryShell ?` guard
+  // below throws ReferenceError for undeclared globals, so this must exist.
+  function createAnalyticsSummaryShell(){
+    return { weakestTransitions:[], weakestSongs:[], weakestPhrases:[], strongestSkills:[], recentImprovement:[], practiceConsistency:{}, recommendations:[] };
+  }
+
   function buildAnalyticsSummary(){
     var summary = createAnalyticsSummaryShell
       ? createAnalyticsSummaryShell()

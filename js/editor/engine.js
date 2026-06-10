@@ -3,6 +3,13 @@
 
 (function(){
 
+  // Formerly js/core/contracts.js; relocated here (its only consumer) when
+  // js/core/ was retired. The bare `createPerformanceChartShell ?` guard in
+  // createEmptyChart throws ReferenceError for undeclared globals.
+  function createPerformanceChartShell(){
+    return { id:"", songId:"", title:"", artist:"", arrangementType:"", bpm:80, phrases:[], events:[] };
+  }
+
   function openEditor(mode, object){
     S.editorMode = mode || "chart";
     S.editorObject = object ? deepClone(object) : createEmptyEditorObject(S.editorMode);
