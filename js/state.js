@@ -342,6 +342,43 @@ var PERSIST_FIELDS=["activeInstrument","xp","streak","sessions","drillCount","da
   "completedCurriculumLessons","editorLibrary",
   "releaseInfo","profile","onboardingFlow"];
 
+// Persistence helpers — formerly js/core/persistence.js; relocated here (their
+// only consumer) when js/core/ was retired. state.js loads before render/app,
+// so these must live in this file or one loaded earlier.
+function buildPersistedStateSnapshot(state,fields){
+  var out={};
+  for(var i=0;i<fields.length;i++){
+    var key=fields[i];
+    out[key]=state[key];
+  }
+  return out;
+}
+
+function applyPersistedStateSnapshot(state,snapshot,fields){
+  if(!snapshot)return;
+  for(var i=0;i<fields.length;i++){
+    var key=fields[i];
+    if(snapshot[key]!==undefined){
+      state[key]=snapshot[key];
+    }
+  }
+}
+
+function capArray(arr,maxLen){
+  if(!Array.isArray(arr))return [];
+  if(arr.length<=maxLen)return arr;
+  return arr.slice(arr.length-maxLen);
+}
+
+function safeJsonParse(raw,fallback){
+  try{return JSON.parse(raw);}catch(e){return fallback;}
+}
+
+function removePersistedBackup(storageKey){
+  try{localStorage.removeItem(storageKey);}
+  catch(e){console.error("Spark: removePersistedBackup failed",e);}
+}
+
 // Debounced save — prevents localStorage thrashing on rapid actions (drills, quizzes)
 var _saveTimer=null;
 function saveState(immediate){
