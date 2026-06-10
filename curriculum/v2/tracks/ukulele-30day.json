@@ -1,0 +1,1261 @@
+{
+  "version": "2026-04-24",
+  "instrument": "ukulele",
+  "title": "Ukulele 30-Day ADHD-First Track",
+  "session_count": 30,
+  "sessions": [
+    {
+      "id": "uke-d01",
+      "instrument": "ukulele",
+      "day": 1,
+      "title": "First strum",
+      "novelty_count": 1,
+      "new_elements": [
+        "open-string-downstrum"
+      ],
+      "prerequisites": [],
+      "target_duration_min": 10,
+      "focus_song": "freeplay over reggae loop",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d01-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d01-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d01-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d01-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "uke-d02",
+      "instrument": "ukulele",
+      "day": 2,
+      "title": "Tuning the uke",
+      "novelty_count": 1,
+      "new_elements": [
+        "tuner-use"
+      ],
+      "prerequisites": [
+        "uke-d01"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "tuner",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d02-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d02-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d02-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d02-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "uke-d03",
+      "instrument": "ukulele",
+      "day": 3,
+      "title": "The C chord",
+      "novelty_count": 1,
+      "new_elements": [
+        "one-finger-chord"
+      ],
+      "prerequisites": [
+        "uke-d02"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "\"Three Little Birds\" chorus",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d03-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d03-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d03-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d03-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "count",
+        "detail": "8 clean",
+        "prompt": "Hit the target: 8 clean."
+      }
+    },
+    {
+      "id": "uke-d04",
+      "instrument": "ukulele",
+      "day": 4,
+      "title": "C with a reggae loop",
+      "novelty_count": 1,
+      "new_elements": [
+        "c-in-rhythm"
+      ],
+      "prerequisites": [
+        "uke-d03"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "reggae at 90",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d04-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d04-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d04-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d04-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "timed",
+        "detail": "3 min",
+        "prompt": "Stay with it for 3 min."
+      }
+    },
+    {
+      "id": "uke-d05",
+      "instrument": "ukulele",
+      "day": 5,
+      "title": "The Am chord",
+      "novelty_count": 1,
+      "new_elements": [
+        "two-finger-chord"
+      ],
+      "prerequisites": [
+        "uke-d04"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "C to Am drill",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d05-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d05-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d05-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d05-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "count",
+        "detail": "4 changes",
+        "prompt": "Hit the target: 4 changes."
+      }
+    },
+    {
+      "id": "uke-d06",
+      "instrument": "ukulele",
+      "day": 6,
+      "title": "The F chord",
+      "novelty_count": 1,
+      "new_elements": [
+        "two-finger-chord"
+      ],
+      "prerequisites": [
+        "uke-d05"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "C-Am-F loop",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d06-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d06-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d06-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d06-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "count",
+        "detail": "8 clean",
+        "prompt": "Hit the target: 8 clean."
+      }
+    },
+    {
+      "id": "uke-d07",
+      "instrument": "ukulele",
+      "day": 7,
+      "title": "\"I'm Yours\" simplified",
+      "novelty_count": 1,
+      "new_elements": [
+        "c-am-f"
+      ],
+      "prerequisites": [
+        "uke-d06"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "the song",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d07-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d07-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d07-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d07-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "uke-d08",
+      "instrument": "ukulele",
+      "day": 8,
+      "title": "The G7 chord",
+      "novelty_count": 1,
+      "new_elements": [
+        "three-finger"
+      ],
+      "prerequisites": [
+        "uke-d07"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "C-Am-F-G7",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d08-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d08-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d08-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d08-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "count",
+        "detail": "8 clean",
+        "prompt": "Hit the target: 8 clean."
+      }
+    },
+    {
+      "id": "uke-d09",
+      "instrument": "ukulele",
+      "day": 9,
+      "title": "\"Stand By Me\" on uke",
+      "novelty_count": 1,
+      "new_elements": [
+        "full-c-am-f-g7"
+      ],
+      "prerequisites": [
+        "uke-d08"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "the song",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d09-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d09-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d09-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d09-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "uke-d10",
+      "instrument": "ukulele",
+      "day": 10,
+      "title": "Review and free play",
+      "novelty_count": 0,
+      "new_elements": [],
+      "prerequisites": [
+        "uke-d09"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "user picks",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d10-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d10-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d10-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d10-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "uke-d11",
+      "instrument": "ukulele",
+      "day": 11,
+      "title": "Island strum (D-DU-UDU)",
+      "novelty_count": 1,
+      "new_elements": [
+        "strum-pattern"
+      ],
+      "prerequisites": [
+        "uke-d10"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "\"Stand By Me\"",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d11-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d11-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d11-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d11-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "uke-d12",
+      "instrument": "ukulele",
+      "day": 12,
+      "title": "The G chord",
+      "novelty_count": 1,
+      "new_elements": [
+        "three-finger-triangle"
+      ],
+      "prerequisites": [
+        "uke-d11"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "\"You Are My Sunshine\"",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d12-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d12-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d12-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d12-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "count",
+        "detail": "8 clean",
+        "prompt": "Hit the target: 8 clean."
+      }
+    },
+    {
+      "id": "uke-d13",
+      "instrument": "ukulele",
+      "day": 13,
+      "title": "\"Sunshine\" on uke",
+      "novelty_count": 1,
+      "new_elements": [
+        "c-f-g"
+      ],
+      "prerequisites": [
+        "uke-d12"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "the song",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d13-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d13-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d13-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d13-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "uke-d14",
+      "instrument": "ukulele",
+      "day": 14,
+      "title": "The Em chord",
+      "novelty_count": 1,
+      "new_elements": [
+        "two-finger"
+      ],
+      "prerequisites": [
+        "uke-d13"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "\"Riptide\" intro",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d14-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d14-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d14-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d14-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "uke-d15",
+      "instrument": "ukulele",
+      "day": 15,
+      "title": "\"Riptide\" simplified",
+      "novelty_count": 1,
+      "new_elements": [
+        "am-g-c-f"
+      ],
+      "prerequisites": [
+        "uke-d14"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "the song",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d15-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d15-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d15-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d15-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "uke-d16",
+      "instrument": "ukulele",
+      "day": 16,
+      "title": "The D chord",
+      "novelty_count": 1,
+      "new_elements": [
+        "two-finger-on-2nd-fret"
+      ],
+      "prerequisites": [
+        "uke-d15"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "D-Em-G switching",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d16-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d16-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d16-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d16-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "count",
+        "detail": "4 changes",
+        "prompt": "Hit the target: 4 changes."
+      }
+    },
+    {
+      "id": "uke-d17",
+      "instrument": "ukulele",
+      "day": 17,
+      "title": "D7 chord",
+      "novelty_count": 1,
+      "new_elements": [
+        "variant"
+      ],
+      "prerequisites": [
+        "uke-d16"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "Key-of-G song",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d17-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d17-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d17-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d17-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "uke-d18",
+      "instrument": "ukulele",
+      "day": 18,
+      "title": "Review and free play",
+      "novelty_count": 0,
+      "new_elements": [],
+      "prerequisites": [
+        "uke-d17"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "user picks",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d18-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d18-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d18-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d18-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "uke-d19",
+      "instrument": "ukulele",
+      "day": 19,
+      "title": "1-minute changes",
+      "novelty_count": 1,
+      "new_elements": [
+        "chord-change-speed"
+      ],
+      "prerequisites": [
+        "uke-d18"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "metronome",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d19-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d19-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d19-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d19-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "count",
+        "detail": "40 in 60s",
+        "prompt": "Hit the target: 40 in 60s."
+      }
+    },
+    {
+      "id": "uke-d20",
+      "instrument": "ukulele",
+      "day": 20,
+      "title": "Reggae chuck",
+      "novelty_count": 1,
+      "new_elements": [
+        "muted-upstroke"
+      ],
+      "prerequisites": [
+        "uke-d19"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "\"Three Little Birds\" full",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d20-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d20-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d20-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d20-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "uke-d21",
+      "instrument": "ukulele",
+      "day": 21,
+      "title": "\"Three Little Birds\" full",
+      "novelty_count": 1,
+      "new_elements": [
+        "application"
+      ],
+      "prerequisites": [
+        "uke-d20"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "the song",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d21-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d21-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d21-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d21-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "uke-d22",
+      "instrument": "ukulele",
+      "day": 22,
+      "title": "The A7 chord",
+      "novelty_count": 1,
+      "new_elements": [
+        "useful-dominant"
+      ],
+      "prerequisites": [
+        "uke-d21"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "in context",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d22-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d22-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d22-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d22-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "uke-d23",
+      "instrument": "ukulele",
+      "day": 23,
+      "title": "Review and free play",
+      "novelty_count": 0,
+      "new_elements": [],
+      "prerequisites": [
+        "uke-d22"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "user picks",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d23-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d23-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d23-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d23-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "uke-d24",
+      "instrument": "ukulele",
+      "day": 24,
+      "title": "The C7 chord",
+      "novelty_count": 1,
+      "new_elements": [
+        "dominant-variant"
+      ],
+      "prerequisites": [
+        "uke-d23"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "blues-ish vamp",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d24-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d24-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d24-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d24-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "uke-d25",
+      "instrument": "ukulele",
+      "day": 25,
+      "title": "Basic 12-bar blues (C7-F7-G7)",
+      "novelty_count": 1,
+      "new_elements": [
+        "form"
+      ],
+      "prerequisites": [
+        "uke-d24"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "blues loop",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d25-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d25-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d25-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d25-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "timed",
+        "detail": "4 min",
+        "prompt": "Stay with it for 4 min."
+      }
+    },
+    {
+      "id": "uke-d26",
+      "instrument": "ukulele",
+      "day": 26,
+      "title": "Fingerpicking: thumb and index",
+      "novelty_count": 1,
+      "new_elements": [
+        "rh-pattern"
+      ],
+      "prerequisites": [
+        "uke-d25"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "C arpeggio",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d26-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d26-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d26-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d26-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "timed",
+        "detail": "3 min",
+        "prompt": "Stay with it for 3 min."
+      }
+    },
+    {
+      "id": "uke-d27",
+      "instrument": "ukulele",
+      "day": 27,
+      "title": "Fingerpicking 4-pattern",
+      "novelty_count": 1,
+      "new_elements": [
+        "classic-pluck"
+      ],
+      "prerequisites": [
+        "uke-d26"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "\"Over the Rainbow\" intro",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d27-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d27-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d27-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d27-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "uke-d28",
+      "instrument": "ukulele",
+      "day": 28,
+      "title": "Review and free play",
+      "novelty_count": 0,
+      "new_elements": [],
+      "prerequisites": [
+        "uke-d27"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "user picks",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d28-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d28-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d28-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d28-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "uke-d29",
+      "instrument": "ukulele",
+      "day": 29,
+      "title": "Showcase prep",
+      "novelty_count": 0,
+      "new_elements": [],
+      "prerequisites": [
+        "uke-d28"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "user's song",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d29-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d29-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d29-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d29-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "uke-d30",
+      "instrument": "ukulele",
+      "day": 30,
+      "title": "Showcase day",
+      "novelty_count": 1,
+      "new_elements": [
+        "record-yourself"
+      ],
+      "prerequisites": [
+        "uke-d29"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "user's song",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "uke-d30-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "uke-d30-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "uke-d30-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "uke-d30-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "record_save",
+        "prompt": "Record a take you want to keep."
+      }
+    }
+  ],
+  "required_chords": [
+    "C",
+    "Am",
+    "F",
+    "G7",
+    "G",
+    "Em",
+    "D",
+    "Dm",
+    "D7",
+    "A7",
+    "C7",
+    "F7"
+  ],
+  "required_scales": [],
+  "required_notes_and_scales": [],
+  "required_songs": [
+    "Three Little Birds",
+    "Stand By Me",
+    "I'm Yours",
+    "You Are My Sunshine",
+    "Riptide",
+    "Over the Rainbow"
+  ],
+  "required_pieces": []
+}

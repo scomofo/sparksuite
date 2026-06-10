@@ -14,6 +14,11 @@ global.SparkInstruments = {
     return [{ id: "pianospark", appId: "pianospark", instrument: "piano" }];
   }
 };
+global.SparkExecutionGateway = {
+  runSessionSegment: function() {
+    return false;
+  }
+};
 
 require("../js/sparksuite/core/session_runtime.js");
 var Runtime = window.SparkSessionRuntime;
@@ -23,6 +28,75 @@ console.log("=== Session Runtime Tests ===");
 test("startSessionLoop returns null without engines", function() {
   var session = Runtime.startSessionLoop();
   assert.strictEqual(session, null);
+});
+
+test("startSessionLoop passes a single request object to sparkCore and supports global-only bindings", function() {
+  var captured = null;
+  global.sparkCore = {
+    startSession: function(request) {
+      captured = request;
+      return {
+        id: "plan_1",
+        flow: request.flow,
+        requestedSessionNum: request.sessionNum,
+        forceRebuild: !!request.forceRebuild,
+        segments: [],
+        exercises: []
+      };
+    }
+  };
+
+  var session = Runtime.startSessionLoop({
+    flow: "guided_session",
+    context: {
+      sessionNum: 3,
+      forceRebuild: true,
+      customSeed: "alpha"
+    }
+  });
+
+  assert.ok(captured);
+  assert.strictEqual(captured.flow, "guided_session");
+  assert.strictEqual(captured.sessionNum, 3);
+  assert.strictEqual(captured.forceRebuild, true);
+  assert.strictEqual(captured.customSeed, "alpha");
+  assert.strictEqual(session.flow, "guided_session");
+  assert.strictEqual(session.requestedSessionNum, 3);
+
+  delete global.sparkCore;
+  Runtime.attachSession(null, {});
+});
+
+test("startSessionLoop primes the first segment as the active ready shell block", function() {
+  global.sparkCore = {
+    startSession: function() {
+      return {
+        id: "plan_2",
+        flow: "daily_practice",
+        segments: [
+          { id: "seg_ready", type: "practice", durationSec: 2, exerciseIds: ["ex_ready"] },
+          { id: "seg_next", type: "song", durationSec: 3, exerciseIds: ["ex_next"] }
+        ],
+        exercises: [
+          { id: "ex_ready", data: { core: { skill: "timing" }, gameplay: {} } },
+          { id: "ex_next", data: { core: { songId: "song_next" }, gameplay: {} } }
+        ]
+      };
+    }
+  };
+
+  var session = Runtime.startSessionLoop();
+
+  assert.strictEqual(session.id, "plan_2");
+  assert.strictEqual(Runtime.getActiveSegmentIndex(), 0);
+  assert.strictEqual(Runtime.getActiveSegment().id, "seg_ready");
+  assert.strictEqual(Runtime.getActiveExercise().id, "ex_ready");
+  assert.strictEqual(Runtime.getSegmentTransport().status, "ready");
+  assert.strictEqual(Runtime.getSegmentTransport().positionMs, 0);
+  assert.strictEqual(Runtime.getSegmentTransport().durationMs, 2000);
+
+  delete global.sparkCore;
+  Runtime.attachSession(null, {});
 });
 
 test("runSegment returns false with no active session", function() {
@@ -48,12 +122,67 @@ test("getActiveSegmentIndex returns -1 initially", function() {
   assert.strictEqual(Runtime.getActiveSegmentIndex(), -1);
 });
 
-test("runSegment normalizes app-id instruments for playable practice payloads", function() {
+test("runSegment delegates segment launches to SparkExecutionGateway when available", function() {
+  var captured = null;
+  var runtimePatch = null;
+  global.SparkExecutionGateway.runSessionSegment = function(session, segment, options) {
+    captured = {
+      session: session,
+      segment: segment,
+      options: options
+    };
+    return "gateway_launch";
+  };
+
+  global.window.sparkCore = {
+    updateRuntimeState: function(patch) {
+      runtimePatch = patch;
+      return patch;
+    },
+    startSession: function() {
+      return {
+        segments: [{ id: "seg_1", type: "practice", exerciseIds: ["ex_1"] }],
+        exercises: [{
+          id: "ex_1",
+          data: {
+            core: { skill: "timing", instrument: "pianospark" },
+            gameplay: { payload: { adapterType: "pianospark" } }
+          }
+        }]
+      };
+    }
+  };
+
+  Runtime.startSessionLoop();
+  var launched = Runtime.runSegment(0, { scheduleTick: false });
+
+  assert.strictEqual(launched, "gateway_launch");
+  assert.ok(captured);
+  assert.strictEqual(captured.segment.id, "seg_1");
+  assert.strictEqual(captured.options.source, "session_runtime");
+  assert.strictEqual(captured.options.segmentIndex, 0);
+  assert.strictEqual(captured.options.exercise.id, "ex_1");
+  assert.strictEqual(Runtime.getActiveSegment().id, "seg_1");
+  assert.strictEqual(Runtime.getActiveExercise().id, "ex_1");
+  assert.ok(runtimePatch);
+  assert.strictEqual(runtimePatch.activeSegmentId, "seg_1");
+  assert.strictEqual(runtimePatch.transport.status, "running");
+  assert.strictEqual(runtimePatch.transport.positionMs, 0);
+  assert.strictEqual(Runtime.getSegmentTransport().status, "running");
+
+  delete global.window.sparkCore;
+  global.SparkExecutionGateway.runSessionSegment = function() {
+    return false;
+  };
+});
+
+test("runSegment falls back to direct legacy launchers when SparkExecutionGateway is unavailable", function() {
   var captured = null;
   global.startPlayableRhythmHighwayPayload = function(payload, options) {
     captured = { payload: payload, options: options };
     return true;
   };
+  delete global.SparkExecutionGateway;
 
   global.window.sparkCore = {
     startSession: function() {
@@ -71,7 +200,7 @@ test("runSegment normalizes app-id instruments for playable practice payloads", 
   };
 
   Runtime.startSessionLoop();
-  var launched = Runtime.runSegment(0);
+  var launched = Runtime.runSegment(0, { scheduleTick: false });
 
   assert.strictEqual(launched, true);
   assert.ok(captured);
@@ -79,6 +208,274 @@ test("runSegment normalizes app-id instruments for playable practice payloads", 
 
   delete global.window.sparkCore;
   delete global.startPlayableRhythmHighwayPayload;
+  global.SparkExecutionGateway = {
+    runSessionSegment: function() {
+      return false;
+    }
+  };
+});
+
+test("runSegment keeps shell-only ukulele mini-session blocks live when gateway declines launch", function() {
+  var gatewayCalls = 0;
+  global.SparkExecutionGateway.runSessionSegment = function() {
+    gatewayCalls++;
+    return true;
+  };
+  global.window.sparkCore = {
+    updateRuntimeState: function() {
+      return true;
+    },
+    startSession: function() {
+      return {
+        flow: "daily_practice",
+        segments: [{
+          id: "uke_favorites_set_a_warmup",
+          type: "warmup",
+          label: "Warm-up Strum",
+          durationSec: 120,
+          meta: { ukuleleMiniSessionId: "uke_favorites_set_a" },
+          exerciseIds: []
+        }],
+        exercises: []
+      };
+    }
+  };
+
+  Runtime.startSessionLoop();
+  var launched = Runtime.runSegmentById("uke_favorites_set_a_warmup", { scheduleTick: false });
+
+  assert.strictEqual(launched, true);
+  assert.strictEqual(Runtime.getActiveSegment().id, "uke_favorites_set_a_warmup");
+  assert.strictEqual(Runtime.getSegmentTransport().status, "running");
+  assert.strictEqual(Runtime.getSegmentTransport().durationMs, 120000);
+  assert.strictEqual(gatewayCalls, 0);
+
+  delete global.window.sparkCore;
+});
+
+test("syncSegmentTransport updates transport progress and auto-advances timed segments", function() {
+  var launches = [];
+  var runtimePatches = [];
+
+  global.SparkExecutionGateway.runSessionSegment = function(session, segment) {
+    launches.push(segment.id);
+    return true;
+  };
+
+  global.window.sparkCore = {
+    updateRuntimeState: function(patch) {
+      runtimePatches.push(patch);
+      return patch;
+    },
+    startSession: function() {
+      return {
+        flow: "daily_practice",
+        segments: [
+          { id: "seg_1", type: "practice", durationSec: 1, exerciseIds: ["ex_1"] },
+          { id: "seg_2", type: "song", durationSec: 2, exerciseIds: ["ex_2"] }
+        ],
+        exercises: [
+          {
+            id: "ex_1",
+            data: {
+              core: { skill: "timing", instrument: "pianospark" },
+              gameplay: { payload: { adapterType: "pianospark" } }
+            }
+          },
+          {
+            id: "ex_2",
+            data: {
+              core: { songId: "song_2", arrangementType: "chords" },
+              gameplay: {}
+            }
+          }
+        ]
+      };
+    }
+  };
+
+  Runtime.startSessionLoop();
+  Runtime.runSegment(0, { nowMs: 1000, scheduleTick: false });
+  Runtime.syncSegmentTransport("tick", { nowMs: 1400 });
+
+  assert.strictEqual(Runtime.getActiveSegmentIndex(), 0);
+  assert.strictEqual(Runtime.getSegmentTransport().positionMs, 400);
+  assert.strictEqual(runtimePatches[runtimePatches.length - 1].transport.positionMs, 400);
+
+  Runtime.syncSegmentTransport("tick", { nowMs: 2100, scheduleTick: false });
+
+  assert.deepStrictEqual(launches, ["seg_1", "seg_2"]);
+  assert.strictEqual(Runtime.getActiveSegmentIndex(), 1);
+  assert.strictEqual(Runtime.getActiveSegment().id, "seg_2");
+  assert.strictEqual(Runtime.getActiveSession().segments[0].completed, true);
+  assert.strictEqual(Runtime.getSegmentTransport().status, "running");
+  assert.strictEqual(Runtime.getSegmentTransport().positionMs, 0);
+  assert.strictEqual(runtimePatches[runtimePatches.length - 1].activeSegmentId, "seg_2");
+  assert.strictEqual(runtimePatches[runtimePatches.length - 1].transport.status, "running");
+  assert.strictEqual(runtimePatches[runtimePatches.length - 1].transport.positionMs, 0);
+
+  delete global.window.sparkCore;
+  global.SparkExecutionGateway.runSessionSegment = function() {
+    return false;
+  };
+});
+
+test("runSegmentById launches the matching active session segment", function() {
+  var launches = [];
+  global.SparkExecutionGateway.runSessionSegment = function(session, segment) {
+    launches.push(segment.id);
+    return true;
+  };
+
+  Runtime.attachSession({
+    flow: "daily_practice",
+    segments: [
+      { id: "seg_a", type: "practice", exerciseIds: ["ex_a"] },
+      { id: "seg_b", type: "song", exerciseIds: ["ex_b"] }
+    ],
+    exercises: [
+      { id: "ex_a", data: { core: { skill: "timing" }, gameplay: {} } },
+      { id: "ex_b", data: { core: { songId: "song_b" }, gameplay: {} } }
+    ]
+  }, { segmentId: "seg_a", status: "ready", scheduleTick: false });
+
+  var launched = Runtime.runSegmentById("seg_b", { scheduleTick: false });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(launches, ["seg_b"]);
+  assert.strictEqual(Runtime.getActiveSegment().id, "seg_b");
+});
+
+test("named transport helpers pause, resume, and complete the active segment", function() {
+  var runtimePatches = [];
+  global.SparkExecutionGateway.runSessionSegment = function() {
+    return true;
+  };
+  global.window.sparkCore = {
+    updateRuntimeState: function(patch) {
+      runtimePatches.push(patch);
+      return patch;
+    }
+  };
+
+  Runtime.attachSession({
+    flow: "daily_practice",
+    segments: [
+      { id: "seg_transport", type: "practice", durationSec: 2, exerciseIds: ["ex_transport"] }
+    ],
+    exercises: [
+      { id: "ex_transport", data: { core: { skill: "timing" }, gameplay: {} } }
+    ]
+  }, {
+    segmentId: "seg_transport",
+    status: "running",
+    positionMs: 600,
+    nowMs: 1000,
+    scheduleTick: false
+  });
+
+  Runtime.pauseActiveSegment({ nowMs: 1400 });
+  assert.strictEqual(Runtime.getSegmentTransport().status, "paused");
+  assert.strictEqual(Runtime.getSegmentTransport().positionMs, 1000);
+
+  Runtime.resumeActiveSegment({ nowMs: 2000, scheduleTick: false });
+  assert.strictEqual(Runtime.getSegmentTransport().status, "running");
+  assert.strictEqual(Runtime.getSegmentTransport().positionMs, 1000);
+
+  var completion = Runtime.completeActiveSegment({ accuracy: 0.9 }, { nowMs: 2600 });
+  assert.strictEqual(completion.hasNext, false);
+  assert.strictEqual(Runtime.getSegmentTransport().status, "completed");
+  assert.strictEqual(Runtime.getActiveSession().segments[0].completed, true);
+  assert.strictEqual(runtimePatches[runtimePatches.length - 1].transport.status, "completed");
+
+  delete global.window.sparkCore;
+});
+
+test("completeSegmentById completes a non-active segment through the shared shell", function() {
+  var runtimePatches = [];
+  global.window.sparkCore = {
+    updateRuntimeState: function(patch) {
+      runtimePatches.push(patch);
+      return patch;
+    }
+  };
+
+  Runtime.attachSession({
+    flow: "daily_practice",
+    segments: [
+      { id: "seg_one", type: "practice", durationSec: 2, exerciseIds: ["ex_one"] },
+      { id: "seg_two", type: "song", durationSec: 3, exerciseIds: ["ex_two"] }
+    ],
+    exercises: [
+      { id: "ex_one", data: { core: { skill: "timing" }, gameplay: {} } },
+      { id: "ex_two", data: { core: { songId: "song_two" }, gameplay: {} } }
+    ]
+  }, {
+    segmentId: "seg_one",
+    status: "running",
+    positionMs: 500,
+    nowMs: 1000,
+    scheduleTick: false
+  });
+
+  var completion = Runtime.completeSegmentById("seg_two", null, { autoAdvance: false });
+
+  assert.strictEqual(completion.hasNext, false);
+  assert.strictEqual(Runtime.getActiveSegment().id, "seg_two");
+  assert.strictEqual(Runtime.getActiveSession().segments[1].completed, true);
+  assert.strictEqual(Runtime.getSegmentTransport().status, "completed");
+  assert.strictEqual(runtimePatches[runtimePatches.length - 1].activeSegmentId, "seg_two");
+
+  delete global.window.sparkCore;
+});
+
+test("skipActiveSegment marks the shell block skipped and advances to the next segment", function() {
+  var launches = [];
+
+  global.SparkExecutionGateway.runSessionSegment = function(session, segment) {
+    launches.push(segment.id);
+    return true;
+  };
+
+  global.window.sparkCore = {
+    updateRuntimeState: function() {
+      return true;
+    }
+  };
+
+  Runtime.attachSession({
+    flow: "daily_practice",
+    segments: [
+      { id: "seg_skip", type: "practice", durationSec: 2, exerciseIds: ["ex_skip"] },
+      { id: "seg_after", type: "song", durationSec: 3, exerciseIds: ["ex_after"] }
+    ],
+    exercises: [
+      { id: "ex_skip", data: { core: { skill: "timing" }, gameplay: {} } },
+      { id: "ex_after", data: { core: { songId: "song_after" }, gameplay: {} } }
+    ]
+  }, {
+    segmentId: "seg_skip",
+    status: "running",
+    positionMs: 600,
+    nowMs: 1000,
+    autoAdvance: true,
+    scheduleTick: false
+  });
+
+  Runtime.runSegmentById("seg_skip", { nowMs: 1000, scheduleTick: false });
+  var completion = Runtime.skipActiveSegment({ nowMs: 1200 });
+
+  assert.strictEqual(completion.hasNext, true);
+  assert.strictEqual(completion.nextIndex, 1);
+  assert.strictEqual(Runtime.getActiveSegment().id, "seg_after");
+  assert.strictEqual(Runtime.getActiveSession().segments[0].completed, true);
+  assert.strictEqual(Runtime.getActiveSession().segments[0].skipped, true);
+  assert.deepStrictEqual(launches, ["seg_skip", "seg_after"]);
+
+  delete global.window.sparkCore;
+  global.SparkExecutionGateway.runSessionSegment = function() {
+    return false;
+  };
 });
 
 console.log("\n" + passed + " passed, " + failed + " failed");

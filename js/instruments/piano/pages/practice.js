@@ -22,6 +22,162 @@ function pianoNormalizePracticeNumber(value, fallback) {
   return isFinite(num) ? num : fallback;
 }
 
+function pianoGetActiveGuidedSessionView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  var view = core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+  return view &&
+    view.plan &&
+    view.plan.flow === "guided_session" &&
+    view.runtimeState &&
+    view.runtimeState.activeScreen === "guided_session"
+    ? view
+    : null;
+}
+
+function pianoResolveCoreDailyPlan(coreView) {
+  var corePlan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
+    ? coreView.plan
+    : null;
+  var bridgedPlan;
+  if (!corePlan) return null;
+  if (window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function") {
+    bridgedPlan = SparkPracticeBridge.toLegacyPlan(corePlan);
+    if (bridgedPlan) return bridgedPlan;
+  }
+  if (corePlan._legacyPlan) return corePlan._legacyPlan;
+  return Array.isArray(corePlan.items) ? corePlan : null;
+}
+
+function pianoGetActiveGuidedSessionNum() {
+  var view = pianoGetActiveGuidedSessionView();
+  var context = view && view.plan && view.plan.context ? view.plan.context : null;
+  if (!view) return null;
+  if (context && context.guidedSession != null) return pianoNormalizePracticeNumber(context.guidedSession, null);
+  if (view.plan.lesson && view.plan.lesson.num != null) return pianoNormalizePracticeNumber(view.plan.lesson.num, null);
+  return null;
+}
+
+function pianoSessionStepRuntimeLabel(step, phase) {
+  if (step === "victoryLap") return "In progress - Cooldown block";
+  if (step === "songSlice") return "In progress - Song block";
+  if (step === "review") return "In progress - Review pass";
+  if (step === "newMove") {
+    if (pianoFirstPracticeCardTextToken(phase)) return "In progress - " + pianoFirstPracticeCardTextToken(phase);
+    return "In progress - Drill block";
+  }
+  return "In progress - Warm engine";
+}
+
+function pianoGetGuidedSessionDurationMin(session, fallbackSec) {
+  var totalSec = pianoNormalizePracticeNumber(fallbackSec, 0);
+  var blocks = session && Array.isArray(session.blocks) ? session.blocks : [];
+  var i;
+  if (session && session.target_duration_min) return pianoNormalizePracticeNumber(session.target_duration_min, 0);
+  if (!totalSec && blocks.length) {
+    for (i = 0; i < blocks.length; i++) {
+      totalSec += pianoNormalizePracticeNumber(blocks[i] && blocks[i].duration_sec, 0);
+    }
+  }
+  return totalSec > 0 ? Math.max(1, Math.round(totalSec / 60)) : 0;
+}
+
+function pianoGetGuidedPrimaryNewElement(session) {
+  var elements = session && Array.isArray(session.new_elements) ? session.new_elements : [];
+  return pianoFirstPracticeCardTextToken(elements[0]);
+}
+
+function pianoBuildGuidedSessionSummary(sourcePlan, runtimeState, options) {
+  var opts = options || {};
+  return {
+    title: pianoFirstPracticeCardTextToken(sourcePlan && sourcePlan.title, opts.fallbackTitle || "Guided session"),
+    level: pianoNormalizePracticeNumber(sourcePlan && sourcePlan.level, pianoNormalizePracticeNumber(opts.level, 1)),
+    blockCount: sourcePlan && Array.isArray(sourcePlan.blocks) ? sourcePlan.blocks.length : 0,
+    targetDurationMin: pianoGetGuidedSessionDurationMin(sourcePlan, opts.guidedShellDurationSec),
+    focusSong: pianoFirstPracticeCardTextToken(sourcePlan && sourcePlan.focus_song),
+    newElement: pianoGetGuidedPrimaryNewElement(sourcePlan),
+    isActive: !!opts.isActive,
+    statusLabel: runtimeState ? pianoSessionStepRuntimeLabel(runtimeState.guidedStep || "spark", runtimeState.guidedNewMovePhase || null) : ""
+  };
+}
+
+function pianoGetGuidedShellBits(summary) {
+  var bits = [];
+  if (summary && summary.blockCount > 0) bits.push(summary.blockCount + " blocks");
+  if (summary && summary.targetDurationMin > 0) bits.push(summary.targetDurationMin + " min shell");
+  return bits;
+}
+
+function pianoGetGuidedShellLabel(summary, fallbackText) {
+  var bits = pianoGetGuidedShellBits(summary);
+  var fallback = pianoFirstPracticeCardTextToken(fallbackText);
+  return bits.length ? bits.join(" • ") : fallback;
+}
+
+function pianoGetGuidedShellBadge(summary) {
+  if (summary && summary.blockCount > 0) return summary.blockCount + " blocks";
+  if (summary && summary.targetDurationMin > 0) return summary.targetDurationMin + " min shell";
+  return "Guided shell";
+}
+
+function pianoRenderGuidedSummaryMeta(summary, options) {
+  var opts = options || {};
+  var mutedClass = opts.mutedClass || "text-muted";
+  var marginStyle = opts.marginStyle || "margin-top:4px";
+  var shellLabel = "";
+  var html = "";
+  if (!summary) return html;
+  if (summary.statusLabel) html += '<div class="' + mutedClass + '" style="' + marginStyle + '">' + escHTML(summary.statusLabel) + '</div>';
+  shellLabel = pianoGetGuidedShellLabel(summary, opts.shellFallbackText || "");
+  if (shellLabel) html += '<div class="' + mutedClass + '" style="' + marginStyle + '">' + escHTML(shellLabel) + '</div>';
+  if (summary.focusSong) html += '<div class="' + mutedClass + '" style="' + marginStyle + '">Song hook: ' + escHTML(summary.focusSong) + '</div>';
+  if (summary.newElement) html += '<div class="' + mutedClass + '" style="' + marginStyle + '">New move: ' + escHTML(summary.newElement) + '</div>';
+  return html;
+}
+
+function pianoRenderGuidedFlowCard(summary, options) {
+  var opts = options || {};
+  var cardClass = opts.cardClass || "card mb16";
+  var cardStyle = opts.cardStyle || "border:2px solid var(--accent)";
+  var mutedClass = opts.mutedClass || "muted";
+  var summaryTitleClass = opts.summaryTitleClass || "guided-status-line";
+  var summaryTitleStyle = opts.summaryTitleStyle || "font-size:14px;margin-top:4px";
+  var h = '';
+  if (!summary) return h;
+  h += '<div class="' + cardClass + '" style="' + cardStyle + '">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px">';
+  h += '<div class="practice-card-heading">Guided Session Flow</div>';
+  h += '<div class="' + mutedClass + '">' + escHTML(pianoGetGuidedShellBadge(summary)) + '</div>';
+  h += '</div>';
+  h += '<div class="' + mutedClass + '" style="margin-bottom:10px">Your live guided shell is the plan right now.</div>';
+  h += '<div style="padding:10px 12px;border-radius:14px;background:rgba(78,205,196,.12);margin-bottom:10px">';
+  h += '<div class="guided-status-line" style="font-size:11px;text-transform:uppercase;color:var(--accent)">Guided Session Live</div>';
+  h += '<div class="' + summaryTitleClass + '" style="' + summaryTitleStyle + '">' + escHTML(summary.title) + '</div>';
+  h += pianoRenderGuidedSummaryMeta(summary, { mutedClass: mutedClass, marginStyle: "margin-top:4px", shellFallbackText: "Shell details loading" });
+  h += '</div>';
+  h += '<button class="btn" onclick="act(\'resume_guided_session\')" style="background:var(--accent);color:#fff;font-weight:700">Resume Guided Session</button>';
+  h += '</div>';
+  return h;
+}
+
+function pianoGetQuickStartGuidedSummary(plan) {
+  var activeView = pianoGetActiveGuidedSessionView();
+  var activeContext = activeView && activeView.plan && activeView.plan.context ? activeView.plan.context : null;
+  var activePlan = activeContext && activeContext.guidedPlan ? activeContext.guidedPlan : null;
+  var activeSessionNum = pianoGetActiveGuidedSessionNum();
+  var sessionNum = pianoNormalizePracticeNumber(plan && plan.num, null);
+  var useActivePlan = !!(activePlan && activeSessionNum != null && sessionNum != null && activeSessionNum === sessionNum);
+  var sourcePlan = useActivePlan ? activePlan : plan;
+  var runtimeState = useActivePlan && activeView && activeView.runtimeState ? activeView.runtimeState : null;
+  return pianoBuildGuidedSessionSummary(sourcePlan, runtimeState, {
+    level: pianoNormalizePracticeNumber(plan && plan.level, 1),
+    guidedShellDurationSec: activeContext && activeContext.guidedShellDurationSec,
+    isActive: useActivePlan,
+    fallbackTitle: "Guided session"
+  });
+}
+
 function pianoPracticeTab() {
   var inst = typeof getPianoPageInstrument === "function" ? getPianoPageInstrument() : (SparkInstruments.getActive ? SparkInstruments.getActive() : null);
   var D = inst && inst.getData ? inst.getData() : {};
@@ -53,12 +209,20 @@ function pianoPracticeTab() {
   // Quick start / Resume session card
   var plan = getCurrentSessionPlan();
   if (plan) {
-    var sessionTitle = pianoFirstPracticeCardTextToken(plan.title, "Guided session");
-    var levelTitle = pianoFirstPracticeCardTextToken(CURRICULUM[plan.level - 1] && CURRICULUM[plan.level - 1].title, "Level");
+    var guidedSummary = pianoGetQuickStartGuidedSummary(plan);
+    var sessionTitle = guidedSummary.title;
+    var levelTitle = pianoFirstPracticeCardTextToken(CURRICULUM[guidedSummary.level - 1] && CURRICULUM[guidedSummary.level - 1].title, "Level");
+    var shouldResumeGuided = guidedSummary.isActive;
+    var guidedMetaHtml = pianoRenderGuidedSummaryMeta(guidedSummary, {
+      mutedClass: "text-muted",
+      marginStyle: "margin-top:4px",
+      shellFallbackText: "Guided shell"
+    });
     html += pianoClickableDiv(
-      "act('start_guided_session')",
+      "act('" + (shouldResumeGuided ? "resume_guided_session" : "start_guided_session") + "')",
       '<h3>Session ' + plan.num + ': ' + escHTML(sessionTitle) + '</h3>' +
-      '<p>Level ' + plan.level + ' \u2022 ' + escHTML(levelTitle) + '</p>',
+      '<p>Level ' + guidedSummary.level + ' \u2022 ' + escHTML(levelTitle) + '</p>' +
+      guidedMetaHtml,
       "quick-start"
     );
   }
@@ -72,7 +236,7 @@ function pianoPracticeTab() {
     var isLocked = lvl.num > S.level + 1; // can see current + next
     var color = levelColor(lvl.num);
     var cls = "level-tab" + (isActive ? " active" : "") + (isLocked ? " locked" : "");
-    html += '<div class="' + cls + '" style="color:' + color + ';background:' + color + '15" onclick="' + (isLocked ? '' : "act('view_level'," + lvl.num + ")") + '">';
+    html += '<div class="' + cls + '" style="color:' + color + ';background:' + color + '15"' + (isLocked ? '' : ' role="button" tabindex="0" onclick="act(\'view_level\',' + lvl.num + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'view_level\',' + lvl.num + ')}"') + '>';
     html += lvl.icon + ' ' + lvl.num;
     html += '</div>';
   }
@@ -187,12 +351,17 @@ function practicePlanSection(){
     );
   }
   var h = '';
+  var activeGuidedView = pianoGetActiveGuidedSessionView();
+  var activeGuidedContext = activeGuidedView && activeGuidedView.plan && activeGuidedView.plan.context ? activeGuidedView.plan.context : null;
+  var activeGuided = activeGuidedContext && activeGuidedContext.guidedPlan
+    ? pianoGetQuickStartGuidedSummary(activeGuidedContext.guidedPlan)
+    : null;
 
   // Practice stats card
   if(typeof getPracticeStats === "function"){
     var stats = getPracticeStats();
     h += '<div class="card" style="margin-top:12px">';
-    h += '<div><b>Practice Stats</b></div>';
+    h += '<div class="practice-card-heading">Practice Stats</div>';
     h += '<div>Streak: '+stats.streak+' days</div>';
     h += '<div>Today: '+stats.todayMinutes+' min</div>';
     h += '<div>Total: '+stats.totalMinutes+' min</div>';
@@ -204,14 +373,11 @@ function practicePlanSection(){
   var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
     ? window.sparkCore.getActiveSessionView()
     : null;
-  var hasPracticeBridge = window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function";
-  var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
-    ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
-    : S.practicePlan;
+  var plan = pianoResolveCoreDailyPlan(coreView);
   if(!plan) plan = S.practicePlan;
   if(plan && Array.isArray(plan.items) && plan.items.some(isRenderablePlanItem)){
     h += '<div class="card" style="margin-top:12px">';
-    h += '<div><b>Today\'s Practice Plan</b></div>';
+    h += '<div class="practice-card-heading">Today\'s Practice Plan</div>';
     for(var i=0;i<plan.items.length;i++){
       var item = plan.items[i];
       if(!isRenderablePlanItem(item)) continue;
@@ -234,10 +400,20 @@ function practicePlanSection(){
     }
     h += '</div>';
   } else {
-    h += '<div class="card" style="margin-top:12px">';
-    h += '<div><b>Today\'s Practice Plan</b></div>';
-    h += '<div class="text-muted">No practice plan yet.</div>';
-    h += '</div>';
+    if (activeGuided && activeGuided.isActive) {
+      h += pianoRenderGuidedFlowCard(activeGuided, {
+        cardClass: "card",
+        cardStyle: "margin-top:12px;border:2px solid var(--accent)",
+        mutedClass: "text-muted",
+        summaryTitleClass: "guided-status-line",
+        summaryTitleStyle: "font-size:13px;margin-top:4px"
+      });
+    } else {
+      h += '<div class="card" style="margin-top:12px">';
+      h += '<div class="practice-card-heading">Today\'s Practice Plan</div>';
+      h += '<div class="text-muted">No practice plan yet.</div>';
+      h += '</div>';
+    }
   }
 
   // Progression mastery summary
@@ -247,7 +423,7 @@ function practicePlanSection(){
     var transitionsMastery = pianoNormalizePracticeNumber(getAverageMastery("transitions"), 0);
     var scalesMastery = pianoNormalizePracticeNumber(getAverageMastery("scales"), 0);
     h += '<div class="card" style="margin-top:12px">';
-    h += '<div><b>Mastery</b></div>';
+    h += '<div class="practice-card-heading">Mastery</div>';
     h += '<div>Chords: '+Math.round(chordsMastery*100)+'%</div>';
     h += '<div>Rhythm: '+Math.round(rhythmMastery*100)+'%</div>';
     h += '<div>Transitions: '+Math.round(transitionsMastery*100)+'%</div>';
@@ -279,7 +455,7 @@ function prettyPianoPracticePlanToken(value){
   var text;
   var lower;
   if(value == null) return "";
-  if(typeof value === "number" || typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
+  if(typeof value !== "string" && typeof value !== "number") return "";
   text = String(value || "").replace(/_/g, " ").trim();
   if(!text) return "";
   lower = text.toLowerCase();

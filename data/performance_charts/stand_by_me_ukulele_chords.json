@@ -1,0 +1,33 @@
+{
+  "id": "stand_by_me_ukulele_chords",
+  "title": "Stand By Me",
+  "artist": "Ben E. King",
+  "bpm": 118,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "ukulele",
+  "audio": { "type": "silent" },
+  "phrases": [
+    { "id": 0, "name": "Verse", "startSec": 0, "endSec": 16.271 },
+    { "id": 1, "name": "Chorus", "startSec": 16.271, "endSec": 32.542 },
+    { "id": 2, "name": "Outro", "startSec": 32.542, "endSec": 48.814 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 2.034, "type": "chord", "chord": "A", "notes": ["A4", "C#5", "E5"], "laneLabel": "A", "strum": "down" },
+    { "id": 2, "t": 2.034, "dur": 2.034, "type": "chord", "chord": "A", "notes": ["A4", "C#5", "E5"], "laneLabel": "A", "strum": "up" },
+    { "id": 3, "t": 4.068, "dur": 2.034, "type": "chord", "chord": "D", "notes": ["A4", "D5", "F#5"], "laneLabel": "D", "strum": "down" },
+    { "id": 4, "t": 6.102, "dur": 2.034, "type": "chord", "chord": "E", "notes": ["B4", "E5", "G#5"], "laneLabel": "E", "strum": "up" },
+    { "id": 5, "t": 8.136, "dur": 2.034, "type": "chord", "chord": "A", "notes": ["A4", "C#5", "E5"], "laneLabel": "A", "strum": "down" },
+    { "id": 6, "t": 10.169, "dur": 2.034, "type": "chord", "chord": "A", "notes": ["A4", "C#5", "E5"], "laneLabel": "A", "strum": "up" },
+    { "id": 7, "t": 12.203, "dur": 2.034, "type": "chord", "chord": "D", "notes": ["A4", "D5", "F#5"], "laneLabel": "D", "strum": "down" },
+    { "id": 8, "t": 14.237, "dur": 2.034, "type": "chord", "chord": "E", "notes": ["B4", "E5", "G#5"], "laneLabel": "E", "strum": "up" },
+    { "id": 9, "t": 16.271, "dur": 2.034, "type": "chord", "chord": "A", "notes": ["A4", "C#5", "E5"], "laneLabel": "A", "strum": "down" },
+    { "id": 10, "t": 18.305, "dur": 2.034, "type": "chord", "chord": "A", "notes": ["A4", "C#5", "E5"], "laneLabel": "A", "strum": "up" },
+    { "id": 11, "t": 20.339, "dur": 2.034, "type": "chord", "chord": "D", "notes": ["A4", "D5", "F#5"], "laneLabel": "D", "strum": "down" },
+    { "id": 12, "t": 22.373, "dur": 2.034, "type": "chord", "chord": "E", "notes": ["B4", "E5", "G#5"], "laneLabel": "E", "strum": "up" },
+    { "id": 13, "t": 24.407, "dur": 2.034, "type": "chord", "chord": "A", "notes": ["A4", "C#5", "E5"], "laneLabel": "A", "strum": "down" },
+    { "id": 14, "t": 26.441, "dur": 2.034, "type": "chord", "chord": "A", "notes": ["A4", "C#5", "E5"], "laneLabel": "A", "strum": "up" },
+    { "id": 15, "t": 28.475, "dur": 2.034, "type": "chord", "chord": "D", "notes": ["A4", "D5", "F#5"], "laneLabel": "D", "strum": "down" },
+    { "id": 16, "t": 30.508, "dur": 2.034, "type": "chord", "chord": "E", "notes": ["B4", "E5", "G#5"], "laneLabel": "E", "strum": "up" }
+  ]
+}

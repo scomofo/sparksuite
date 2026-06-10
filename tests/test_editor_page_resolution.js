@@ -44,6 +44,9 @@ function resetEnvironment() {
   global.validateEditorObject = function() { return []; };
   global.renderVisualTimeline = function() { return "<div>timeline</div>"; };
   global.renderEditorInspector = function() { return "<div>inspector</div>"; };
+  delete global.getEditorTimelineRange;
+  delete global.getEditorBpm;
+  delete global.buildTimelineGridLines;
 }
 
 function test(name, fn) {
@@ -64,7 +67,7 @@ console.log("\n--- Editor Page Resolution ---");
 test("editorPage ignores stale metadata and item labels", function() {
   var html = editorPage();
   assert.ok(html.indexOf("song_chart_1") >= 0);
-  assert.ok(html.indexOf("Mode:</b> chart") >= 0);
+  assert.ok(html.indexOf('<span class="metric-label">Mode:</span> <span class="metric-value" style="font-size:13px">chart</span>') >= 0);
   assert.ok(html.indexOf("value=\"song_chart_1\"") >= 0);
   assert.ok(html.indexOf("value=\"null\"") === -1);
   assert.ok(html.indexOf("undefined @ 1.5") === -1);
@@ -97,6 +100,33 @@ test("editorPage ignores malformed timeline numbers", function() {
   assert.ok(html.indexOf("Playhead: 0.00s") >= 0);
   assert.ok(html.indexOf("Beat 1 (0.00s)") >= 0);
   assert.ok(html.indexOf("NaNs") === -1);
+});
+
+test("editor surfaces expose keyboard handlers for selectable rows", function() {
+  var source = loadJS("js/pages/editor.js");
+  assert.ok(source.indexOf('role="button" tabindex="0" onclick="act(\\\'editorSelect\\\',') >= 0);
+});
+
+test("editorPage uses shared visual contract classes", function() {
+  var html = editorPage();
+  var source = loadJS("js/pages/editor.js");
+
+  assert.strictEqual(html.indexOf("<b>"), -1);
+  assert.strictEqual(source.indexOf("<b>"), -1);
+  assert.ok(html.indexOf('class="card-section-heading mb8"') >= 0);
+  assert.ok(html.indexOf('class="card-micro-heading"') >= 0);
+  assert.ok(html.indexOf('class="metric-label"') >= 0);
+  assert.ok(html.indexOf('class="metric-value"') >= 0);
+  assert.ok(html.indexOf('class="action-row"') >= 0);
+});
+
+test("editorPage renders when optional validator is not loaded", function() {
+  delete global.validateEditorObject;
+
+  var html = editorPage();
+
+  assert.ok(html.indexOf("<h2>Editor</h2>") >= 0);
+  assert.ok(html.indexOf("Validation") === -1);
 });
 
 if (process.exitCode) process.exit(process.exitCode);

@@ -1,0 +1,10 @@
+{
+  "userId": "fixture_v1",
+  "xp": 12,
+  "selectedInstrument": "guitar",
+  "mastery": {
+    "gtr-d01": {
+      "mastery": 0.45
+    }
+  }
+}

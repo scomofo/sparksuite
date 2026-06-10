@@ -1,5 +1,9 @@
 (function(){
 
+  function getPracticeCore(){
+    return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  }
+
   function currentInstrumentType(){
     var active = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive
       ? SparkInstruments.getActive()
@@ -18,17 +22,19 @@
       && S.practicePlanDate === today
       && (!currentInstrument || S.practicePlanInstrument === currentInstrument);
 
-    if(window.sparkCore && typeof window.sparkCore.startSession === "function"){
+    var core = getPracticeCore();
+    if(core && typeof core.startSession === "function"){
       var forceRebuild = !!opts.forceRebuild || !cacheValid;
-      var plan = window.sparkCore.startSession({
+      var plan = core.startSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         forceRebuild: forceRebuild
       });
       if(plan){
         S.practicePlanInstrument = currentInstrument;
         if(typeof saveState === "function") saveState();
+        return plan.toLegacyPracticePlan();
       }
-      return plan ? plan.toLegacyPracticePlan() : null;
+      // fall through to cache / buildPracticePlan() when startSession fails
     }
 
     if(cacheValid) return S.practicePlan;
@@ -36,36 +42,40 @@
   }
 
   function buildPracticePlan(){
-    if(window.sparkCore && typeof window.sparkCore.startSession === "function"){
-      var plan = window.sparkCore.startSession({
+    var core = getPracticeCore();
+    if(core && typeof core.startSession === "function"){
+      var plan = core.startSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         forceRebuild: true
       });
-      return plan ? plan.toLegacyPracticePlan() : null;
+      if (plan) return plan.toLegacyPracticePlan();
     }
 
     var today = new Date().toISOString().slice(0,10);
     var items = [];
 
+    // The selectors module exports the *Candidate family — the old *Item /
+    // *Transition / *Target names this fallback used were never defined,
+    // so every plan rebuild that missed the core engine threw.
     // 1. Always warmup
-    var warmup = selectWarmupItem();
+    var warmup = typeof selectWarmupCandidate === "function" ? selectWarmupCandidate() : null;
     if(warmup) items.push(warmup);
 
     // 2. Weakest transition
-    var transition = selectWeakTransition();
+    var transition = typeof selectWeakTransitionCandidate === "function" ? selectWeakTransitionCandidate() : null;
     if(transition) items.push(transition);
 
     // 3. Weak song/phrase
-    var song = selectWeakPerformanceTarget();
+    var song = typeof selectWeakPerformanceCandidate === "function" ? selectWeakPerformanceCandidate() : null;
     if(song) items.push(song);
 
     // 4. Rhythm if needed
-    var rhythm = selectRhythmItem();
+    var rhythm = typeof selectRhythmCandidate === "function" ? selectRhythmCandidate() : null;
     if(rhythm) items.push(rhythm);
 
     // 5. Finger exercise
     if(items.length < 4){
-      var finger = selectFingerItem();
+      var finger = typeof selectFingerCandidate === "function" ? selectFingerCandidate() : null;
       if(finger) items.push(finger);
     }
 
@@ -100,7 +110,8 @@
   }
 
   function completePracticePlan(){
-    if(window.sparkCore && typeof window.sparkCore.completeSession === "function"){
+    var core = getPracticeCore();
+    if(core && typeof core.completeSession === "function"){
       var activeInstrument = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
       if (activeInstrument && !activeInstrument.instrument && typeof SparkInstruments.getAll === "function") {
         var activeId = activeInstrument.id || activeInstrument.appId || activeInstrument.instrumentId || null;
@@ -113,7 +124,7 @@
           }
         }
       }
-      window.sparkCore.completeSession({
+      core.completeSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         markPlanComplete: true
       });

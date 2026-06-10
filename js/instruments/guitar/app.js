@@ -23,6 +23,48 @@ function getGuitarAppInstrument() {
   return inst;
 }
 
+function getGuitarActiveGuidedView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  var view = core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+  return view &&
+    view.plan &&
+    view.plan.flow === "guided_session" &&
+    view.runtimeState &&
+    view.runtimeState.activeScreen === "guided_session"
+    ? view
+    : null;
+}
+
+function clearGuitarShowroomRoute() {
+  var core = typeof window !== "undefined" && window.sparkCore ? window.sparkCore : null;
+  if (core && typeof core.clearShowroomRoutingState === "function") return core.clearShowroomRoutingState(S);
+  if (window.SparkShowroomRoutingState && typeof SparkShowroomRoutingState.clear === "function") return SparkShowroomRoutingState.clear(S);
+  return false;
+}
+
+function syncGuitarGuidedViewToState(view) {
+  var guidedPlan = view && view.plan && view.plan.context ? view.plan.context.guidedPlan : null;
+  var runtimeState = view && view.runtimeState ? view.runtimeState : {};
+  if (!guidedPlan) return false;
+  clearGuitarShowroomRoute();
+  if (window.SparkProgressBridge && typeof SparkProgressBridge.syncGuidedSessionToState === "function") {
+    SparkProgressBridge.syncGuidedSessionToState(view.plan);
+  } else {
+    S.guidedPlan = guidedPlan;
+    S.guidedSession = view.plan.context.guidedSession || guidedPlan.num || S.guidedSession || 1;
+    S.guidedStep = "spark";
+    S.newMovePhase = null;
+    S.guidedPaused = false;
+  }
+  if (runtimeState.guidedStep != null) S.guidedStep = runtimeState.guidedStep;
+  if (runtimeState.guidedNewMovePhase !== undefined) S.newMovePhase = runtimeState.guidedNewMovePhase || null;
+  if (runtimeState.guidedPaused !== undefined) S.guidedPaused = !!runtimeState.guidedPaused;
+  if (runtimeState.transport && runtimeState.transport.status === "paused") S.guidedPaused = true;
+  return true;
+}
+
 function guitarAct(a, v) {
   var inst = getGuitarAppInstrument();
   var D = inst && inst.getData ? inst.getData() : {};
@@ -116,6 +158,10 @@ function guitarAct(a, v) {
     T.session = setTimeout(tickS, 1000);
     saveState();
     return true;
+  }
+
+  if (a === "start_drill") {
+    return guitarAct("startDrill", v);
   }
 
   if (a === "startDrill") {
@@ -328,7 +374,15 @@ function guitarAct(a, v) {
     return true;
   }
 
-  if (a === "guidedStart") {
+  if (a === "resume_guided_session") {
+    if (syncGuitarGuidedViewToState(getGuitarActiveGuidedView())) {
+      S.screen = SCR.GUIDED; snd("start"); render(); saveState();
+      return true;
+    }
+    return guitarAct("start_guided_session", v);
+  }
+
+  if (a === "start_guided_session") {
     var sessionNum = parseInt(v, 10);
     if (typeof window.openGuidedSessionRequest === "function") {
       var guidedSession = isNaN(sessionNum) ? (S.guidedSession || 1) : sessionNum;
@@ -336,6 +390,7 @@ function guitarAct(a, v) {
         sessionNum: guidedSession
       });
       if (corePlan && corePlan.context && corePlan.context.guidedPlan) {
+        clearGuitarShowroomRoute();
         S.screen = SCR.GUIDED; snd("start"); render(); saveState();
         return true;
       }
@@ -346,6 +401,7 @@ function guitarAct(a, v) {
         sessionNum: guidedSession
       });
       if (corePlan && corePlan.context && corePlan.context.guidedPlan) {
+        clearGuitarShowroomRoute();
         S.screen = SCR.GUIDED; snd("start"); render(); saveState();
         return true;
       }
@@ -362,6 +418,7 @@ function guitarAct(a, v) {
     } else {
       S.guidedPlan = plan; S.guidedStep = "spark"; S.newMovePhase = null; S.guidedPaused = false;
     }
+    clearGuitarShowroomRoute();
     S.screen = SCR.GUIDED; snd("start"); render();
     return true;
   }

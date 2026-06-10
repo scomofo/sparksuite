@@ -35,6 +35,18 @@ function resetEnv() {
   global.escHTML = function(value) { return String(value == null ? "" : value); };
   global.act = function() {};
   global.buildAnalyticsSummary = function() { return null; };
+  global.S = {
+    transitionStats: {},
+    performanceStats: {},
+    history: [],
+    streak: 0,
+    sessions: 0
+  };
+  delete global.createAnalyticsSummaryShell;
+  delete global.selectWeakTransitionCandidate;
+  delete global.selectWeakPerformanceCandidate;
+  delete global.selectRhythmCandidate;
+  delete global.selectFingerCandidate;
 }
 
 console.log("\n--- Analytics Page Resolution ---");
@@ -101,9 +113,51 @@ test("analyticsPage ignores malformed numeric metrics", function() {
   assert.strictEqual(html.indexOf("NaN"), -1);
   assert.ok(html.indexOf("0 ms") >= 0);
   assert.ok(html.indexOf("0%") >= 0);
-  assert.ok(html.indexOf("Streak: 0") >= 0);
-  assert.ok(html.indexOf("Sessions: 0") >= 0);
-  assert.ok(html.indexOf("History Entries: 0") >= 0);
+  assert.ok(html.indexOf('<span class="metric-label">Streak:</span> <span class="metric-value" style="font-size:13px">0</span>') >= 0);
+  assert.ok(html.indexOf('<span class="metric-label">Sessions:</span> <span class="metric-value" style="font-size:13px">0</span>') >= 0);
+  assert.ok(html.indexOf('<span class="metric-label">History Entries:</span> <span class="metric-value" style="font-size:13px">0</span>') >= 0);
+});
+
+test("analyticsPage uses shared visual contract classes", function() {
+  global.buildAnalyticsSummary = function() {
+    return {
+      weakestTransitions: [],
+      weakestSongs: [],
+      weakestPhrases: [],
+      strongestSkills: [{ label: "Timing", value: "Good" }],
+      recentImprovement: [{ label: "Accuracy", value: "+4%" }],
+      practiceConsistency: { streak: 2, sessions: 3, historyCount: 4 },
+      recommendations: [{ label: "Song A", reason: "Keep momentum" }]
+    };
+  };
+
+  global.eval(loadJS("js/pages/analytics.js"));
+
+  var html = analyticsPage();
+  assert.strictEqual(html.indexOf("<b>"), -1);
+  assert.ok(html.indexOf('class="card-section-heading mb8"') >= 0);
+  assert.ok(html.indexOf('class="card-micro-heading"') >= 0);
+  assert.ok(html.indexOf('class="metric-label"') >= 0);
+  assert.ok(html.indexOf('class="metric-value"') >= 0);
+});
+
+test("analyticsPage renders an empty state when summary builder is not loaded", function() {
+  delete global.buildAnalyticsSummary;
+  global.eval(loadJS("js/pages/analytics.js"));
+
+  var html = analyticsPage();
+
+  assert.ok(html.indexOf("No analytics available yet.") >= 0);
+});
+
+test("analytics engine tolerates missing optional recommendation helpers", function() {
+  global.eval(loadJS("js/analytics/engine.js"));
+
+  var summary = buildAnalyticsSummary();
+
+  assert.ok(summary);
+  assert.deepStrictEqual(summary.recommendations, []);
+  assert.deepStrictEqual(summary.weakestTransitions, []);
 });
 
 console.log("\n" + passed + " passed, " + failed + " failed");

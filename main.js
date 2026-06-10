@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const { spawn } = require('child_process');
 const { registerDialogs } = require('./desktop/dialogs');
 const { registerUpdater } = require('./desktop/updater');
+const { runPackagedSmokeForWindow } = require('./desktop/packaged_smoke');
 
 let mainWindow;
 let demucsProcess = null;
@@ -45,14 +46,28 @@ function createWindow() {
     }
   });
 
+  if (process.env.SPARKSUITE_SMOKE_OUTPUT) {
+    runPackagedSmokeForWindow(mainWindow, {
+      outputPath: process.env.SPARKSUITE_SMOKE_OUTPUT,
+      userId: process.env.SPARKSUITE_SMOKE_USER_ID || 'smoke_user',
+      onComplete: function(result, error) {
+        setTimeout(function() {
+          app.exit(error ? 1 : 0);
+        }, 50);
+      }
+    });
+  }
+
   mainWindow.loadFile('index.html');
 
-  // Enforce Content Security Policy headers
+  // Enforce Content Security Policy headers. The plain HTTP localhost entry
+  // supports the bundled Express dev service on port 3456; remote connections
+  // must stay on HTTPS.
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,
-        'Content-Security-Policy': ["default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; media-src 'self' file:; connect-src 'self' http://localhost:3456 https://localhost:3456; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com"]
+        'Content-Security-Policy': ["default-src 'self'; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; media-src 'self' file:; connect-src 'self' data: http://localhost:3456 https://localhost:3456; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com"]
       }
     });
   });
@@ -206,7 +221,8 @@ ipcMain.handle('stems:getFileUrl', async (event, stemPath) => {
   // Validate path is within stems directory (prevent path traversal)
   var normalized = path.resolve(stemPath);
   var stemsDir = path.resolve(app.getPath('userData'), 'stems');
-  if (!normalized.startsWith(stemsDir)) {
+  var relativeStemPath = path.relative(stemsDir, normalized);
+  if (!relativeStemPath || relativeStemPath.startsWith('..') || path.isAbsolute(relativeStemPath)) {
     throw new Error('Access denied: path outside stems directory');
   }
   return 'file://' + normalized.replace(/\\/g, '/');

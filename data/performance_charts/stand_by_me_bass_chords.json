@@ -1,0 +1,33 @@
+{
+  "id": "stand_by_me_bass_chords",
+  "title": "Stand By Me",
+  "artist": "Ben E. King",
+  "bpm": 118,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "bass",
+  "audio": { "type": "silent" },
+  "phrases": [
+    { "id": 0, "name": "Verse", "startSec": 0, "endSec": 16.271 },
+    { "id": 1, "name": "Chorus", "startSec": 16.271, "endSec": 32.542 },
+    { "id": 2, "name": "Outro", "startSec": 32.542, "endSec": 48.814 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 1.017, "type": "tap", "chord": "A_root", "notes": ["A2"], "laneLabel": "A", "strum": "tap" },
+    { "id": 2, "t": 1.017, "dur": 1.017, "type": "tap", "chord": "F#_fifth", "notes": ["F#2"], "laneLabel": "F#", "strum": "tap" },
+    { "id": 3, "t": 2.034, "dur": 1.017, "type": "tap", "chord": "D_root", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 4, "t": 3.051, "dur": 1.017, "type": "tap", "chord": "E_root", "notes": ["E2"], "laneLabel": "E", "strum": "tap" },
+    { "id": 5, "t": 4.068, "dur": 1.017, "type": "tap", "chord": "A_root", "notes": ["A2"], "laneLabel": "A", "strum": "tap" },
+    { "id": 6, "t": 5.085, "dur": 1.017, "type": "tap", "chord": "F#_fifth", "notes": ["F#2"], "laneLabel": "F#", "strum": "tap" },
+    { "id": 7, "t": 6.102, "dur": 1.017, "type": "tap", "chord": "D_root", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 8, "t": 7.119, "dur": 1.017, "type": "tap", "chord": "E_root", "notes": ["E2"], "laneLabel": "E", "strum": "tap" },
+    { "id": 9, "t": 8.136, "dur": 1.017, "type": "tap", "chord": "A_root", "notes": ["A2"], "laneLabel": "A", "strum": "tap" },
+    { "id": 10, "t": 9.153, "dur": 1.017, "type": "tap", "chord": "F#_fifth", "notes": ["F#2"], "laneLabel": "F#", "strum": "tap" },
+    { "id": 11, "t": 10.169, "dur": 1.017, "type": "tap", "chord": "D_root", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 12, "t": 11.186, "dur": 1.017, "type": "tap", "chord": "E_root", "notes": ["E2"], "laneLabel": "E", "strum": "tap" },
+    { "id": 13, "t": 12.203, "dur": 1.017, "type": "tap", "chord": "A_root", "notes": ["A2"], "laneLabel": "A", "strum": "tap" },
+    { "id": 14, "t": 13.22, "dur": 1.017, "type": "tap", "chord": "F#_fifth", "notes": ["F#2"], "laneLabel": "F#", "strum": "tap" },
+    { "id": 15, "t": 14.237, "dur": 1.017, "type": "tap", "chord": "D_root", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 16, "t": 15.254, "dur": 1.017, "type": "tap", "chord": "E_root", "notes": ["E2"], "laneLabel": "E", "strum": "tap" }
+  ]
+}

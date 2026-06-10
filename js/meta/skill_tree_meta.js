@@ -1,6 +1,7 @@
 (function(){
 
-  function buildSkillTree(){
+  function ensureMetaSkillTree(){
+    if(S.skillTree) return S.skillTree;
     S.skillTree = {
       rhythm_1:{ unlocked:true, cost:0 },
       rhythm_2:{ unlocked:false, cost:2 },
@@ -10,9 +11,11 @@
       speed_training:{ unlocked:false, cost:3 },
       sight_reading:{ unlocked:false, cost:4 }
     };
+    return S.skillTree;
   }
 
   function unlockSkill(skillId){
+    ensureMetaSkillTree();
     if(!S.skillTree[skillId]) return;
     if(S.metaProgress.skillPoints <= 0) return;
     if(S.skillTree[skillId].unlocked) return;
@@ -23,11 +26,13 @@
   }
 
   function awardSkillPoint(){
+    ensureMetaSkillTree();
     S.metaProgress.skillPoints++;
     saveState();
   }
 
-  window.buildSkillTree = buildSkillTree;
+  window.ensureMetaSkillTree = ensureMetaSkillTree;
+  window.buildMetaSkillTree = ensureMetaSkillTree;
   window.unlockMetaSkill = unlockSkill;
   window.awardSkillPoint = awardSkillPoint;
 

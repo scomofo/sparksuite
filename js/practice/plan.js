@@ -1,14 +1,25 @@
 (function(){
 
+  function getPracticePlanCore(){
+    if(typeof window !== "undefined" && window.sparkCore){
+      return window.sparkCore;
+    }
+    if(typeof sparkCore !== "undefined"){
+      return sparkCore;
+    }
+    return null;
+  }
+
   function generateDailyPracticePlan(){
     if(typeof ensurePracticePlan === "function" && ensurePracticePlan !== generateDailyPracticePlan){
       return ensurePracticePlan();
     }
-    if(window.sparkCore && typeof window.sparkCore.startSession === "function"){
-      var corePlan = window.sparkCore.startSession({
+    var core = getPracticePlanCore();
+    if(core && typeof core.startSession === "function"){
+      var corePlan = core.startSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE
       });
-      return corePlan ? corePlan.toLegacyPracticePlan() : null;
+      if (corePlan) return corePlan.toLegacyPracticePlan();
     }
 
     var weak = getTopWeakSpots();
@@ -87,8 +98,9 @@
     if(typeof markPracticePlanItem === "function" && markPracticePlanItem !== completePracticeItem && result == null){
       return markPracticePlanItem(id);
     }
-    if(window.sparkCore && typeof window.sparkCore.completeSession === "function"){
-      return window.sparkCore.completeSession({
+    var core = getPracticePlanCore();
+    if(core && typeof core.completeSession === "function"){
+      return core.completeSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         itemId: id,
         result: result

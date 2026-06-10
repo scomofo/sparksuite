@@ -1,5 +1,11 @@
 (function(){
 
+  function getPerformancePracticeCore() {
+    if (typeof window !== "undefined" && window.sparkCore) return window.sparkCore;
+    if (typeof sparkCore !== "undefined") return sparkCore;
+    return null;
+  }
+
   function splitTransitionKey(key) {
     key = String(key || "");
     if (key.indexOf("->") >= 0) return key.split("->");
@@ -52,11 +58,12 @@
     if (typeof ensurePracticePlan === "function") {
       return ensurePracticePlan();
     }
-    if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
-      var corePlan = window.sparkCore.startSession({
+    var core = getPerformancePracticeCore();
+    if (core && typeof core.startSession === "function") {
+      var corePlan = core.startSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE
       });
-      return corePlan ? corePlan.toLegacyPracticePlan() : null;
+      if (corePlan) return corePlan.toLegacyPracticePlan();
     }
 
     var today = new Date().toISOString().split("T")[0];
@@ -153,8 +160,9 @@
   }
 
   function markPracticePlanItem(itemId) {
-    if (window.sparkCore && typeof window.sparkCore.completeSession === "function") {
-      return window.sparkCore.completeSession({
+    var core = getPerformancePracticeCore();
+    if (core && typeof core.completeSession === "function") {
+      return core.completeSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         itemId: itemId
       });

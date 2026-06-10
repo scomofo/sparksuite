@@ -177,4 +177,94 @@ test("performanceEditorPage ignores malformed numeric editor values", function()
   assert.ok(html.indexOf("0.00s / 0.00s") >= 0);
 });
 
+test("performanceEditorPage can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  global.S.performEditorChart = {
+    id: "global_editor_chart",
+    title: "Global Groove",
+    bpm: 108,
+    events: [{ id: 5, laneLabel: "A", t: 1.25, dur: 0.75 }],
+    phrases: []
+  };
+  global.S.performEditorLibrary = [];
+  global.sparkCore = {
+    getPerformanceEditorDocumentView: function() {
+      return {
+        chart: global.S.performEditorChart,
+        library: global.S.performEditorLibrary,
+        title: "Global Groove",
+        source: "runtime",
+        dirty: true,
+        mode: "lead",
+        snap: "free"
+      };
+    },
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          performanceEditorMode: "lead",
+          performanceEditorSnap: "free",
+          performanceEditorDirty: true
+        }
+      };
+    }
+  };
+
+  global.eval(loadJS("js/pages/performance_editor.js"));
+
+  var html = performanceEditorPage();
+  assert.ok(html.indexOf("Global Groove | runtime | 1 events") >= 0);
+  assert.ok(html.indexOf("unsaved") >= 0);
+  assert.ok(html.indexOf('onclick="act(\'editorMode\',\'lead\')"') >= 0);
+  assert.ok(html.indexOf('onclick="act(\'editorSnap\',\'free\')"') >= 0);
+});
+
+test("performance editor event rows expose keyboard handlers", function() {
+  var source = loadJS("js/pages/performance_editor.js");
+  assert.ok(source.indexOf('role="button" tabindex="0" onclick="if(event.target&&event.target.closest&&event.target.closest(\\\'button,input,select,textarea,a\\\')){return;}act(\\\'editorSelectEvent\\\',') >= 0);
+  assert.ok(source.indexOf('role="button" tabindex="0" style="cursor:pointer;margin-top:8px" onclick="if(event.target&&event.target.closest&&event.target.closest(\\\'button,input,select,textarea,a\\\')){return;}act(\\\'editorLoad\\\',') >= 0);
+  assert.ok(source.indexOf('class="split-row" role="button" tabindex="0" style="padding:3px 6px;font-size:12px;border-radius:6px;cursor:pointer;background:') >= 0);
+  assert.ok(source.indexOf('onclick="act(\\\'editorSelectPhrase\\\',') >= 0);
+  assert.strictEqual(source.indexOf("event.stopPropagation();act('editorDelete'"), -1);
+  assert.strictEqual(source.indexOf("event.stopPropagation();act('editorDeleteEvent'"), -1);
+});
+
+test("performanceEditorPage uses shared visual contract classes", function() {
+  global.S.performEditorChart = {
+    id: "editor_chart_3",
+    title: "Chart",
+    bpm: 112,
+    events: [{ id: 11, laneLabel: "C", t: 1, dur: 0.5 }],
+    phrases: [{ id: 5, name: "Intro", startSec: 0, endSec: 2 }]
+  };
+  global.sparkCore = {
+    getPerformanceEditorDocumentView: function() {
+      return {
+        chart: global.S.performEditorChart,
+        library: [],
+        source: "existing",
+        dirty: true,
+        mode: "chords",
+        snap: "1/8",
+        selectedEventId: 11,
+        selectedPhraseId: 5
+      };
+    },
+    getActiveSessionView: function() {
+      return { runtimeState: {} };
+    }
+  };
+
+  var html = performanceEditorPage();
+  var source = loadJS("js/pages/performance_editor.js");
+
+  assert.ok(html.indexOf('class="card-section-heading"') >= 0);
+  assert.ok(html.indexOf('class="card-micro-heading"') >= 0);
+  assert.ok(html.indexOf('class="metric-label"') >= 0);
+  assert.ok(html.indexOf('class="metric-value"') >= 0);
+  assert.ok(html.indexOf('class="split-row"') >= 0);
+  assert.ok(html.indexOf('class="action-row"') >= 0);
+  assert.strictEqual(source.indexOf("display:flex;justify-content:space-between;align-items:center"), -1);
+});
+
 if (process.exitCode) process.exit(process.exitCode);

@@ -1,0 +1,456 @@
+{
+  "id": "piano_ballad_flow",
+  "title": "Ballad Flow",
+  "artist": "SparkSuite Piano",
+  "bpm": 66,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "piano",
+  "audio": {
+    "type": "silent"
+  },
+  "phrases": [
+    {
+      "id": 0,
+      "name": "Intro",
+      "startSec": 0,
+      "endSec": 14.55
+    },
+    {
+      "id": 1,
+      "name": "Verse",
+      "startSec": 14.55,
+      "endSec": 29.09
+    },
+    {
+      "id": 2,
+      "name": "Chorus",
+      "startSec": 29.09,
+      "endSec": 43.64
+    },
+    {
+      "id": 3,
+      "name": "Bridge",
+      "startSec": 43.64,
+      "endSec": 58.18
+    }
+  ],
+  "events": [
+    {
+      "id": 1,
+      "t": 0,
+      "dur": 0.5,
+      "type": "tap",
+      "chord": "F_root",
+      "notes": [
+        "F2"
+      ],
+      "laneLabel": "F",
+      "strum": "tap"
+    },
+    {
+      "id": 2,
+      "t": 0.5,
+      "dur": 3.14,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F3",
+        "A3",
+        "C4"
+      ],
+      "laneLabel": "F",
+      "strum": "down"
+    },
+    {
+      "id": 3,
+      "t": 3.64,
+      "dur": 0.5,
+      "type": "tap",
+      "chord": "C_root",
+      "notes": [
+        "C3"
+      ],
+      "laneLabel": "C",
+      "strum": "tap"
+    },
+    {
+      "id": 4,
+      "t": 4.14,
+      "dur": 3.14,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C4",
+        "E4",
+        "G4"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 5,
+      "t": 7.28,
+      "dur": 0.5,
+      "type": "tap",
+      "chord": "G_root",
+      "notes": [
+        "G2"
+      ],
+      "laneLabel": "G",
+      "strum": "tap"
+    },
+    {
+      "id": 6,
+      "t": 7.78,
+      "dur": 3.14,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G3",
+        "B3",
+        "D4"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 7,
+      "t": 10.92,
+      "dur": 0.5,
+      "type": "tap",
+      "chord": "Am_root",
+      "notes": [
+        "A2"
+      ],
+      "laneLabel": "Am",
+      "strum": "tap"
+    },
+    {
+      "id": 8,
+      "t": 11.42,
+      "dur": 3.14,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A3",
+        "C4",
+        "E4"
+      ],
+      "laneLabel": "Am",
+      "strum": "down"
+    },
+    {
+      "id": 9,
+      "t": 14.56,
+      "dur": 0.5,
+      "type": "tap",
+      "chord": "Em_root",
+      "notes": [
+        "E2"
+      ],
+      "laneLabel": "Em",
+      "strum": "tap"
+    },
+    {
+      "id": 10,
+      "t": 15.06,
+      "dur": 3.14,
+      "type": "chord",
+      "chord": "Em",
+      "notes": [
+        "E3",
+        "G3",
+        "B3"
+      ],
+      "laneLabel": "Em",
+      "strum": "down"
+    },
+    {
+      "id": 11,
+      "t": 18.2,
+      "dur": 0.5,
+      "type": "tap",
+      "chord": "F_root",
+      "notes": [
+        "F2"
+      ],
+      "laneLabel": "F",
+      "strum": "tap"
+    },
+    {
+      "id": 12,
+      "t": 18.7,
+      "dur": 3.14,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F3",
+        "A3",
+        "C4"
+      ],
+      "laneLabel": "F",
+      "strum": "down"
+    },
+    {
+      "id": 13,
+      "t": 21.84,
+      "dur": 0.5,
+      "type": "tap",
+      "chord": "C_root",
+      "notes": [
+        "C3"
+      ],
+      "laneLabel": "C",
+      "strum": "tap"
+    },
+    {
+      "id": 14,
+      "t": 22.34,
+      "dur": 3.14,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C4",
+        "E4",
+        "G4"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 15,
+      "t": 25.48,
+      "dur": 0.5,
+      "type": "tap",
+      "chord": "G_root",
+      "notes": [
+        "G2"
+      ],
+      "laneLabel": "G",
+      "strum": "tap"
+    },
+    {
+      "id": 16,
+      "t": 25.98,
+      "dur": 3.14,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G3",
+        "B3",
+        "D4"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 17,
+      "t": 29.12,
+      "dur": 0.5,
+      "type": "tap",
+      "chord": "Am_root",
+      "notes": [
+        "A2"
+      ],
+      "laneLabel": "Am",
+      "strum": "tap"
+    },
+    {
+      "id": 18,
+      "t": 29.62,
+      "dur": 3.14,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A3",
+        "C4",
+        "E4"
+      ],
+      "laneLabel": "Am",
+      "strum": "down"
+    },
+    {
+      "id": 19,
+      "t": 32.76,
+      "dur": 0.5,
+      "type": "tap",
+      "chord": "Em_root",
+      "notes": [
+        "E2"
+      ],
+      "laneLabel": "Em",
+      "strum": "tap"
+    },
+    {
+      "id": 20,
+      "t": 33.26,
+      "dur": 3.14,
+      "type": "chord",
+      "chord": "Em",
+      "notes": [
+        "E3",
+        "G3",
+        "B3"
+      ],
+      "laneLabel": "Em",
+      "strum": "down"
+    },
+    {
+      "id": 21,
+      "t": 36.4,
+      "dur": 0.5,
+      "type": "tap",
+      "chord": "F_root",
+      "notes": [
+        "F2"
+      ],
+      "laneLabel": "F",
+      "strum": "tap"
+    },
+    {
+      "id": 22,
+      "t": 36.9,
+      "dur": 3.14,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F3",
+        "A3",
+        "C4"
+      ],
+      "laneLabel": "F",
+      "strum": "down"
+    },
+    {
+      "id": 23,
+      "t": 40.04,
+      "dur": 0.5,
+      "type": "tap",
+      "chord": "C_root",
+      "notes": [
+        "C3"
+      ],
+      "laneLabel": "C",
+      "strum": "tap"
+    },
+    {
+      "id": 24,
+      "t": 40.54,
+      "dur": 3.14,
+      "type": "chord",
+      "chord": "C",
+      "notes": [
+        "C4",
+        "E4",
+        "G4"
+      ],
+      "laneLabel": "C",
+      "strum": "down"
+    },
+    {
+      "id": 25,
+      "t": 43.68,
+      "dur": 0.5,
+      "type": "tap",
+      "chord": "G_root",
+      "notes": [
+        "G2"
+      ],
+      "laneLabel": "G",
+      "strum": "tap"
+    },
+    {
+      "id": 26,
+      "t": 44.18,
+      "dur": 3.14,
+      "type": "chord",
+      "chord": "G",
+      "notes": [
+        "G3",
+        "B3",
+        "D4"
+      ],
+      "laneLabel": "G",
+      "strum": "down"
+    },
+    {
+      "id": 27,
+      "t": 47.32,
+      "dur": 0.5,
+      "type": "tap",
+      "chord": "Am_root",
+      "notes": [
+        "A2"
+      ],
+      "laneLabel": "Am",
+      "strum": "tap"
+    },
+    {
+      "id": 28,
+      "t": 47.82,
+      "dur": 3.14,
+      "type": "chord",
+      "chord": "Am",
+      "notes": [
+        "A3",
+        "C4",
+        "E4"
+      ],
+      "laneLabel": "Am",
+      "strum": "down"
+    },
+    {
+      "id": 29,
+      "t": 50.96,
+      "dur": 0.5,
+      "type": "tap",
+      "chord": "Em_root",
+      "notes": [
+        "E2"
+      ],
+      "laneLabel": "Em",
+      "strum": "tap"
+    },
+    {
+      "id": 30,
+      "t": 51.46,
+      "dur": 3.14,
+      "type": "chord",
+      "chord": "Em",
+      "notes": [
+        "E3",
+        "G3",
+        "B3"
+      ],
+      "laneLabel": "Em",
+      "strum": "down"
+    },
+    {
+      "id": 31,
+      "t": 54.6,
+      "dur": 0.5,
+      "type": "tap",
+      "chord": "F_root",
+      "notes": [
+        "F2"
+      ],
+      "laneLabel": "F",
+      "strum": "tap"
+    },
+    {
+      "id": 32,
+      "t": 55.1,
+      "dur": 3.14,
+      "type": "chord",
+      "chord": "F",
+      "notes": [
+        "F3",
+        "A3",
+        "C4"
+      ],
+      "laneLabel": "F",
+      "strum": "down"
+    }
+  ]
+}

@@ -33,7 +33,8 @@
     bass:    "#7C3AED",
     ukulele: "#14B8A6",
     piano:   "#0EA5E9",
-    drums:   "#FFE66D"
+    drums:   "#FFE66D",
+    vocals:  "#F472B6"
   };
 
   function accentFor(type) {
@@ -89,6 +90,17 @@
         + '<rect x="60" y="40" width="10" height="8" rx="1" fill-opacity=".75" stroke-width="0"/>'
         + '<line x1="32" y1="38" x2="36" y2="34" stroke-width="1.5" stroke-opacity=".7"/>'
         + '<line x1="68" y1="38" x2="64" y2="34" stroke-width="1.5" stroke-opacity=".7"/>';
+    },
+    // Studio microphone with grille lines, short stem, and desk stand.
+    vocals: function() {
+      return ''
+        + '<rect x="38" y="24" width="24" height="42" rx="12" fill-opacity=".86" stroke-width="0"/>'
+        + '<path d="M32 48 C32 62 40 72 50 72 C60 72 68 62 68 48" fill="none" stroke-width="4" stroke-opacity=".78"/>'
+        + '<line x1="42" y1="36" x2="58" y2="36" stroke="#12100E" stroke-opacity=".34" stroke-width="1"/>'
+        + '<line x1="42" y1="43" x2="58" y2="43" stroke="#12100E" stroke-opacity=".34" stroke-width="1"/>'
+        + '<line x1="42" y1="50" x2="58" y2="50" stroke="#12100E" stroke-opacity=".34" stroke-width="1"/>'
+        + '<line x1="50" y1="72" x2="50" y2="82" stroke-width="4" stroke-opacity=".78"/>'
+        + '<path d="M38 84 H62" fill="none" stroke-width="4" stroke-opacity=".78"/>';
     },
     // Generic music-note fallback.
     generic: function() {

@@ -44,6 +44,12 @@
       return guitarAct(a, v);
     },
 
+    getScaleRenderer: function() {
+      return typeof stringedScaleSVG === "function"
+        ? stringedScaleSVG
+        : (typeof scaleSVG === "function" ? scaleSVG : null);
+    },
+
     ui: {
       chord: function(chordObj, size, label, animate) {
         if (typeof stringedChordSVG === "function" && chordObj) {
@@ -63,20 +69,53 @@
         }
         return typeof chordSVG === "function" ? chordSVG(chordObj, size, label, animate) : "";
       },
-      header: function() {
-        return typeof headerHTML === "function" ? headerHTML() : "";
-      },
-      tabNav: function() {
-        return typeof tabNavHTML === "function" ? tabNavHTML() : "";
-      },
-      ring: function(pct, size, color) {
-        return typeof ringHTML === "function" ? ringHTML(pct, size, color) : "";
-      },
       strum: function(pattern) {
         return typeof strumHTML === "function" ? strumHTML(pattern) : "";
       },
       scale: function(scale, opts) {
         return typeof scaleSVG === "function" ? scaleSVG(scale, opts) : "";
+      },
+      watchAnimation: function(container, chordObj, options) {
+        if (typeof WatchCommon === "undefined" || !chordObj) return null;
+        var chart = {
+          name: chordObj.name || "chord", instrument: "guitar",
+          stringCount: 6,
+          stringLabels: typeof STRING_NAMES !== "undefined" ? STRING_NAMES : ["E","A","D","G","B","e"],
+          fretCountVisible: 4, startFret: 0,
+          open: chordObj.open || [], muted: chordObj.muted || [],
+          fingers: chordObj.fingers || [],
+          barre: chordObj.barFret ? { fret: chordObj.barFret, fromString: Math.min.apply(null, chordObj.barStrings || [0]), toString: Math.max.apply(null, chordObj.barStrings || [5]) } : null
+        };
+        var minF = 99, maxF = 0;
+        for (var i = 0; i < chart.fingers.length; i++) {
+          if (chart.fingers[i][1] > 0) { if (chart.fingers[i][1] < minF) minF = chart.fingers[i][1]; if (chart.fingers[i][1] > maxF) maxF = chart.fingers[i][1]; }
+        }
+        if (chart.barre) { if (chart.barre.fret < minF) minF = chart.barre.fret; if (chart.barre.fret > maxF) maxF = chart.barre.fret; }
+        if (maxF > 4) chart.startFret = minF - 1;
+        options = options || {};
+        options.strumFn = options.strumFn || function() { if (typeof strumChord === "function") strumChord(chordObj.name || ""); };
+        return WatchCommon.stringedWatch(container, chart, options);
+      },
+      shadowQuiz: function(container, chordObj, options) {
+        if (typeof WatchCommon === "undefined" || !chordObj) return null;
+        var chart = {
+          name: chordObj.name || "chord", instrument: "guitar",
+          stringCount: 6,
+          stringLabels: typeof STRING_NAMES !== "undefined" ? STRING_NAMES : ["E","A","D","G","B","e"],
+          fretCountVisible: 4, startFret: 0,
+          open: chordObj.open || [], muted: chordObj.muted || [],
+          fingers: chordObj.fingers || [],
+          barre: chordObj.barFret ? { fret: chordObj.barFret, fromString: Math.min.apply(null, chordObj.barStrings || [0]), toString: Math.max.apply(null, chordObj.barStrings || [5]) } : null
+        };
+        var minF = 99, maxF = 0;
+        for (var i = 0; i < chart.fingers.length; i++) {
+          if (chart.fingers[i][1] > 0) { if (chart.fingers[i][1] < minF) minF = chart.fingers[i][1]; if (chart.fingers[i][1] > maxF) maxF = chart.fingers[i][1]; }
+        }
+        if (chart.barre) { if (chart.barre.fret < minF) minF = chart.barre.fret; if (chart.barre.fret > maxF) maxF = chart.barre.fret; }
+        if (maxF > 4) chart.startFret = minF - 1;
+        options = options || {};
+        options.strumFn = options.strumFn || function() { if (typeof strumChord === "function") strumChord(chordObj.name || ""); };
+        return WatchCommon.stringedShadow(container, chart, options);
       }
     },
 
@@ -157,6 +196,12 @@
 
     getCurriculumMap: function() {
       return typeof CURRICULUM !== "undefined" ? CURRICULUM : [];
+    },
+
+    getCurriculumMapV2: function() {
+      return typeof SparkCurriculumV2LegacyAdapter !== "undefined"
+        ? SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar")
+        : [];
     },
 
     getExercises: function() {

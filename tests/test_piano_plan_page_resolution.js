@@ -45,6 +45,7 @@ function resetEnvironment() {
 function test(name, fn) {
   try {
     resetEnvironment();
+    global.eval(loadJS("js/instruments/piano/pages/practice.js"));
     global.eval(loadJS("js/instruments/piano/pages/plan.js"));
     fn();
     console.log("  PASS: " + name);
@@ -85,6 +86,68 @@ test("pianoPlanPage prefers the active core-backed practice plan and launches by
   assert.ok(html.indexOf("piano - left hand - finger") >= 0);
 });
 
+test("shared plan page render uses shared heading and action row classes", function() {
+  var source = loadJS("js/pages/plan.js");
+  global.eval(source);
+
+  var html = planPage();
+
+  assert.ok(html.indexOf("card-section-heading") >= 0);
+  assert.ok(html.indexOf("card-micro-heading") >= 0);
+  assert.ok(html.indexOf("action-row") >= 0);
+  assert.strictEqual(html.indexOf('style="font-weight:700;font-size:14px"'), -1);
+});
+
+test("pianoPlanPage pivots into guided resume mode with V2 shell details when a guided session is active and no daily plan exists", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: null
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedSession: 2,
+            guidedShellDurationSec: 600,
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned",
+              blocks: [
+                { type: "warm_engine", duration_sec: 90 },
+                { type: "drill", duration_sec: 180 },
+                { type: "song", duration_sec: 240 },
+                { type: "cooldown", duration_sec: 90 }
+              ],
+              focus_song: "Horse With No Name",
+              new_elements: ["use the tuner"]
+            }
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice",
+          guidedNewMovePhase: null
+        },
+        lastSessionOutcome: null
+      };
+    }
+  };
+
+  var html = pianoPlanPage();
+  assert.ok(html.indexOf("Guided Session Flow") >= 0);
+  assert.ok(html.indexOf("Guided Session Live") >= 0);
+  assert.ok(html.indexOf("How guitars get tuned") >= 0);
+  assert.ok(html.indexOf("In progress - Song block") >= 0);
+  assert.ok(html.indexOf("4 blocks") >= 0);
+  assert.ok(html.indexOf("10 min shell") >= 0);
+  assert.ok(html.indexOf("Song hook: Horse With No Name") >= 0);
+  assert.ok(html.indexOf("New move: use the tuner") >= 0);
+  assert.ok(html.indexOf("Resume Guided Session") >= 0);
+  assert.ok(html.indexOf("No practice plan yet.") === -1);
+});
+
 test("piano practice plan section reads the active core-backed plan without generating one during render", function() {
   var generateCalls = 0;
   global.S = {
@@ -123,13 +186,19 @@ test("piano practice plan section reads the active core-backed plan without gene
   global.eval(loadJS("js/instruments/piano/pages/practice.js"));
 
   var html = practicePlanSection();
+  var styles = loadJS("styles.css");
   assert.strictEqual(generateCalls, 0);
   assert.ok(html.indexOf("Replay Island Strum") >= 0);
   assert.ok(html.indexOf("Quick warmup") >= 0);
+  assert.ok(html.indexOf("practice-card-heading") >= 0);
+  assert.ok(styles.indexOf(".practice-card-heading") >= 0);
+  assert.strictEqual(html.indexOf("<b>Practice Stats</b>"), -1);
+  assert.strictEqual(html.indexOf("<b>Today's Practice Plan</b>"), -1);
+  assert.strictEqual(html.indexOf("<b>Mastery</b>"), -1);
   assert.strictEqual(html.indexOf("Old Stale Song"), -1);
 });
 
-test("piano practice plan section falls back to cached plan state when the practice bridge is unavailable", function() {
+test("piano practice plan section prefers the active core plan when the practice bridge is unavailable", function() {
   global.S = {
     practicePlan: {
       items: [{ id: "cached_1", label: "Cached Warmup", completed: false }]
@@ -157,8 +226,8 @@ test("piano practice plan section falls back to cached plan state when the pract
   global.eval(loadJS("js/instruments/piano/pages/practice.js"));
 
   var html = practicePlanSection();
-  assert.ok(html.indexOf("Cached Warmup") >= 0);
-  assert.strictEqual(html.indexOf("Core Warmup"), -1);
+  assert.ok(html.indexOf("Core Warmup") >= 0);
+  assert.strictEqual(html.indexOf("Cached Warmup"), -1);
 });
 
 test("piano practice plan section shows an empty state when no plan exists", function() {
@@ -180,6 +249,116 @@ test("piano practice plan section shows an empty state when no plan exists", fun
   var html = practicePlanSection();
   assert.ok(html.indexOf("Today's Practice Plan") >= 0 || html.indexOf("Today\\'s Practice Plan") >= 0);
   assert.ok(html.indexOf("No practice plan yet.") >= 0);
+});
+
+test("piano practice plan section pivots into guided resume mode with V2 shell details when a guided session is active", function() {
+  global.S = { practicePlan: null };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+  global.SparkPracticeBridge = undefined;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedSession: 2,
+            guidedShellDurationSec: 600,
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned",
+              blocks: [
+                { type: "warm_engine", duration_sec: 90 },
+                { type: "drill", duration_sec: 180 },
+                { type: "song", duration_sec: 240 },
+                { type: "cooldown", duration_sec: 90 }
+              ],
+              focus_song: "Horse With No Name",
+              new_elements: ["use the tuner"]
+            }
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice",
+          guidedNewMovePhase: null
+        }
+      };
+    }
+  };
+
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var html = practicePlanSection();
+  var styles = loadJS("styles.css");
+  assert.ok(html.indexOf("Guided Session Flow") >= 0);
+  assert.ok(html.indexOf("Guided Session Live") >= 0);
+  assert.ok(html.indexOf("How guitars get tuned") >= 0);
+  assert.ok(html.indexOf("practice-card-heading") >= 0);
+  assert.ok(html.indexOf("guided-status-line") >= 0);
+  assert.ok(styles.indexOf(".practice-card-heading") >= 0);
+  assert.ok(styles.indexOf(".guided-status-line") >= 0);
+  assert.strictEqual(html.indexOf("font-size:15px;font-weight:800\">Guided Session Flow"), -1);
+  assert.strictEqual(html.indexOf("font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--accent)\">Guided Session Live"), -1);
+  assert.ok(html.indexOf("In progress - Song block") >= 0);
+  assert.ok(html.indexOf("4 blocks") >= 0);
+  assert.ok(html.indexOf("10 min shell") >= 0);
+  assert.ok(html.indexOf("Song hook: Horse With No Name") >= 0);
+  assert.ok(html.indexOf("New move: use the tuner") >= 0);
+  assert.ok(html.indexOf("Resume Guided Session") >= 0);
+  assert.strictEqual(html.indexOf("No practice plan yet."), -1);
+});
+
+test("piano guided flow surfaces stay honest when the live shell has no duration or block metadata", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: null
+  };
+  global.getPracticeStats = function() {
+    return { streak: 2, todayMinutes: 4, totalMinutes: 30, sessions: 7 };
+  };
+  global.getAverageMastery = function() { return 0.5; };
+  global.SparkPracticeBridge = undefined;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedSession: 2,
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned"
+            }
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice",
+          guidedNewMovePhase: null
+        }
+      };
+    }
+  };
+
+  global.practicePlanSection = undefined;
+  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+
+  var planHtml = pianoPlanPage();
+  var practiceHtml = practicePlanSection();
+
+  assert.ok(planHtml.indexOf("Guided Session Flow") >= 0);
+  assert.ok(planHtml.indexOf("In progress - Song block") >= 0);
+  assert.ok(planHtml.indexOf("Guided shell") >= 0);
+  assert.strictEqual(planHtml.indexOf("4 blocks"), -1);
+  assert.strictEqual(planHtml.indexOf("10 min shell"), -1);
+  assert.ok(practiceHtml.indexOf("Guided Session Flow") >= 0);
+  assert.ok(practiceHtml.indexOf("Guided shell") >= 0);
+  assert.strictEqual(practiceHtml.indexOf("4 blocks"), -1);
+  assert.strictEqual(practiceHtml.indexOf("10 min shell"), -1);
 });
 
 test("piano practice plan section treats malformed cached plan shells without array items as empty state", function() {
@@ -614,7 +793,7 @@ test("pianoPlanPage stays read-only when no plan exists and shows an empty state
   assert.strictEqual(html.indexOf("Generated Plan Row"), -1);
 });
 
-test("pianoPlanPage falls back to cached plan state when the practice bridge is unavailable", function() {
+test("pianoPlanPage prefers the active core plan when the practice bridge is unavailable", function() {
   global.S = {
     practicePlanComplete: false,
     practicePlan: {
@@ -639,8 +818,8 @@ test("pianoPlanPage falls back to cached plan state when the practice bridge is 
   };
 
   var html = pianoPlanPage();
-  assert.ok(html.indexOf("Cached Warmup") >= 0);
-  assert.strictEqual(html.indexOf("Core Warmup"), -1);
+  assert.ok(html.indexOf("Core Warmup") >= 0);
+  assert.strictEqual(html.indexOf("Cached Warmup"), -1);
 });
 
 test("pianoPlanPage does not render completed items as clickable go buttons", function() {
@@ -1321,6 +1500,11 @@ test("piano plan and practice sections skip null slots when real plan items exis
   assert.strictEqual(practiceHtml.indexOf(">Unavailable<"), -1);
   assert.ok(planHtml.indexOf("warmup 1") >= 0);
   assert.ok(practiceHtml.indexOf("warmup 1") >= 0);
+});
+
+test("piano plan page routes go actions through practiceStartItem", function() {
+  var source = loadJS("js/instruments/piano/pages/plan.js");
+  assert.ok(source.indexOf('onclick="act(\\\'practiceStartItem\\\', this.getAttribute(\\\'data-item-id\\\'))"') >= 0);
 });
 
 if (process.exitCode) process.exit(process.exitCode);
