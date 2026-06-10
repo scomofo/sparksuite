@@ -1059,7 +1059,12 @@
          + '<header class="showroom-appbar">'
          + '<div class="showroom-appbar-left"><button class="showroom-iconbtn" onclick="' + backToHome() + '" aria-label="Back"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span></button></div>'
          + '<h1 class="showroom-appbar-title" style="font-family:\'Plus Jakarta Sans\';font-weight:700">Practice Session</h1>'
-         + '<div class="showroom-appbar-right"><button class="showroom-iconbtn" onclick="' + nav("settings") + '" aria-label="Settings"><span class="material-symbols-outlined" aria-hidden="true">settings</span></button></div>'
+         // Insights moved out of this page's bottom nav when the suite nav
+         // was unified; keep it one tap away as an appbar action.
+         + '<div class="showroom-appbar-right">'
+           + '<button class="showroom-iconbtn" onclick="' + nav("insights") + '" aria-label="Insights"><span class="material-symbols-outlined" aria-hidden="true">query_stats</span></button>'
+           + '<button class="showroom-iconbtn" onclick="' + nav("settings") + '" aria-label="Settings"><span class="material-symbols-outlined" aria-hidden="true">settings</span></button>'
+         + '</div>'
          + '</header>'
          + '<main class="showroom-canvas" style="padding-top:80px">'
            + '<section><h2 class="showroom-practice-h" style="font-family:\'Syne\';font-weight:900;font-size:28px">Daily Practice</h2><p class="showroom-practice-sub">Stay in the flow state.</p></section>'
