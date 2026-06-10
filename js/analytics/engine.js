@@ -8,7 +8,7 @@
   }
 
   function buildAnalyticsSummary(){
-    var summary = createAnalyticsSummaryShell
+    var summary = typeof createAnalyticsSummaryShell === "function"
       ? createAnalyticsSummaryShell()
       : {
           weakestTransitions:[],
@@ -163,10 +163,10 @@
 
   function buildAnalyticsRecommendations(){
     var recs = [];
-    var weakTransition = selectWeakTransitionCandidate ? selectWeakTransitionCandidate() : null;
-    var weakPerformance = selectWeakPerformanceCandidate ? selectWeakPerformanceCandidate() : null;
-    var rhythm = selectRhythmCandidate ? selectRhythmCandidate() : null;
-    var finger = selectFingerCandidate ? selectFingerCandidate() : null;
+    var weakTransition = typeof selectWeakTransitionCandidate === "function" ? selectWeakTransitionCandidate() : null;
+    var weakPerformance = typeof selectWeakPerformanceCandidate === "function" ? selectWeakPerformanceCandidate() : null;
+    var rhythm = typeof selectRhythmCandidate === "function" ? selectRhythmCandidate() : null;
+    var finger = typeof selectFingerCandidate === "function" ? selectFingerCandidate() : null;
     if(weakTransition) recs.push(toAnalyticsRec(weakTransition));
     if(weakPerformance) recs.push(toAnalyticsRec(weakPerformance));
     if(rhythm) recs.push(toAnalyticsRec(rhythm));

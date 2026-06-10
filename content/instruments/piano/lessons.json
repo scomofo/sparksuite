@@ -1,0 +1,4 @@
+[
+  { "id": "pno_content_01", "skill": "c_position", "title": "C Position Notes", "prerequisites": [], "masteryRequired": 0.7, "estimatedMinutes": 5 },
+  { "id": "pno_content_02", "skill": "basic_rhythm", "title": "Quarter Note Pulse", "prerequisites": ["c_position"], "masteryRequired": 0.75, "estimatedMinutes": 5 }
+]

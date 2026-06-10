@@ -1,0 +1,25 @@
+{
+  "id": "another_one_bites_the_dust_bass_chords",
+  "title": "Another One Bites the Dust",
+  "artist": "Queen",
+  "bpm": 110,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "bass",
+  "audio": { "type": "silent" },
+  "phrases": [
+    { "id": 0, "name": "Verse", "startSec": 0, "endSec": 8.727 },
+    { "id": 1, "name": "Chorus", "startSec": 8.727, "endSec": 17.455 },
+    { "id": 2, "name": "Outro", "startSec": 17.455, "endSec": 26.182 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 0.545, "type": "tap", "chord": "E", "notes": ["E1"], "laneLabel": "E", "strum": "tap" },
+    { "id": 2, "t": 0.545, "dur": 0.546, "type": "tap", "chord": "E", "notes": ["E1"], "laneLabel": "E", "strum": "tap" },
+    { "id": 3, "t": 1.091, "dur": 0.545, "type": "tap", "chord": "G", "notes": ["G1"], "laneLabel": "G", "strum": "tap" },
+    { "id": 4, "t": 1.636, "dur": 0.546, "type": "tap", "chord": "A", "notes": ["A1"], "laneLabel": "A", "strum": "tap" },
+    { "id": 5, "t": 2.182, "dur": 0.545, "type": "tap", "chord": "E", "notes": ["E1"], "laneLabel": "E", "strum": "tap" },
+    { "id": 6, "t": 2.727, "dur": 0.546, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 7, "t": 3.273, "dur": 0.545, "type": "tap", "chord": "C", "notes": ["C2"], "laneLabel": "C", "strum": "tap" },
+    { "id": 8, "t": 3.818, "dur": 0.546, "type": "tap", "chord": "B", "notes": ["B1"], "laneLabel": "B", "strum": "tap" }
+  ]
+}

@@ -24,6 +24,48 @@ var PERFORMANCE_CHART_LIBRARY_FALLBACK = [
     instrument: "guitar"
   }
 ];
+var PERFORMANCE_AUDIO_EXTENSION_CANDIDATES = [".mp3", ".wav", ".ogg", ".m4a"];
+
+function getPerformanceChartEngine() {
+  if (typeof window === "undefined") return null;
+  if (!window.SparkPerformanceChartEngine) {
+    window.SparkPerformanceChartEngine = createPerformanceChartEngine();
+  }
+  hydrateGeneratedPerformanceCharts(window.SparkPerformanceChartEngine);
+  return window.SparkPerformanceChartEngine;
+}
+
+function createPerformanceChartEngine() {
+  var preloaded = {};
+  return {
+    _generatedHydrated: false,
+    preloadChart: function(chartId, definition) {
+      if (!chartId || !definition) return false;
+      preloaded[chartId] = clonePerformanceChart(definition);
+      return true;
+    },
+    preloadCharts: function(registry) {
+      var chartId;
+      var count = 0;
+      if (!registry || typeof registry !== "object") return 0;
+      for (chartId in registry) {
+        if (Object.prototype.hasOwnProperty.call(registry, chartId) && this.preloadChart(chartId, registry[chartId])) count++;
+      }
+      return count;
+    },
+    getPreloadedChart: function(chartId) {
+      return preloaded[chartId] ? clonePerformanceChart(preloaded[chartId]) : null;
+    }
+  };
+}
+
+function hydrateGeneratedPerformanceCharts(engine) {
+  if (!engine || engine._generatedHydrated) return;
+  if (window.__SPARK_PERFORMANCE_CHART_PRELOAD__) {
+    engine.preloadCharts(window.__SPARK_PERFORMANCE_CHART_PRELOAD__);
+  }
+  engine._generatedHydrated = true;
+}
 
 function normalizePerformanceInstrument(instrument) {
   var candidate = instrument || null;
@@ -40,22 +82,290 @@ function normalizePerformanceInstrument(instrument) {
   return candidate;
 }
 
+function getCanonicalPerformanceSongEntry(songId) {
+  if (!songId || typeof window === "undefined" || !window.SparkContent || !window.SparkContent.songs) return null;
+  return window.SparkContent.songs[songId] || null;
+}
+
+function buildConventionalPerformanceSongAudioCandidates(songId) {
+  var candidates = [];
+  var i;
+  if (!songId) return candidates;
+  for (i = 0; i < PERFORMANCE_AUDIO_EXTENSION_CANDIDATES.length; i++) {
+    candidates.push({
+      type: "audio",
+      src: "content/songs/audio/" + songId + PERFORMANCE_AUDIO_EXTENSION_CANDIDATES[i],
+      label: "Built-in Backing Track",
+      source: "convention"
+    });
+  }
+  return candidates;
+}
+
+function getPerformanceSongAudioAssetCache() {
+  if (typeof window === "undefined") return {};
+  if (!window.__performanceSongAudioAssetCache) window.__performanceSongAudioAssetCache = {};
+  return window.__performanceSongAudioAssetCache;
+}
+
+function getCanonicalPerformanceSongAudio(songId) {
+  var song = getCanonicalPerformanceSongEntry(songId);
+  var cacheEntry;
+  if (!song) return null;
+  if (song.audio && song.audio.src) return song.audio;
+  if (song.midi) {
+    return {
+      type: "midi",
+      src: song.midi,
+      label: "Built-in MIDI Backing"
+    };
+  }
+  cacheEntry = getPerformanceSongAudioAssetCache()[songId];
+  if (cacheEntry && cacheEntry.status === "resolved" && cacheEntry.audio) return cacheEntry.audio;
+  return null;
+}
+
+function resolvePerformanceSongAudioAsset(songId, options) {
+  var song = getCanonicalPerformanceSongEntry(songId);
+  var cache = getPerformanceSongAudioAssetCache();
+  var candidates;
+  var probeIndex = 0;
+  options = options || {};
+  if (!songId || !song) return Promise.resolve(null);
+  if (song.audio && song.audio.src) return Promise.resolve(song.audio);
+  if (song.midi) {
+    return Promise.resolve({
+      type: "midi",
+      src: song.midi,
+      label: "Built-in MIDI Backing"
+    });
+  }
+  if (!options.forceRefresh && cache[songId]) {
+    if (cache[songId].status === "resolved") return Promise.resolve(cache[songId].audio);
+    if (cache[songId].status === "missing") return Promise.resolve(null);
+    if (cache[songId].promise) return cache[songId].promise;
+  }
+  candidates = buildConventionalPerformanceSongAudioCandidates(songId);
+  cache[songId] = { status: "probing", audio: null, promise: null };
+  cache[songId].promise = new Promise(function(resolve) {
+    function finalize(audio) {
+      cache[songId] = {
+        status: audio ? "resolved" : "missing",
+        audio: audio || null,
+        promise: null
+      };
+      resolve(audio || null);
+    }
+    function probeNext() {
+      var candidate = candidates[probeIndex++];
+      if (!candidate || typeof fetch !== "function") {
+        finalize(null);
+        return;
+      }
+      fetch(candidate.src, { method: "HEAD", cache: "no-store" }).then(function(response) {
+        if (response && response.ok) {
+          finalize(candidate);
+          return;
+        }
+        probeNext();
+      }).catch(function() {
+        probeNext();
+      });
+    }
+    probeNext();
+  });
+  return cache[songId].promise;
+}
+
+function applyCanonicalPerformanceChartAudio(chart, songId) {
+  var audio;
+  if (!chart || !songId) return chart;
+  if (chart.audio && chart.audio.type && chart.audio.type !== "silent" && chart.audio.src) return chart;
+  audio = getCanonicalPerformanceSongAudio(songId);
+  if (audio) chart.audio = audio;
+  return chart;
+}
+
 function loadPerformanceChart(chartId) {
+  var meta = getPerformanceChartMeta(chartId);
+  var chartEngine = getPerformanceChartEngine();
+  var preloadedChart = chartEngine && typeof chartEngine.getPreloadedChart === "function"
+    ? chartEngine.getPreloadedChart(chartId)
+    : null;
+  if (meta && meta.sourceType === "generated_catalog") {
+    return loadGeneratedCatalogPerformanceChart(meta);
+  }
+  if (preloadedChart) {
+    return Promise.resolve(preloadedChart)
+      .then(function(chartDefinition) {
+        return applyCanonicalPerformanceChartAudio(normalizePerformanceChartDefinition(chartDefinition), meta && meta.songId);
+      });
+  }
   return fetch("data/performance_charts/" + chartId + ".json")
     .then(function(r) {
       if (!r.ok) throw new Error("Chart not found: " + chartId);
       return r.json();
     })
     .then(function(chartDefinition) {
-      return normalizePerformanceChartDefinition(chartDefinition);
+      return applyCanonicalPerformanceChartAudio(normalizePerformanceChartDefinition(chartDefinition), meta && meta.songId);
     });
 }
 
 function getPerformanceChartManifest() {
-  if (window.PERFORMANCE_CHART_MANIFEST && Array.isArray(window.PERFORMANCE_CHART_MANIFEST.charts)) {
-    return window.PERFORMANCE_CHART_MANIFEST.charts.slice();
+  var charts = window.PERFORMANCE_CHART_MANIFEST && Array.isArray(window.PERFORMANCE_CHART_MANIFEST.charts)
+    ? window.PERFORMANCE_CHART_MANIFEST.charts.slice()
+    : PERFORMANCE_CHART_LIBRARY_FALLBACK.slice();
+  return charts.concat(buildPerformanceCatalogChartEntries(charts));
+}
+
+function getGeneratedCatalogChartId(song) {
+  var songId = song && (song.id || song.songId) ? (song.id || song.songId) : "song";
+  var instrument = normalizePerformanceInstrument(
+    (song && (song.defaultInstrument || song.instrument || song.instrumentType || song.adapterType)) ||
+    "guitar"
+  ) || "guitar";
+  var arrangementType = song && song.arrangementType ? song.arrangementType : "chords";
+  return songId + "__generated__" + instrument + "__" + arrangementType;
+}
+
+function buildPerformanceCatalogChartEntries(existingCharts) {
+  var songs;
+  var seen;
+  var entries = [];
+  var key;
+  var song;
+  var chartId;
+  var songId;
+
+  if (typeof window === "undefined" || !window.SparkContent || !window.SparkContent.songs) return entries;
+
+  songs = window.SparkContent.songs;
+  seen = {};
+  (existingCharts || []).forEach(function(chart) {
+    if (chart && chart.id) seen[chart.id] = true;
+  });
+
+  for (key in songs) {
+    if (!Object.prototype.hasOwnProperty.call(songs, key)) continue;
+    song = songs[key] || {};
+    chartId = song.chartId;
+    songId = song.id || key;
+    if (chartId && !seen[chartId]) {
+      entries.push({
+        id: chartId,
+        title: song.title || songId,
+        artist: song.artist || "SparkSuite",
+        bpm: typeof song.bpm === "number" && song.bpm > 0 ? song.bpm : 100,
+        description: "Built-in chart exposed from the song catalog.",
+        sourceType: "built_in",
+        accentColor: "#45B7D1",
+        badge: "Song",
+        instrument: song.defaultInstrument || song.instrument || song.instrumentType || song.adapterType || "guitar",
+        songId: songId,
+        familyId: song.familyId || songId,
+        arrangementType: song.arrangementType || "chords",
+        audio: getCanonicalPerformanceSongAudio(songId)
+      });
+      seen[chartId] = true;
+      continue;
+    }
+    if (song.highwaySource === "generated" && song.defaultInstrument) {
+      chartId = getGeneratedCatalogChartId(song);
+      if (seen[chartId]) continue;
+      entries.push({
+        id: chartId,
+        title: song.title || songId,
+        artist: song.artist || "SparkSuite",
+        bpm: typeof song.bpm === "number" && song.bpm > 0 ? song.bpm : 100,
+        description: "Generated chart exposed from the canonical song catalog.",
+        sourceType: "generated_catalog",
+        accentColor: "#8b5cf6",
+        badge: "Generated",
+        instrument: song.defaultInstrument,
+        songId: songId,
+        familyId: song.familyId || songId,
+        arrangementType: song.arrangementType || "chords",
+        audio: getCanonicalPerformanceSongAudio(songId)
+      });
+      seen[chartId] = true;
+    }
   }
-  return PERFORMANCE_CHART_LIBRARY_FALLBACK.slice();
+
+  return entries;
+}
+
+function findGeneratedCatalogSong(meta) {
+  var requestedInstrument = normalizePerformanceInstrument(meta && meta.instrument);
+  var all;
+  var i;
+  var entry;
+  var data;
+  var songs;
+  var j;
+  var song;
+  var candidateId;
+
+  if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getAll !== "function") {
+    return null;
+  }
+  all = SparkInstruments.getAll() || [];
+  for (i = 0; i < all.length; i++) {
+    entry = all[i] || {};
+    if (requestedInstrument && normalizePerformanceInstrument(entry.instrument || entry.instrumentType || entry.id || entry.appId || "") !== requestedInstrument) {
+      continue;
+    }
+    if (typeof entry.getData !== "function") continue;
+    data = entry.getData() || {};
+    songs = Array.isArray(data.SONGS) ? data.SONGS : [];
+    for (j = 0; j < songs.length; j++) {
+      song = songs[j] || {};
+      candidateId = typeof resolvePerformanceSongId === "function"
+        ? resolvePerformanceSongId(song, song.title)
+        : ((song.id || song.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_"));
+      if (candidateId === meta.songId) return song;
+    }
+  }
+  return null;
+}
+
+function loadGeneratedCatalogPerformanceChart(meta) {
+  var song = findGeneratedCatalogSong(meta);
+  var chart;
+  if (!song || typeof buildPerformanceChartFromSong !== "function") {
+    return Promise.reject(new Error("Generated catalog chart source not found: " + meta.id));
+  }
+  chart = buildPerformanceChartFromSong(song, "builtin", meta.arrangementType || "chords");
+  if (!chart) {
+    return Promise.reject(new Error("Generated catalog chart could not be built: " + meta.id));
+  }
+  chart.id = meta.id;
+  chart.title = meta.title || chart.title;
+  chart.artist = meta.artist || chart.artist;
+  chart.instrument = meta.instrument || chart.instrument;
+  chart.adapterType = meta.instrument || chart.adapterType;
+  chart.songId = meta.songId || chart.songId;
+  chart.familyId = meta.familyId || chart.familyId || meta.songId || "";
+  applyCanonicalPerformanceChartAudio(chart, chart.songId || meta.songId);
+  return Promise.resolve(chart);
+}
+
+function chartSupportsPerformanceInstrument(chart, requestedInstrument) {
+  var normalizedRequested;
+  var normalizedChartInstrument;
+  var supported;
+  var i;
+  if (!requestedInstrument) return true;
+  normalizedRequested = normalizePerformanceInstrument(requestedInstrument);
+  supported = Array.isArray(chart && chart.supportedInstruments) ? chart.supportedInstruments : null;
+  if (supported && supported.length) {
+    for (i = 0; i < supported.length; i++) {
+      if (normalizePerformanceInstrument(supported[i]) === normalizedRequested) return true;
+    }
+    return false;
+  }
+  normalizedChartInstrument = normalizePerformanceInstrument(chart && (chart.instrument || chart.instrumentType || chart.adapterType || null));
+  if (!normalizedChartInstrument) return true;
+  return normalizedChartInstrument === normalizedRequested;
 }
 
 function getPerformanceChartLibrary(options) {
@@ -64,7 +374,7 @@ function getPerformanceChartLibrary(options) {
   if (options.instrument) {
     var requestedInstrument = normalizePerformanceInstrument(options.instrument);
     charts = charts.filter(function(chart) {
-      return !chart.instrument || chart.instrument === requestedInstrument;
+      return chartSupportsPerformanceInstrument(chart, requestedInstrument);
     });
   }
   return charts;
@@ -76,6 +386,28 @@ function getPerformanceChartMeta(chartId) {
     if (library[i].id === chartId) return library[i];
   }
   return null;
+}
+
+function resolvePerformanceChartVariantId(songId, options) {
+  options = options || {};
+  var arrangementType = options.arrangementType || "chords";
+  var requestedInstrument = normalizePerformanceInstrument(options.instrument || null);
+  var library = getPerformanceChartManifest();
+  var fallbackId = null;
+  var i;
+  var chart;
+  for (i = 0; i < library.length; i++) {
+    chart = library[i] || {};
+    if (chart.songId !== songId) continue;
+    if ((chart.arrangementType || "chords") !== arrangementType) continue;
+    if (!requestedInstrument) return chart.id;
+    if (!chartSupportsPerformanceInstrument(chart, requestedInstrument)) continue;
+    if (normalizePerformanceInstrument(chart.instrument || chart.instrumentType || chart.adapterType || null) === requestedInstrument) {
+      return chart.id;
+    }
+    if (!fallbackId) fallbackId = chart.id;
+  }
+  return fallbackId;
 }
 
 function normalizePerformanceChartDefinition(chartDefinition) {
@@ -141,7 +473,26 @@ function convertSparkSongChartToPerformanceChart(songChart, options) {
   var notes = track.notes || [];
   var phrases = track.phrases || [];
   var events = [];
-  var bpm = songChart.tempoMap.segments && songChart.tempoMap.segments.length ? songChart.tempoMap.segments[0].bpm : 100;
+  var bpm = 100;
+  if (songChart.tempoMap.segments && songChart.tempoMap.segments.length) {
+    var segs = songChart.tempoMap.segments;
+    if (segs.length === 1) {
+      bpm = segs[0].bpm;
+    } else {
+      var bestBpm = segs[0].bpm;
+      var bestDur = 0;
+      for (var si = 0; si < segs.length; si++) {
+        var segStart = segs[si].startTick !== undefined ? segs[si].startTick : 0;
+        var segEnd = si + 1 < segs.length && segs[si + 1].startTick !== undefined ? segs[si + 1].startTick : segStart;
+        var segDur = segEnd - segStart;
+        if (segDur > bestDur) {
+          bestDur = segDur;
+          bestBpm = segs[si].bpm;
+        }
+      }
+      bpm = bestBpm;
+    }
+  }
 
   for (var i = 0; i < notes.length; i++) {
     var note = notes[i];
@@ -178,16 +529,44 @@ function convertSparkSongChartToPerformanceChart(songChart, options) {
       endSec: songChart.tempoMap.tickToSeconds(phrases[j].endTick) + (songChart.song.offsetSec || 0)
     });
   }
-  if (!normalizedPhrases.length) {
-    normalizedPhrases.push({
-      id: 0,
-      name: "Full Song",
-      startSec: 0,
-      endSec: songChart.song.durationSec || (events.length ? events[events.length - 1].t + events[events.length - 1].dur : 0)
-    });
+  if (!normalizedPhrases.length || (normalizedPhrases.length === 1 && normalizedPhrases[0].name === "Full Song")) {
+    var inferredPhrases = [];
+    var GAP_SEC = 2;
+    if (events.length > 1) {
+      var phraseStartIdx = 0;
+      for (var pi = 1; pi < events.length; pi++) {
+        var prevEnd = events[pi - 1].t + (events[pi - 1].dur || 0);
+        if (events[pi].t - prevEnd > GAP_SEC) {
+          inferredPhrases.push({
+            id: inferredPhrases.length,
+            name: "Section " + (inferredPhrases.length + 1),
+            startSec: events[phraseStartIdx].t,
+            endSec: events[pi - 1].t + (events[pi - 1].dur || 0)
+          });
+          phraseStartIdx = pi;
+        }
+      }
+      if (inferredPhrases.length > 0) {
+        inferredPhrases.push({
+          id: inferredPhrases.length,
+          name: "Section " + (inferredPhrases.length + 1),
+          startSec: events[phraseStartIdx].t,
+          endSec: events[events.length - 1].t + (events[events.length - 1].dur || 0)
+        });
+        normalizedPhrases = inferredPhrases;
+      }
+    }
+    if (!normalizedPhrases.length) {
+      normalizedPhrases.push({
+        id: 0,
+        name: "Full Song",
+        startSec: 0,
+        endSec: songChart.song.durationSec || (events.length ? events[events.length - 1].t + events[events.length - 1].dur : 0)
+      });
+    }
   }
 
-  return normalizePerformanceChart({
+  var chartDef = {
     id: options.chartId || songChart.song.id || "imported_chart",
     title: options.title || songChart.song.title || "Imported Chart",
     artist: options.artist || songChart.song.artist || "Unknown Artist",
@@ -199,7 +578,13 @@ function convertSparkSongChartToPerformanceChart(songChart, options) {
     events: events,
     phrases: normalizedPhrases,
     sourceFormat: songChart.metadata ? songChart.metadata.sourceFormat : null
-  });
+  };
+  var builtChart = normalizePerformanceChart(chartDef);
+  var lastEvtEnd = builtChart.events.length
+    ? builtChart.events[builtChart.events.length - 1].t + (builtChart.events[builtChart.events.length - 1].dur || 0)
+    : 0;
+  builtChart.durationSec = Math.max(lastEvtEnd, songChart.song.audioDurationSec || 0);
+  return builtChart;
 }
 
 function validatePerformanceChart(chart) {
@@ -399,3 +784,13 @@ function dedupePerformancePitchClasses(notes) {
 }
 
 window.getPerformanceChartManifest = getPerformanceChartManifest;
+window.chartSupportsPerformanceInstrument = chartSupportsPerformanceInstrument;
+window.getPerformanceChartMeta = getPerformanceChartMeta;
+window.getPerformanceChartLibrary = getPerformanceChartLibrary;
+window.loadPerformanceChart = loadPerformanceChart;
+window.normalizePerformanceChartDefinition = normalizePerformanceChartDefinition;
+window.getPerformanceImportAdapter = getPerformanceImportAdapter;
+window.convertSparkSongChartToPerformanceChart = convertSparkSongChartToPerformanceChart;
+window.resolvePerformanceChartVariantId = resolvePerformanceChartVariantId;
+window.getCanonicalPerformanceSongAudio = getCanonicalPerformanceSongAudio;
+window.resolvePerformanceSongAudioAsset = resolvePerformanceSongAudioAsset;

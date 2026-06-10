@@ -54,7 +54,7 @@ function pianoAnalyticsPage(){
 
 function renderAnalyticsWeaknesses(summary){
   var h = '<div class="card mb16">';
-  h += '<div class="mb8"><b>Weakest Skills</b></div>';
+  h += '<div class="card-section-heading mb8">Weakest Skills</div>';
   var hasAny = false;
 
   if(summary.weakestTransitions && summary.weakestTransitions.length){
@@ -93,7 +93,7 @@ function renderAnalyticsWeaknesses(summary){
 
 function renderAnalyticsStrengths(summary){
   var h = '<div class="card mb16">';
-  h += '<div class="mb8"><b>Strongest Areas</b></div>';
+  h += '<div class="card-section-heading mb8">Strongest Areas</div>';
   if(!summary.strongestSkills || !summary.strongestSkills.length){
     h += '<div class="muted">Not enough data yet.</div>';
   }else{
@@ -108,7 +108,7 @@ function renderAnalyticsStrengths(summary){
 
 function renderAnalyticsImprovement(summary){
   var h = '<div class="card mb16">';
-  h += '<div class="mb8"><b>Recent Improvement</b></div>';
+  h += '<div class="card-section-heading mb8">Recent Improvement</div>';
   if(!summary.recentImprovement || !summary.recentImprovement.length){
     h += '<div class="muted">No trend data yet.</div>';
   }else{
@@ -124,7 +124,7 @@ function renderAnalyticsImprovement(summary){
 function renderAnalyticsConsistency(summary){
   var c = summary.practiceConsistency || {};
   var h = '<div class="card mb16">';
-  h += '<div class="mb8"><b>Practice Consistency</b></div>';
+  h += '<div class="card-section-heading mb8">Practice Consistency</div>';
   h += '<div style="font-size:13px;margin-bottom:6px">Streak: '+pianoAnalyticsCountValue(c.streak)+'</div>';
   h += '<div style="font-size:13px;margin-bottom:6px">Sessions: '+pianoAnalyticsCountValue(c.sessions)+'</div>';
   h += '<div style="font-size:13px;margin-bottom:6px">History Entries: '+pianoAnalyticsCountValue(c.historyCount)+'</div>';
@@ -134,14 +134,14 @@ function renderAnalyticsConsistency(summary){
 
 function renderAnalyticsRecommendations(summary){
   var h = '<div class="card mb16">';
-  h += '<div class="mb8"><b>Recommended Next</b></div>';
+  h += '<div class="card-section-heading mb8">Recommended Next</div>';
   if(!summary.recommendations || !summary.recommendations.length){
     h += '<div class="muted">No recommendations yet.</div>';
   }else{
     for(var i=0;i<summary.recommendations.length;i++){
       var r = summary.recommendations[i];
       h += '<div style="padding:10px;border-radius:10px;background:var(--input-bg);margin-bottom:8px">';
-      h += '<div style="font-size:13px;font-weight:800">'+escHTML(pianoFirstAnalyticsTextToken(r.label, "Recommendation"))+'</div>';
+      h += '<div class="card-micro-heading">'+escHTML(pianoFirstAnalyticsTextToken(r.label, "Recommendation"))+'</div>';
       h += '<div style="font-size:11px;color:var(--text-muted);margin:4px 0 8px">'+escHTML(pianoFirstAnalyticsTextToken(r.reason))+'</div>';
       h += '<button class="btn" onclick="act(\'launchAnalyticsRecommendation\','+i+')">Start</button>';
       h += '</div>';

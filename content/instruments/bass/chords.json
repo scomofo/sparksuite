@@ -1,0 +1,9 @@
+[
+  { "id": "E_root", "name": "E Root", "notes": ["E1"] },
+  { "id": "A_root", "name": "A Root", "notes": ["A1"] },
+  { "id": "D_root", "name": "D Root", "notes": ["D2"] },
+  { "id": "G_root", "name": "G Root", "notes": ["G2"] },
+  { "id": "C_root", "name": "C Root", "notes": ["C2"] },
+  { "id": "B_fifth", "name": "B Fifth", "notes": ["B1"] },
+  { "id": "ghost_x", "name": "Muted Ghost", "notes": ["x"] }
+]

@@ -1,0 +1,18 @@
+{
+  "id": "uke_fingerpick_flow_package",
+  "title": "Fingerpick Flow",
+  "artist": "SparkSuite Ukulele",
+  "packageFormat": "sparksuite_import_v1",
+  "arrangementType": "ukulele_fingerpick",
+  "adapterType": "ukulele",
+  "instrument": "ukulele",
+  "chartImport": {
+    "files": {
+      "notes.chart": "[Song]\n{\n  Name = \"Fingerpick Flow\"\n  Artist = \"SparkSuite Ukulele\"\n  Resolution = 192\n}\n[SyncTrack]\n{\n  0 = B 70000\n}\n[ExpertSingle]\n{\n  0 = N 0 0\n  48 = N 1 0\n  96 = N 2 0\n  144 = N 3 0\n  192 = N 3 0\n  240 = N 2 0\n  288 = N 1 0\n  336 = N 0 0\n  384 = N 0 0\n  432 = N 1 0\n  480 = N 2 0\n  528 = N 3 0\n  576 = N 3 0\n  624 = N 2 0\n  672 = N 1 0\n  720 = N 0 0\n  768 = N 0 0\n  816 = N 1 0\n  864 = N 2 0\n  912 = N 3 0\n  960 = N 3 0\n  1008 = N 2 0\n  1056 = N 1 0\n  1104 = N 0 0\n  1152 = N 0 0\n  1200 = N 1 0\n  1248 = N 2 0\n  1296 = N 3 0\n  1344 = N 3 0\n  1392 = N 2 0\n  1440 = N 1 0\n  1488 = N 0 0\n  1536 = N 0 0\n  1584 = N 1 0\n  1632 = N 2 0\n  1680 = N 3 0\n  1728 = N 3 0\n  1776 = N 2 0\n  1824 = N 1 0\n  1872 = N 0 0\n  1920 = N 0 0\n  1968 = N 1 0\n  2016 = N 2 0\n  2064 = N 3 0\n  2112 = N 3 0\n  2160 = N 2 0\n  2208 = N 1 0\n  2256 = N 0 0\n  2304 = N 0 0\n  2352 = N 1 0\n  2400 = N 2 0\n  2448 = N 3 0\n  2496 = N 3 0\n  2544 = N 2 0\n  2592 = N 1 0\n  2640 = N 0 0\n  2688 = N 0 0\n  2736 = N 1 0\n  2784 = N 2 0\n  2832 = N 3 0\n  2880 = N 3 0\n  2928 = N 2 0\n  2976 = N 1 0\n  3024 = N 0 0\n}\n[Events]\n{\n  0 = E \"section Am\"\n  768 = E \"section F\"\n  1536 = E \"section C\"\n  2304 = E \"section G\"\n}\n",
+      "song.ini": "[song]\nname = Fingerpick Flow\nartist = SparkSuite Ukulele"
+    }
+  },
+  "importOptions": {
+    "trackName": "ExpertSingle"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "pno_fixture_session",
+  "userId": "fixture_piano",
+  "flow": "guided_session",
+  "instrumentType": "piano",
+  "lessonId": "pno-d01",
+  "skillId": "middle_c_position",
+  "difficulty": "easy",
+  "segments": [
+    {
+      "id": "pno_segment_1",
+      "type": "practice",
+      "exerciseIds": ["pno_ex_1"]
+    },
+    {
+      "id": "pno_segment_2",
+      "type": "song",
+      "exerciseIds": ["pno_ex_2"]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "pno_ex_1",
+      "type": "keys",
+      "data": {
+        "label": "C Position Warmup"
+      }
+    },
+    {
+      "id": "pno_ex_2",
+      "type": "song",
+      "data": {
+        "label": "C Position Melody"
+      }
+    }
+  ],
+  "rewards": []
+}

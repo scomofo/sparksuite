@@ -82,14 +82,14 @@ function pianoSongsTab() {
   html += '<div class="level-tabs">';
   subtabs.forEach(function(t) {
     var active = S._songTab === t.id ? " active" : "";
-    html += '<div class="level-tab' + active + '" style="color:var(--accent)" onclick="S._songTab=\'' + t.id + '\';render()">' + t.label + '</div>';
+    html += '<div class="level-tab' + active + '" style="color:var(--accent)" role="button" tabindex="0" onclick="act(\'pianoSongTab\',\'' + t.id + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'pianoSongTab\',\'' + t.id + '\')}">' + t.label + '</div>';
   });
   html += '</div>';
 
   switch (S._songTab) {
     case "library": html += songLibrary(); break;
     case "styles":  html += stylesTab(); break;
-    case "build":   html += buildTab(); break;
+    case "build":   html += pianoBuildTab(); break;
     case "stems":   html += stemsSection(); break;
   }
   return html;
@@ -97,7 +97,7 @@ function pianoSongsTab() {
 
 function songLibrary() {
   var SONGS = _pianoSongs, CURRICULUM = _pianoCurriculum;
-  var html = '<div class="card"><h2>Song Library</h2>';
+  var html = '<div class="card"><h2 class="card-section-heading">Song Library</h2>';
 
   if (S.songIdx !== null && SONGS[S.songIdx]) {
     var song = SONGS[S.songIdx];
@@ -105,8 +105,8 @@ function songLibrary() {
     var songArtist = pianoFirstSongPageTextToken(song.artist, "Unknown Artist");
     var songTempo = pianoFormatSongTempo(S.bpm, 90);
     html += '<div class="song-detail">';
-    html += '<h3>' + escHTML(songTitle) + '</h3>';
-    html += '<div class="text-muted">' + escHTML(songArtist) + ' \u2022 Level ' + song.level + ' \u2022 ' + pianoFormatSongPageBpm(song.bpm, "--") + ' BPM</div>';
+    html += '<h3 class="card-section-heading">' + escHTML(songTitle) + '</h3>';
+    html += '<div class="metric-label">' + escHTML(songArtist) + ' \u2022 Level <span class="metric-value">' + song.level + '</span> \u2022 ' + pianoFormatSongPageBpm(song.bpm, "--") + ' BPM</div>';
     html += '<div class="song-chords">';
     song.chords.forEach(function(ch) {
       var chord = findChord(ch);
@@ -126,7 +126,7 @@ function songLibrary() {
     var currentChord = song.progression[S.songChordIdx];
     if (currentChord) html += pianoSVG(findChord(currentChord));
 
-    html += '<div class="song-controls">';
+    html += '<div class="song-controls action-row">';
     html += '<button class="btn btn-accent" onclick="act(\'play_song\')">' + (S.songPlaying ? "\u23F8 Pause" : "\u25B6 Play Along") + '</button>';
     html += '<button class="btn" onclick="act(\'open_perform_song\',' + S.songIdx + ')" style="background:var(--accent);color:#fff">Performance</button>';
     html += '<label style="font-size:0.85rem">Tempo: ' + songTempo + ' BPM</label>';
@@ -178,7 +178,7 @@ function songLibrary() {
     });
 
     // Count
-    html += '<div class="text-muted" style="font-size:0.75rem;margin-bottom:8px">' + filtered.length + ' song' + (filtered.length === 1 ? '' : 's') + (safeSongFilter ? ' matching \u201C' + escHTML(safeSongFilter) + '\u201D' : '') + '</div>';
+    html += '<div class="metric-label" style="margin-bottom:8px">' + filtered.length + ' song' + (filtered.length === 1 ? '' : 's') + (safeSongFilter ? ' matching \u201C' + escHTML(safeSongFilter) + '\u201D' : '') + '</div>';
 
     if (S.songSort === "level" && !safeSongFilter) {
       // Grouped by level (original view, respecting sort direction)
@@ -187,7 +187,7 @@ function songLibrary() {
         var lvlSongs = filtered.filter(function(item) { return item.song.level === l; });
         if (!lvlSongs.length) return;
         var locked = l > S.level + 1;
-        html += '<h3 style="color:' + levelColor(l) + (locked ? ';opacity:0.4' : '') + '">' + CURRICULUM[l-1].icon + ' Level ' + l + '</h3>';
+        html += '<h3 class="card-micro-heading" style="color:' + levelColor(l) + (locked ? ';opacity:0.4' : '') + '">' + CURRICULUM[l-1].icon + ' Level ' + l + '</h3>';
         html += '<div class="song-list">';
         lvlSongs.forEach(function(item) {
           var s = item.song, idx = item.origIdx;
@@ -227,20 +227,20 @@ function songLibrary() {
 
 // ── Playing Styles ──
 function stylesTab() {
-  var html = '<div class="card"><h2>Playing Styles</h2>';
+  var html = '<div class="card"><h2 class="card-section-heading">Playing Styles</h2>';
   var styleTempo = pianoFormatSongTempo(S.bpm, 90);
   html += '<p>Learn different ways to play piano chords.</p>';
 
   PLAY_STYLES.forEach(function(ps, i) {
     var active = S.styleIdx === i;
     html += '<div class="style-card ' + (active ? 'active' : '') + '">';
-    html += '<div class="style-header" onclick="act(\'select_style\',' + i + ')">';
+    html += '<div class="style-header" role="button" tabindex="0" onclick="act(\'select_style\',' + i + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'select_style\',' + i + ')}">';
     html += '<strong>' + ps.name + '</strong> <span class="level-tag">Lvl ' + ps.level + '</span>';
     html += '</div>';
     if (active) {
       html += '<p class="text-muted" style="padding:0 14px">' + ps.desc + '</p>';
       html += styleHTML(ps);
-      html += '<div class="style-controls">';
+      html += '<div class="style-controls action-row">';
       html += '<label>BPM: ' + styleTempo + '</label>';
       html += '<input type="range" min="40" max="200" value="' + styleTempo + '" onchange="act(\'set_bpm\', this.value)"/>';
       html += '<button class="btn btn-accent" onclick="act(\'play_style\')">\u{1F50A} Demo</button>';
@@ -255,12 +255,8 @@ function stylesTab() {
 }
 
 // ── Progression Builder ──
-function buildTab() {
-  // This global shadows js/pages/games.js buildTab for every instrument
-  // (piano pages load last), so it can render outside piano flows where
-  // buildChords was never initialized.
-  if (!Array.isArray(S.buildChords)) S.buildChords = [];
-  var html = '<div class="card"><h2>Progression Builder</h2>';
+function pianoBuildTab() {
+  var html = '<div class="card"><h2 class="card-section-heading">Progression Builder</h2>';
   html += '<p>Create your own chord progressions.</p>';
 
   html += '<div class="build-chords">';
@@ -271,7 +267,7 @@ function buildTab() {
   html += '</div>';
 
   if (S.buildChords.length > 0) {
-    html += '<div class="build-controls">';
+    html += '<div class="build-controls action-row">';
     html += '<button class="btn btn-accent" onclick="act(\'build_play\')">' + (S.buildPlaying ? "\u23F8 Stop" : "\u25B6 Play") + '</button>';
     html += '<button class="btn btn-secondary" onclick="act(\'build_clear\')">Clear</button>';
     html += '</div>';
@@ -298,7 +294,7 @@ function stemsSection() {
   var stemError = pianoFirstSongPageTextToken(S.stemError);
   var html = '<div class="card" style="text-align:center">';
   html += '<div style="font-size:32px;margin-bottom:8px">\u{1F3A7}</div>';
-  html += '<h3>Stem Separator</h3>';
+  html += '<h3 class="card-section-heading">Stem Separator</h3>';
   html += '<p class="text-muted">Import a song to isolate vocals, drums, bass, guitar & piano</p>';
 
   if (!window.electron) {
@@ -322,7 +318,7 @@ function stemsSection() {
     html += '<div class="spinner"></div>';
     html += '<div><strong>Separating stems...</strong><br><span class="text-muted">' + escHTML(stemFileName) + '</span></div></div>';
     html += '<div class="prog-bar" style="margin-bottom:8px"><div class="prog-fill" style="width:' + S.stemProgress + '%;background:var(--accent)"></div></div>';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+    html += '<div class="split-row" style="gap:12px">';
     html += '<span class="text-muted" style="font-size:0.8rem">This may take 5-10 minutes</span>';
     html += '<button class="btn btn-sm" style="color:var(--danger)" onclick="act(\'stemCancel\')">Cancel</button>';
     html += '</div></div>';
@@ -332,7 +328,7 @@ function stemsSection() {
     html += '<div class="card" style="border:1px solid var(--accent)">';
     html += '<div style="display:flex;align-items:center;gap:12px">';
     html += '<span style="font-size:28px">\u2705</span>';
-    html += '<div style="flex:1"><strong>Stems Ready!</strong><br><span class="text-muted">' + escHTML(stemFileName) + '</span></div>';
+    html += '<div style="flex:1"><strong class="card-micro-heading">Stems Ready!</strong><br><span class="metric-label">' + escHTML(stemFileName) + '</span></div>';
     html += '<button class="btn btn-accent" onclick="act(\'stemOpen\')">\u{1F3A7} Open Player</button>';
     html += '</div></div>';
   }
@@ -351,7 +347,7 @@ function pianoStemsPlayerPage() {
   var html = '<div style="padding:8px 0">';
   html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">';
   html += '<button class="btn btn-sm" onclick="act(\'stemBack\')">\u2190</button>';
-  html += '<div style="flex:1"><strong>\u{1F3A7} Stem Player</strong><br><span class="text-muted">' + escHTML(stemFileName) + '</span></div></div>';
+  html += '<div style="flex:1"><strong class="card-section-heading">\u{1F3A7} Stem Player</strong><br><span class="metric-label">' + escHTML(stemFileName) + '</span></div></div>';
 
   html += '<div class="card">';
   html += '<div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:8px">';
@@ -363,7 +359,7 @@ function pianoStemsPlayerPage() {
     var on = S.stemToggles[name];
     var color = STEM_COLORS[name];
     var icon = STEM_ICONS[name];
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;' + (i > 0 ? 'border-top:1px solid var(--border);' : '') + '">';
+    html += '<div class="split-row" style="gap:12px;padding:10px 0;' + (i > 0 ? 'border-top:1px solid var(--border);' : '') + '">';
     html += '<div style="display:flex;align-items:center;gap:10px">';
     html += '<span style="font-size:20px">' + icon + '</span>';
     html += '<span style="font-weight:700">' + name.charAt(0).toUpperCase() + name.slice(1) + '</span></div>';

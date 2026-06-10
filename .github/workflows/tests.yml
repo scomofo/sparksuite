@@ -16,6 +16,38 @@ jobs:
         with:
           node-version: 20
 
-      # The suite is plain Node with no dependencies — no npm install needed.
+      # Chart data is generated, not committed; several performance tests read it.
+      - name: Generate chart data
+        run: node scripts/generate-chart-data.js
+
       - name: Run full test suite
         run: node tests/run-tests.js
+
+      - name: Run e2e tests
+        run: node tests/e2e/session_happy_path.test.js && node tests/e2e/instrument_modularity.test.js
+
+      - name: UI business-logic scan
+        run: node scripts/check_ui_business_logic.js
+
+  browser-smoke:
+    name: Browser clickthrough smoke
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Generate chart data
+        run: node scripts/generate-chart-data.js
+
+      - name: Run browser clickthrough smoke
+        run: node tests/browser_clickthrough_smoke.js

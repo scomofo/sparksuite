@@ -1,5 +1,13 @@
 # Manifest Auto-Update Handoff
 
+## Status
+
+Implemented with a safe production split.
+
+- `scripts/apply_generated_instrument.js` regenerates `instrument_manifest.generated.js` and the explicit deferred runtime instrument block in `index.html`.
+- `js/instruments/discovery_loader.js` is an optional manifest-backed loader for tooling and experiments. It now deduplicates existing `script[src]` and `script[data-deferred-src]` entries, preserves manifest order, marks discovered scripts, and exposes `SparkInstrumentDiscovery.loadAll(callback)`.
+- Production boot continues to use explicit `data-deferred-src` tags because those participate in `SparkBootLoader`'s deterministic sequencing.
+
 ## What This Is
 
 The manifest system eliminates manual index.html edits for instrument loading.

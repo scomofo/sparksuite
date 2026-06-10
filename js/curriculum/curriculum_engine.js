@@ -11,7 +11,7 @@
     }
     inst = SparkInstruments.getActive();
     if (!inst) return null;
-    if (typeof inst.getCurriculumMap === "function") return inst;
+    if (typeof inst.getCurriculumMap === "function" || typeof inst.getCurriculumMapV2 === "function") return inst;
     candidate = inst.id || inst.appId || inst.instrumentId || null;
     if (!candidate || typeof SparkInstruments.getAll !== "function") return inst;
     all = SparkInstruments.getAll() || [];
@@ -20,6 +20,75 @@
       if (entry.id === candidate || entry.appId === candidate) return entry;
     }
     return inst;
+  }
+
+  function getInstrumentCurriculumMap(inst) {
+    var map = typeof inst.getCurriculumMap === "function" ? inst.getCurriculumMap() : [];
+    if (Array.isArray(map) && map.length) return map;
+    map = typeof inst.getCurriculumMapV2 === "function" ? inst.getCurriculumMapV2() : [];
+    return Array.isArray(map) ? map : [];
+  }
+
+  function getCompletedCurriculumLessonIds(inst) {
+    var completedLessons = [];
+    var lessonMasteryMap;
+    var instrumentKey;
+    var v2Completed;
+    if (typeof S !== "undefined") {
+      completedLessons = Array.isArray(S.completedLessons) ? S.completedLessons.slice() : [];
+      lessonMasteryMap = typeof SparkMastery !== "undefined"
+        ? SparkMastery.category("lessons")
+        : ((S.mastery && S.mastery.lessons) || {});
+      for (var lessonId in lessonMasteryMap) {
+        if (lessonMasteryMap[lessonId] && completedLessons.indexOf(lessonId) === -1) {
+          completedLessons.push(lessonId);
+        }
+      }
+      instrumentKey = inst && (inst.instrument || inst.instrumentType) ? (inst.instrument || inst.instrumentType) : null;
+      v2Completed = instrumentKey && S.curriculumV2CompletedSessions ? S.curriculumV2CompletedSessions[instrumentKey] : null;
+      if (Array.isArray(v2Completed)) {
+        for (var i = 0; i < v2Completed.length; i++) {
+          if (completedLessons.indexOf(v2Completed[i]) === -1) completedLessons.push(v2Completed[i]);
+        }
+      }
+    }
+    return completedLessons;
+  }
+
+  function getCurriculumLessonById(lessonId, inst) {
+    var lesson;
+    var currMap;
+    var i;
+    if (typeof getCurriculumItem === "function") {
+      lesson = getCurriculumItem("lessons", lessonId);
+      if (lesson) return lesson;
+    }
+    currMap = inst ? getInstrumentCurriculumMap(inst) : [];
+    for (i = 0; i < currMap.length; i++) {
+      if (currMap[i] && currMap[i].id === lessonId) return currMap[i];
+    }
+    return null;
+  }
+
+  function isFlatLessonUnlocked(lesson, inst) {
+    var curriculumMap;
+    var completedLessons;
+    var lessonIds = {};
+    var i;
+    var prerequisites;
+    if (!lesson) return true;
+    curriculumMap = getInstrumentCurriculumMap(inst);
+    completedLessons = getCompletedCurriculumLessonIds(inst);
+    for (i = 0; i < curriculumMap.length; i++) {
+      if (curriculumMap[i] && curriculumMap[i].id) lessonIds[curriculumMap[i].id] = true;
+    }
+    prerequisites = Array.isArray(lesson.prerequisites) ? lesson.prerequisites : [];
+    for (i = 0; i < prerequisites.length; i++) {
+      if (lessonIds[prerequisites[i]] && completedLessons.indexOf(prerequisites[i]) === -1) {
+        return false;
+      }
+    }
+    return true;
   }
 
   function getNextLessonFromCurriculum(curriculumId, completedLessons){
@@ -43,8 +112,15 @@
   }
 
   function checkLessonUnlockRules(lessonId){
-    var lesson = getCurriculumItem("lessons", lessonId);
-    if(!lesson || !lesson.unlockRules) return true; // no rules = unlocked
+    var lesson = typeof getCurriculumItem === "function" ? getCurriculumItem("lessons", lessonId) : null;
+    var activeInstrument;
+    if(!lesson){
+      activeInstrument = getActiveCurriculumInstrument();
+      lesson = getCurriculumLessonById(lessonId, activeInstrument);
+      if (!lesson) return true;
+      return isFlatLessonUnlocked(lesson, activeInstrument);
+    }
+    if(!lesson.unlockRules) return true; // no rules = unlocked
     var rules = lesson.unlockRules;
 
     if(rules.lessonsCompleted && Array.isArray(rules.lessonsCompleted)){
@@ -86,10 +162,7 @@
     },
 
     getLessonById: function(lessonId) {
-      if (typeof getCurriculumItem === "function") {
-        return getCurriculumItem("lessons", lessonId);
-      }
-      return null;
+      return getCurriculumLessonById(lessonId, getActiveCurriculumInstrument());
     },
 
     getReviewTargets: function(userContext) {
@@ -150,25 +223,13 @@
       }
 
       // 2. Get next lesson from curriculum
-      var completedLessons = [];
-      if (typeof S !== "undefined") {
-        completedLessons = Array.isArray(S.completedLessons) ? S.completedLessons.slice() : [];
-        var lessonMasteryMap = typeof SparkMastery !== "undefined"
-          ? SparkMastery.category("lessons")
-          : ((S.mastery && S.mastery.lessons) || {});
-        for (var lessonId in lessonMasteryMap) {
-          if (lessonMasteryMap[lessonId] && completedLessons.indexOf(lessonId) === -1) {
-            completedLessons.push(lessonId);
-          }
-        }
-      }
-
       // Try to find next lesson from active instrument's curriculum map
       // currMap is an array of lesson/level objects (not a curriculum root ID),
       // so iterate directly for the first incomplete lesson.
       var inst = getActiveCurriculumInstrument();
       if (inst) {
-        var currMap = typeof inst.getCurriculumMap === "function" ? inst.getCurriculumMap() : [];
+        var completedLessons = getCompletedCurriculumLessonIds(inst);
+        var currMap = getInstrumentCurriculumMap(inst);
         for (var ci = 0; ci < currMap.length; ci++) {
           var cmItem = currMap[ci];
           var cmId = cmItem && cmItem.id ? cmItem.id : null;

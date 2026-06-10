@@ -68,6 +68,21 @@ eval(loadJS("js/sparksuite/instruments/guitar/guitar_rhythm_curriculum.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/guitar_rhythm_adapter.js"));
 eval(loadJS("js/sparksuite/instruments/guitar/guitar_adapter.js"));
 eval(loadJS("js/sparksuite/instruments/bass/bass_module.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_skill_tree.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_curriculum.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_lessons.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_exercises.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_patterns.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_songs.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_kits.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_mapping.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_notation.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_progression.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_packs.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_chart_library.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_runtime_adapter.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_rhythm_adapter.js"));
+eval(loadJS("js/sparksuite/instruments/drums/drums_module.js"));
 eval(loadJS("js/sparksuite/instruments/ukulele/ukulele_lessons.js"));
 eval(loadJS("js/sparksuite/instruments/ukulele/ukulele_chords.js"));
 eval(loadJS("js/sparksuite/instruments/ukulele/ukulele_scales.js"));
@@ -90,8 +105,8 @@ test("chart io normalizes guitar exercise definitions", function() {
 
   assert.ok(chart.song.id);
   assert.strictEqual(chart.metadata.sourceFormat, "spark_exercise_v1");
-  assert.strictEqual(chart.tracks.guitar.notes.length, 16);
-  assert.strictEqual(chart.tracks.guitar.phrases.length, 2);
+  assert.strictEqual(chart.tracks.guitar.notes.length, 8);
+  assert.strictEqual(chart.tracks.guitar.phrases.length, 1);
 });
 
 test("chart io imports notes.chart text with tempo changes and song.ini metadata", function() {
@@ -393,6 +408,7 @@ test("rhythm highway loop tooling can build a normalized loop payload", function
 test("instrument rhythm adapters expose lane metadata for non-guitar highway layouts", function() {
   var bassPayload = new SparkBassRhythmAdapter().createPayload({});
   var ukulelePayload = new SparkUkuleleRhythmAdapter().createPayload({});
+  var drumsPayload = new SparkDrumsRhythmAdapter().createPayload({});
 
   assert.strictEqual(bassPayload.adapterType, "bass");
   assert.strictEqual(bassPayload.laneCount, 4);
@@ -400,6 +416,67 @@ test("instrument rhythm adapters expose lane metadata for non-guitar highway lay
   assert.strictEqual(ukulelePayload.adapterType, "ukulele");
   assert.strictEqual(ukulelePayload.laneCount, 4);
   assert.deepStrictEqual(ukulelePayload.laneLabels, ["G", "C", "E", "A"]);
+  assert.strictEqual(drumsPayload.adapterType, "drums");
+  assert.strictEqual(drumsPayload.laneCount, 4);
+  assert.deepStrictEqual(drumsPayload.laneLabels, ["Kick", "Snare", "Hat", "Aux"]);
+});
+
+test("rhythm highway can launch directly from an authored drum module payload", function() {
+  global.SparkInstruments = {
+    getAll: function() {
+      return [
+        { id: "drumspark", appId: "drumspark", instrument: "drums" }
+      ];
+    }
+  };
+
+  var capturedClockInstrument = null;
+  var capturedAdapter = null;
+  var OriginalTimingEngine = global.SparkTimingEngine;
+  var OriginalGameplayEngine = global.SparkRhythmGameplayEngine;
+
+  global.SparkTimingEngine = function() {};
+  SparkTimingEngine.prototype.createClock = function(instrument) {
+    capturedClockInstrument = instrument;
+    return { getSongTime: function() { return 0; }, close: function() {} };
+  };
+  SparkTimingEngine.prototype.tickToSeconds = function(tempoMap, tick) {
+    return tempoMap && typeof tempoMap.tickToSeconds === "function" ? tempoMap.tickToSeconds(tick) : 0;
+  };
+
+  global.SparkRhythmGameplayEngine = function(options) {
+    capturedAdapter = options.adapter;
+    this.update = function() {
+      return { gameplay: { score: 0, maxCombo: 0, accuracy: 0 }, notes: [], songTimeSec: 0, finished: false };
+    };
+    this.getSnapshot = function() {
+      return { gameplay: { score: 0, maxCombo: 0, accuracy: 0 }, notes: [], songTimeSec: 0, finished: false };
+    };
+  };
+
+  try {
+    var payload = new SparkDrumsRhythmAdapter().createPayload({
+      curriculum: { nextLessonId: "lesson_drums_basic_backbeat_01" }
+    });
+
+    var started = startRhythmHighwayPayload(payload, "spark_balanced", {
+      source: "module_exercise",
+      label: "First Backbeat",
+      instrument: "drums",
+      exerciseId: "ex_drums_basic_backbeat_01",
+      exerciseFocus: "basic_backbeat"
+    });
+
+    assert.strictEqual(started, true);
+    assert.strictEqual(capturedClockInstrument, "drums");
+    assert.ok(capturedAdapter instanceof SparkDrumsRhythmAdapter);
+    assert.strictEqual(S.rhythmHighwayLaunchContext.instrument, "drums");
+    assert.deepStrictEqual(_getRhythmHighwayLaneLabels(), ["Kick", "Snare", "Hat", "Aux"]);
+  } finally {
+    global.SparkTimingEngine = OriginalTimingEngine;
+    global.SparkRhythmGameplayEngine = OriginalGameplayEngine;
+    delete global.SparkInstruments;
+  }
 });
 
 test("rhythm highway can launch directly from an authored bass module payload", function() {
@@ -545,6 +622,76 @@ test("rhythm highway falls back to the thin active instrument when payloads omit
   }
 });
 
+test("rhythm highway can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  var completed = null;
+  var payload = new SparkUkuleleRhythmAdapter().createPayload({});
+  global.sparkCore = {
+    getSegmentById: function(segmentId) {
+      return {
+        id: segmentId,
+        label: "Island Groove",
+        meta: { gameplayPayload: payload }
+      };
+    },
+    completeSession: function(request) {
+      completed = request;
+      return { ok: true };
+    }
+  };
+
+  var OriginalTimingEngine = global.SparkTimingEngine;
+  var OriginalGameplayEngine = global.SparkRhythmGameplayEngine;
+
+  global.SparkTimingEngine = function() {};
+  SparkTimingEngine.prototype.createClock = function() {
+    return { getSongTime: function() { return 0; }, close: function() {} };
+  };
+
+  global.SparkRhythmGameplayEngine = function() {
+    this.update = function() {
+      return {
+        gameplay: { score: 900, maxCombo: 5, accuracy: 0.8 },
+        notes: [],
+        songTimeSec: 0,
+        finished: true
+      };
+    };
+    this.getSnapshot = function() {
+      return {
+        gameplay: { score: 0, maxCombo: 0, accuracy: 0 },
+        notes: [],
+        songTimeSec: 0,
+        finished: false
+      };
+    };
+    this.finalize = function() {
+      return {
+        gameplay: { score: 900, maxCombo: 5, accuracy: 0.8 },
+        learning: { weakAreas: ["late"], skills: [] }
+      };
+    };
+  };
+
+  try {
+    var started = startRhythmHighwaySegment("seg_uke_1", "spark_balanced");
+
+    assert.strictEqual(started, true);
+    assert.strictEqual(S.activeCoreSegmentId, "seg_uke_1");
+    assert.strictEqual(S.rhythmHighwayLaunchContext.label, "Island Groove");
+
+    assert.ok(completed);
+    assert.strictEqual(completed.itemId, "seg_uke_1");
+    assert.strictEqual(completed.flow, SparkSessionTypes.FLOW_DAILY_PRACTICE);
+    assert.strictEqual(completed.gameplayContext.source, "core_segment");
+    assert.strictEqual(completed.gameplayContext.label, "Island Groove");
+  } finally {
+    global.SparkTimingEngine = OriginalTimingEngine;
+    global.SparkRhythmGameplayEngine = OriginalGameplayEngine;
+    delete global.sparkCore;
+  }
+});
+
 test("bass module can provide rhythm guidance for focused authored drills", function() {
   var guidance = SparkBassModule.getRhythmGuidance("walking_bass", {
     gameplay: { accuracy: 71 / 100 },
@@ -654,7 +801,7 @@ test("practice engine upgrades rhythm candidates into rhythm_highway segments wi
   assert.strictEqual(segments.length, 1);
   assert.strictEqual(segments[0].type, "rhythm_highway");
   assert.ok(segments[0].meta.gameplayPayload);
-  assert.strictEqual(segments[0].meta.gameplayPayload.chartId, "power_chords_01");
+  assert.strictEqual(segments[0].meta.gameplayPayload.chartId, "gtr_open_strums_01");
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

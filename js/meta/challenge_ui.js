@@ -1,6 +1,6 @@
 function challengeHubPage(){
   var h = '<div class="card mb16">';
-  h += '<div><b>Challenge Hub</b></div>';
+  h += '<div class="card-section-heading">Challenge Hub</div>';
   h += '<div class="muted">Daily, weekly, seasonal, and pack progress.</div>';
   h += '</div>';
   h += renderActiveChallengesCard();
@@ -9,12 +9,18 @@ function challengeHubPage(){
   return h;
 }
 
+function getChallengeUiCoreView(){
+  var core = (typeof window !== "undefined" && window && window.sparkCore)
+    ? window.sparkCore
+    : (typeof sparkCore !== "undefined" ? sparkCore : null);
+  if(!core || typeof core.getActiveSessionView !== "function") return null;
+  return core.getActiveSessionView();
+}
+
 function renderActiveChallengesCard(){
   var h = '<div class="card mb16">';
-  h += '<div><b>Active Challenges</b></div>';
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  h += '<div class="card-section-heading">Active Challenges</div>';
+  var coreView = getChallengeUiCoreView();
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var arr = runtimeState && runtimeState.dashboardChallenges ? runtimeState.dashboardChallenges : (S.activeChallenges || []);
   if(!arr.length){
@@ -22,7 +28,7 @@ function renderActiveChallengesCard(){
   }
   for(var i=0;i<arr.length;i++){
     h += '<div style="margin-top:10px;padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:8px">';
-    h += '<div><b>'+escHTML(arr[i].title)+'</b></div>';
+    h += '<div class="card-micro-heading">'+escHTML(arr[i].title)+'</div>';
     h += '<div>'+escHTML(arr[i].description || "")+'</div>';
     h += '<div>'+arr[i].progress+' / '+arr[i].target+'</div>';
     if(arr[i].completed && !arr[i].claimed){
@@ -39,13 +45,13 @@ function renderActiveChallengesCard(){
 function renderSeasonalEventCard(){
   var ev = typeof getActiveSeasonalEvent === "function" ? getActiveSeasonalEvent() : null;
   var h = '<div class="card mb16">';
-  h += '<div><b>Seasonal Event</b></div>';
+  h += '<div class="card-section-heading">Seasonal Event</div>';
   if(!ev){
     h += '<div>No active event.</div>';
     h += '</div>';
     return h;
   }
-  h += '<div><b>'+escHTML(ev.title)+'</b></div>';
+  h += '<div class="card-micro-heading">'+escHTML(ev.title)+'</div>';
   var arr = ev.challenges || [];
   for(var i=0;i<arr.length;i++){
     h += '<div>'+escHTML(arr[i].title)+' — '+arr[i].progress+'/'+arr[i].target+'</div>';
@@ -57,7 +63,7 @@ function renderSeasonalEventCard(){
 function renderPackProgressCard(){
   var packs = (S.packCompletion && S.packCompletion.packs) || {};
   var h = '<div class="card mb16">';
-  h += '<div><b>Pack Progress</b></div>';
+  h += '<div class="card-section-heading">Pack Progress</div>';
   var any = false;
   for(var id in packs){
     any = true;

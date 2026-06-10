@@ -1,9 +1,15 @@
 (function(){
 
+  function getMidiUiRuntimeState(){
+    var core = (typeof window !== "undefined" && window && window.sparkCore)
+      ? window.sparkCore
+      : (typeof sparkCore !== "undefined" ? sparkCore : null);
+    if(!core || typeof core.getRuntimeState !== "function") return null;
+    return core.getRuntimeState();
+  }
+
   function midiSettingsPage(){
-    var runtimeState = window.sparkCore && typeof window.sparkCore.getRuntimeState === "function"
-      ? window.sparkCore.getRuntimeState()
-      : null;
+    var runtimeState = getMidiUiRuntimeState();
     var activeDeviceName = runtimeState && runtimeState.midiActiveDeviceName
       ? runtimeState.midiActiveDeviceName
       : ((getActiveMidiDevice() && getActiveMidiDevice().name) || "None");
@@ -21,16 +27,16 @@
       : S.activeMidiProfileId;
     var usingProfileArray = Array.isArray(profiles);
     var h = '<div class="card">';
-    h += '<div><b>MIDI Settings</b></div>';
+    h += '<div class="card-section-heading">MIDI Settings</div>';
     h += '<div>Active Device: ' + escHTML(activeDeviceName) + '</div>';
     h += '<div>Active Profile: ' + escHTML(activeProfileName) + '</div>';
-    h += '<button onclick="refreshMidiDevices()">Refresh Devices</button> ';
+    h += '<button onclick="act(\'refreshMidiDevices\')">Refresh Devices</button> ';
     h += '<button onclick="act(\'createDefaultPianoProfile\')">New Piano Profile</button> ';
     h += '<button onclick="act(\'createDefaultGuitarProfile\')">New Guitar Profile</button>';
     h += '</div>';
 
     h += '<div class="card">';
-    h += '<div><b>Available Devices</b></div>';
+    h += '<div class="card-section-heading">Available Devices</div>';
     for(var i=0;i<devs.length;i++){
       h += '<div>';
       h += escHTML(devs[i].name) + ' ';
@@ -41,7 +47,7 @@
     h += '</div>';
 
     h += '<div class="card">';
-    h += '<div><b>Saved Profiles</b></div>';
+    h += '<div class="card-section-heading">Saved Profiles</div>';
     var profileIds = usingProfileArray ? [] : Object.keys(profiles);
     if (usingProfileArray) {
       for (var pIdx = 0; pIdx < profiles.length; pIdx++) profileIds.push(profiles[pIdx].id);

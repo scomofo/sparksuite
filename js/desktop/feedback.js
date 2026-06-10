@@ -2,8 +2,8 @@
 
   function feedbackPage(){
     var h = '<div class="card">';
-    h += '<div><b>Send Feedback</b></div>';
-    h += '<textarea oninput="S.feedbackDraft.text=this.value" placeholder="What worked? What broke?" style="width:100%;min-height:80px">' + escHTML(S.feedbackDraft.text || "") + '</textarea>';
+    h += '<div class="card-section-heading">Send Feedback</div>';
+    h += '<textarea oninput="act(\'feedbackDraftText\',this.value)" placeholder="What worked? What broke?" style="width:100%;min-height:80px">' + escHTML(S.feedbackDraft.text || "") + '</textarea>';
     h += '<button onclick="act(\'exportFeedback\')">Export Feedback</button>';
     h += '</div>';
     return h;
