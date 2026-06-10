@@ -12,7 +12,7 @@ var S={
   selectedSong:null,songBeat:0,songPlaying:false,
   capoModeFret:0,
   tunerActive:false,tunerNote:null,tunerFreq:0,tunerCents:0,tunerErr:null,
-  lastSessionDate:null,
+  lastSessionDate:null,streakFreezeUsedAt:null,
   metronomeOn:false,metronomeBpm:80,_metroBeat:0,_metroBeats:4,
   chordDetectOn:false,detectedNotes:[],chordMatch:-1,chordDetectErr:null,
   // History & Analytics
@@ -301,7 +301,7 @@ var _undoBackup=null;
 // ===== PERSISTENCE =====
 var SAVE_KEY="chordspark_state";
 var PERSIST_FIELDS=["activeInstrument","xp","streak","sessions","drillCount","dailyDone","quizCorrect","songsPlayed",
-  "level","chordProgress","soundOn","darkMode","earnedBadges","selectedLevel","lastSessionDate",
+  "level","chordProgress","soundOn","darkMode","earnedBadges","selectedLevel","lastSessionDate","streakFreezeUsedAt",
   "history","customSets","earTrainScore","transitionStats",
   "dailyGoalMinutes","todayPracticeSeconds","lastPracticeDate","goalReachedToday","goalStreak",
   "importedSongs","strumTone","midiEnabled","midiOutputId","audioInputId","lastChordName","focusMode","runnerHighScore",
@@ -491,6 +491,18 @@ function recoverFromCrash(){
   }catch(e){console.error("ChordSpark: recoverFromCrash failed",e);}
 }
 
+// A streak freeze covers exactly one missed day and regenerates 7 days
+// after it was last consumed. Missing one day is the #1 churn trigger in
+// habit apps; a freeze keeps a single slip from zeroing weeks of momentum.
+function isStreakFreezeAvailable(todayISO){
+  if(!S.streakFreezeUsedAt) return true;
+  var usedISO;
+  try{ usedISO=new Date(S.streakFreezeUsedAt).toISOString().split("T")[0]; }
+  catch(e){ return true; }
+  var days=Math.floor((new Date(todayISO)-new Date(usedISO))/86400000);
+  return days>=7;
+}
+
 function checkStreak(){
   var today=new Date().toISOString().split("T")[0];
   if(S.lastSessionDate){
@@ -498,7 +510,15 @@ function checkStreak(){
     var last=new Date(S.lastSessionDate);
     var lastISO=last.toISOString().split("T")[0];
     var diff=Math.floor((new Date(today)-new Date(lastISO))/86400000);
-    if(diff>1){S.streak=0;saveState(true);}
+    if(diff===2&&S.streak>0&&isStreakFreezeAvailable(today)){
+      // Exactly one missed day — consume the freeze instead of resetting.
+      S.streakFreezeUsedAt=today;
+      S.microToast={msg:"Streak freeze used — your "+S.streak+"-day streak is safe!",icon:"🧊",time:Date.now()};
+      saveState(true);
+    } else if(diff>1){
+      S.streak=0;
+      saveState(true);
+    }
   }
 }
 
