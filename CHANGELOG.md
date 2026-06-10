@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-06-09 — v1.0.4: Restore instrument card/hero images in packaged builds
+
+The showroom references `resources/instruments/<id>/card.png` and `hero.jpg` relative to index.html, so the images must live inside the asar. v1.0.3 only shipped them as extraResources outside the asar, which 404'd in packaged builds and fell back to SVG silhouettes. The images are now packaged into the asar (and no longer duplicated into extraResources).
+
 ## 2026-06-09 — v1.0.3: Repo/installer reconciliation, real auto-update, CI test gate
 
 First release published through CI. Reconciles the repository with the v1.0.2 installer (which had been built from a never-pushed local tree), then moves the release pipeline onto GitHub Releases.
