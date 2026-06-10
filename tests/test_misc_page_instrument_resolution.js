@@ -151,6 +151,20 @@ function resetEnvironment() {
       newMovePhase: "watch"
     };
   };
+  global.buildSkillTree = function() {
+    return {
+      branches: [{
+        id: "rhythm",
+        label: "Rhythm",
+        nodes: [{
+          label: "Steady Pulse",
+          status: "developing",
+          progress: 42,
+          children: []
+        }]
+      }]
+    };
+  };
   global.SparkInstruments = {
     getActive: function() {
       return { appId: "pianospark" };
@@ -167,8 +181,10 @@ function test(name, fn) {
     global.eval(loadJS("js/pages/dual.js"));
     global.eval(loadJS("js/pages/games.js"));
     global.eval(loadJS("js/pages/guided.js"));
+    global.eval(loadJS("js/meta/challenge_ui.js"));
     global.eval(loadJS("js/pages/tools.js"));
     global.eval(loadJS("js/pages/shared.js"));
+    global.eval(loadJS("js/pages/skill_tree.js"));
     fn();
     console.log("  PASS: " + name);
   } catch (err) {
@@ -201,6 +217,34 @@ test("guided review rehydrates an app-id-only active instrument shell", function
   });
   assert.ok(html.indexOf("chord-svg") >= 0);
   assert.ok(html.indexOf("Review") >= 0);
+});
+
+test("active challenges card can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  global.S.activeChallenges = [];
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          dashboardChallenges: [{
+            id: "daily-clean-change",
+            title: "Clean Change",
+            description: "Land 5 clean switches",
+            progress: 3,
+            target: 5,
+            completed: false,
+            claimed: false
+          }]
+        }
+      };
+    }
+  };
+
+  global.eval(loadJS("js/meta/challenge_ui.js"));
+  var html = renderActiveChallengesCard();
+
+  assert.ok(html.indexOf("Clean Change") >= 0);
+  assert.ok(html.indexOf("3 / 5") >= 0);
 });
 
 test("tunerTab rehydrates an app-id-only active instrument shell", function() {
@@ -276,10 +320,83 @@ test("tunerTab and statsTab ignore malformed shared counters", function() {
 
   assert.ok(tunerHtml.indexOf("width:0%") >= 0);
   assert.ok(tunerHtml.indexOf("NaN") === -1);
-  assert.ok(statsHtml.indexOf(">0</div><div style=\"font-size:11px;color:var(--text-muted);font-weight:600\">Total XP</div>") >= 0);
+  assert.ok(statsHtml.indexOf(">0</div><div class=\"metric-label\">Total XP</div>") >= 0);
   assert.ok(statsHtml.indexOf("Lvl 1") >= 0);
   assert.ok(statsHtml.indexOf("Combined XP") >= 0);
   assert.ok(statsHtml.indexOf("NaN") === -1);
+});
+
+test("tools page can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  S.tunerActive = undefined;
+  S.tunerNote = undefined;
+  S.tunerFreq = undefined;
+  S.tunerCents = undefined;
+  S.tunerErr = undefined;
+  S.audioInputDevices = [];
+  S.audioInputId = undefined;
+  S.audioTestingId = undefined;
+  S.audioTestLevel = undefined;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          tunerActive: true,
+          tunerNote: "D",
+          tunerFreq: 146.8,
+          tunerCents: 1,
+          tunerError: null,
+          audioInputDevices: [{ id: "usb-1", name: "USB Interface" }],
+          audioInputId: "usb-1",
+          audioTestingId: "usb-1",
+          audioTestLevel: 18
+        }
+      };
+    }
+  };
+
+  var html = tunerTab();
+  assert.ok(html.indexOf(">D<") >= 0);
+  assert.ok(html.indexOf("146.8 Hz") >= 0 || html.indexOf("146.80 Hz") >= 0 || html.indexOf("147 Hz") >= 0);
+  assert.ok(html.indexOf("USB Interface") >= 0);
+  assert.ok(html.indexOf("Signal detected - play to confirm") >= 0);
+});
+
+test("challenge and skill tree pages can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  S.activeChallenges = [];
+  S.skillTreeFocus = undefined;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          dashboardChallenges: [{
+            id: "daily_1",
+            title: "Daily Groove",
+            description: "Hit 3 clean reps",
+            progress: 2,
+            target: 3,
+            completed: false,
+            claimed: false
+          }]
+        }
+      };
+    },
+    getRuntimeState: function() {
+      return {
+        skillTreeFocus: "rhythm"
+      };
+    }
+  };
+
+  var challengeHtml = renderActiveChallengesCard();
+  var skillHtml = skillTreePage();
+
+  assert.ok(challengeHtml.indexOf("Daily Groove") >= 0);
+  assert.ok(challengeHtml.indexOf("2 / 3") >= 0);
+  assert.ok(skillHtml.indexOf("Rhythm") >= 0);
+  assert.ok(skillHtml.indexOf("Steady Pulse") >= 0);
+  assert.ok(skillHtml.indexOf("Overview") >= 0);
 });
 
 test("updateTunerUI rehydrates an app-id-only active instrument shell", function() {
@@ -334,6 +451,14 @@ test("statsTab ignores malformed shared history and transition metrics", functio
   assert.ok(html.indexOf("Practice Stats") >= 0);
   assert.ok(html.indexOf("NaNs") === -1);
   assert.ok(html.indexOf("0.0s") >= 0);
+});
+
+test("tools page routes learning path through a studio action", function() {
+  var toolsSource = loadJS("js/pages/tools.js");
+  var studioSource = loadJS("js/actions/studio_family.js");
+  assert.ok(toolsSource.indexOf('onclick="act(\\\'openLearningPath\\\')"') >= 0);
+  assert.ok(studioSource.indexOf('if (a === "openLearningPath") {') >= 0);
+  assert.ok(studioSource.indexOf('window.SparkShowroomNavigate("path");') >= 0);
 });
 
 test("shared helpers ignore malformed drill and strum BPM values", function() {

@@ -10,6 +10,7 @@ var S={
   quizQ:null,quizOpts:[],quizAns:null,quizScore:0,quizTotal:0,quizStreak:0,
   strumActive:false,selectedStrum:null,_strumBeat:-1,
   selectedSong:null,songBeat:0,songPlaying:false,
+  capoModeFret:0,
   tunerActive:false,tunerNote:null,tunerFreq:0,tunerCents:0,tunerErr:null,
   lastSessionDate:null,
   metronomeOn:false,metronomeBpm:80,_metroBeat:0,_metroBeats:4,
@@ -308,7 +309,7 @@ var PERSIST_FIELDS=["activeInstrument","xp","streak","sessions","drillCount","da
   "performMode","performDifficulty","performSpeed","performPracticePreset","performAssistHints","performCountIn",
   "performPracticeMode","performSongStats","performArrangementType",
   "performanceStats","performanceUnlocks","performanceBadges",
-  "performMidiOffsetMs","performAudioOffsetMs","performCalibrated",
+  "performMidiOffsetMs","performMicOffsetMs","performCalibrated",
   "performanceDailyHistory",
   "performEditorLibrary",
   "practicePlan","practicePlanDate","practicePlanHistory",
@@ -402,6 +403,13 @@ function loadState(){
     var data=safeJsonParse(raw,null);
     if(!data)return;
     applyPersistedStateSnapshot(S,data,PERSIST_FIELDS);
+    if ((!isFinite(S.performMicOffsetMs) || S.performMicOffsetMs == null) && isFinite(data.performAudioOffsetMs)) {
+      S.performMicOffsetMs = Number(data.performAudioOffsetMs);
+    }
+    if (!isFinite(S.performMicOffsetMs) || S.performMicOffsetMs == null) {
+      S.performMicOffsetMs = 0;
+    }
+    S.performAudioOffsetMs = 0;
     // Ensure arrays
     if(!Array.isArray(S.history))S.history=[];
     if(!Array.isArray(S.customSets))S.customSets=[];
@@ -470,6 +478,13 @@ function recoverFromCrash(){
         return;
       }
       applyPersistedStateSnapshot(S,data,PERSIST_FIELDS);
+      if ((!isFinite(S.performMicOffsetMs) || S.performMicOffsetMs == null) && isFinite(data.performAudioOffsetMs)) {
+        S.performMicOffsetMs = Number(data.performAudioOffsetMs);
+      }
+      if (!isFinite(S.performMicOffsetMs) || S.performMicOffsetMs == null) {
+        S.performMicOffsetMs = 0;
+      }
+      S.performAudioOffsetMs = 0;
       removePersistedBackup(SAVE_KEY+"_backup");
       saveState(true);
     }

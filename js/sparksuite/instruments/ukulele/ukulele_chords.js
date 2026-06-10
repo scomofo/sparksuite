@@ -43,7 +43,29 @@
     4: ["Em", "A", "Bm", "Em7", "Am7", "Cmaj7"]
   };
 
-  function buildFingerDots(shape) {
+  // Explicit finger assignments for standard ukulele technique
+  var FINGERINGS = {
+    C:     [[3, 3, 3, COLORS[2]]],                                          // ring on A3
+    Am:    [[0, 2, 2, COLORS[1]]],                                          // middle on G2
+    F:     [[0, 2, 2, COLORS[1]], [2, 1, 1, COLORS[0]]],                    // middle G2, index E1
+    G:     [[1, 2, 1, COLORS[0]], [2, 3, 3, COLORS[2]], [3, 2, 2, COLORS[1]]], // index C2, ring E3, middle A2
+    G7:    [[1, 2, 2, COLORS[1]], [2, 1, 1, COLORS[0]], [3, 2, 3, COLORS[2]]], // middle C2, index E1, ring A2
+    Dm:    [[0, 2, 2, COLORS[1]], [1, 2, 3, COLORS[2]], [2, 1, 1, COLORS[0]]], // middle G2, ring C2, index E1
+    Em:    [[1, 4, 4, COLORS[3]], [2, 3, 3, COLORS[2]], [3, 2, 2, COLORS[1]]], // pinky C4, ring E3, middle A2
+    A:     [[0, 2, 2, COLORS[1]], [1, 1, 1, COLORS[0]]],                    // middle G2, index C1
+    D:     [[0, 2, 1, COLORS[0]], [1, 2, 2, COLORS[1]], [2, 2, 3, COLORS[2]]], // index G2, middle C2, ring E2
+    E7:    [[0, 1, 1, COLORS[0]], [1, 2, 2, COLORS[1]], [3, 2, 3, COLORS[2]]], // index G1, middle C2, ring A2
+    Bb:    [[0, 1, 1, COLORS[0]], [1, 1, 1, COLORS[0]], [2, 2, 2, COLORS[1]], [3, 3, 3, COLORS[2]]], // barre index G1+C1, middle E2, ring A3
+    C7:    [[3, 1, 1, COLORS[0]]],                                          // index A1
+    Bm:    [[0, 4, 4, COLORS[3]], [1, 2, 1, COLORS[0]], [2, 2, 1, COLORS[0]], [3, 2, 1, COLORS[0]]], // pinky G4, barre index C2+E2+A2
+    Em7:   [[1, 2, 1, COLORS[0]], [3, 2, 2, COLORS[1]]],                    // index C2, middle A2
+    Am7:   [],                                                               // all open
+    Cmaj7: [[3, 2, 2, COLORS[1]]]                                           // middle A2
+  };
+
+  function buildFingerDots(shape, name) {
+    if (FINGERINGS[name]) return FINGERINGS[name].map(function(f) { return f.slice(); });
+    // Fallback: sequential assignment
     var fingers = [];
     var fingerNum = 1;
     for (var i = 0; i < shape.length; i++) {
@@ -62,7 +84,7 @@
       frets: shape.slice(),
       open: shape.map(function(fret) { return fret === 0; }),
       muted: [],
-      fingers: buildFingerDots(shape),
+      fingers: buildFingerDots(shape, name),
       stringCount: 4,
       stringNames: ["G", "C", "E", "A"]
     };

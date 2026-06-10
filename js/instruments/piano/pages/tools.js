@@ -69,7 +69,7 @@ function pianoToolsTab() {
   html += '<div class="level-tabs">';
   subtabs.forEach(function(t) {
     var active = S._toolTab === t.id ? " active" : "";
-    html += '<div class="level-tab' + active + '" style="color:var(--accent)" onclick="S._toolTab=\'' + t.id + '\';render()">' + t.label + '</div>';
+    html += '<div class="level-tab' + active + '" style="color:var(--accent)" role="button" tabindex="0" onclick="act(\'pianoToolTab\',\'' + t.id + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'pianoToolTab\',\'' + t.id + '\')}">' + t.label + '</div>';
   });
   html += '</div>';
 
@@ -259,10 +259,10 @@ function settingsTab() {
   // Export / Import / Reset
   html += '<h3 style="margin-top:20px">Data</h3>';
   html += '<div class="setting-row">';
-  html += '<button class="btn" onclick="exportState()" style="background:#F59E0B;color:#fff">Export JSON</button>';
+  html += '<button class="btn" onclick="act(\'exportProgress\')" style="background:#F59E0B;color:#fff">Export JSON</button>';
   html += '</div>';
   html += '<div class="setting-row">';
-  html += '<button class="btn btn-danger" onclick="if(confirm(\'Reset all progress?\'))act(\'reset\')">Reset Progress</button>';
+  html += '<button class="btn btn-danger" onclick="act(\'pianoConfirmResetProgress\')">Reset Progress</button>';
   if (S._undoBackup) {
     html += '<button class="btn" onclick="act(\'undo_reset\')">Undo Reset</button>';
   }

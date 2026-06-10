@@ -1,3 +1,41 @@
+function pianoGetPlanCoreView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  return core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+}
+
+function pianoResolvePlanPageCoreDailyPlan(coreView) {
+  var corePlan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
+    ? coreView.plan
+    : null;
+  var bridgedPlan;
+  if (!corePlan) return null;
+  if (window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function") {
+    bridgedPlan = SparkPracticeBridge.toLegacyPlan(corePlan);
+    if (bridgedPlan) return bridgedPlan;
+  }
+  if (corePlan._legacyPlan) return corePlan._legacyPlan;
+  return Array.isArray(corePlan.items) ? corePlan : null;
+}
+
+function pianoGetActiveGuidedPlanSummary() {
+  var coreView = pianoGetPlanCoreView();
+  var context = coreView && coreView.plan && coreView.plan.context ? coreView.plan.context : null;
+  var guidedPlan = context && context.guidedPlan ? context.guidedPlan : null;
+  var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
+  if (!coreView || !guidedPlan || !runtimeState || runtimeState.activeScreen !== "guided_session" || coreView.plan.flow !== "guided_session") {
+    return null;
+  }
+  return typeof pianoBuildGuidedSessionSummary === "function"
+    ? pianoBuildGuidedSessionSummary(guidedPlan, runtimeState, {
+        guidedShellDurationSec: context.guidedShellDurationSec,
+        isActive: true,
+        fallbackTitle: prettyPianoPlanToken(guidedPlan.id) || "Guided Session"
+      })
+    : null;
+}
+
 function pianoPlanPage(){
   function isCompletedPlanItem(item){
     var value = item ? item.completed : null;
@@ -58,13 +96,9 @@ function pianoPlanPage(){
       ? plan.items.filter(isRenderablePlanItem)
       : [];
   }
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
-  var hasPracticeBridge = window.SparkPracticeBridge && typeof SparkPracticeBridge.toLegacyPlan === "function";
-  var plan = coreView && coreView.plan && coreView.plan.flow === "daily_practice"
-    ? (hasPracticeBridge ? SparkPracticeBridge.toLegacyPlan(coreView.plan) : null)
-    : S.practicePlan;
+  var coreView = pianoGetPlanCoreView();
+  var plan = pianoResolvePlanPageCoreDailyPlan(coreView);
+  var activeGuided = pianoGetActiveGuidedPlanSummary();
   if(!plan) plan = S.practicePlan;
   var renderableItems = getRenderablePlanItems(plan);
   var hasPlanItems = hasRenderablePlanItems(plan);
@@ -78,18 +112,31 @@ function pianoPlanPage(){
 
   h += '<div class="card mb16">';
   h += '<h2>Today\'s Practice Plan</h2>';
-  h += '<div class="muted">'+escHTML(getPianoPlanFocusLabel(plan))+'</div>';
+  h += '<div class="muted">'+escHTML(activeGuided ? "Guided Session Live" : getPianoPlanFocusLabel(plan))+'</div>';
   if(hasPlanItems && planCompleted){
     h += '<div style="margin-top:8px;color:var(--success);font-weight:700">Plan completed!</div>';
   }
   h += '</div>';
 
   if(!hasPlanItems){
+    if (activeGuided) {
+      h += pianoRenderGuidedFlowCard(activeGuided, {
+        cardClass: "card mb16",
+        cardStyle: "border:2px solid var(--accent)",
+        mutedClass: "muted",
+        summaryTitleClass: "guided-status-line",
+        summaryTitleStyle: "font-size:14px;margin-top:4px"
+      });
+      h += '<div class="card mb16" style="text-align:center">';
+      h += '<button class="btn" onclick="act(\'back\')">Back</button>';
+      h += '</div>';
+      return h;
+    }
     h += '<div class="card mb16"><div class="muted">No practice plan yet.</div></div>';
-    h += '<div class="card mb16" style="text-align:center">';
+    h += '<div class="card mb16"><div class="plan-actions">';
     h += '<button class="btn" onclick="act(\'regeneratePlan\')">Regenerate Plan</button> ';
     h += '<button class="btn" onclick="act(\'back\')">Back</button>';
-    h += '</div>';
+    h += '</div></div>';
     return h;
   }
 
@@ -104,11 +151,11 @@ function pianoPlanPage(){
     var actionHtml = isCompleted
       ? '<span class="text-muted">Done</span>'
       : (canLaunch
-        ? '<button class="btn btn-sm" data-item-id="'+escHTML(itemId)+'" onclick="launchPracticePlanItem(this.getAttribute(\'data-item-id\'))" style="background:var(--accent);color:#fff">Go</button>'
+        ? '<button class="btn btn-sm" data-item-id="'+escHTML(itemId)+'" onclick="act(\'practiceStartItem\', this.getAttribute(\'data-item-id\'))" style="background:var(--accent);color:#fff">Go</button>'
         : '<span class="text-muted">Unavailable</span>');
     h += '<div class="card mb16" style="border-left:4px solid '+planItemColor(getPianoPlanDisplayType(item))+'">';
-    h += '<div style="display:flex;justify-content:space-between;align-items:center">';
-    h += '<div>';
+    h += '<div class="plan-item-row">';
+    h += '<div class="plan-item-copy">';
     h += '<div style="font-weight:700;font-size:14px"'+done+'>'+escHTML(getPianoPlanItemLabel(item))+'</div>';
     h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(formatPianoPlanItemSubtitle(item))+(durationMinutes != null ? ' \u2022 '+durationMinutes+'m' : '')+'</div>';
     h += '</div>';
@@ -118,15 +165,15 @@ function pianoPlanPage(){
   }
 
   if(!planCompleted){
-    h += '<div class="card mb16" style="text-align:center">';
+    h += '<div class="card mb16"><div class="plan-actions">';
     h += '<button class="btn btn-primary" onclick="act(\'completePlan\')">Mark Plan Complete</button>';
-    h += '</div>';
+    h += '</div></div>';
   }
 
-  h += '<div class="card mb16" style="text-align:center">';
-  h += '<button class="btn" onclick="act(\'regeneratePlan\')">Regenerate Plan</button> ';
+  h += '<div class="card mb16"><div class="plan-actions">';
+  h += '<button class="btn" onclick="act(\'regeneratePlan\')">Regenerate Plan</button>';
   h += '<button class="btn" onclick="act(\'back\')">Back</button>';
-  h += '</div>';
+  h += '</div></div>';
 
   return h;
 }
@@ -165,7 +212,7 @@ function prettyPianoPlanToken(value){
   var text;
   var lower;
   if(value == null) return "";
-  if(typeof value === "number" || typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
+  if(typeof value !== "string" && typeof value !== "number") return "";
   text = String(value || "").replace(/_/g, " ").trim();
   if(!text) return "";
   lower = text.toLowerCase();

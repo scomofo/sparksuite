@@ -69,6 +69,7 @@
     var type = normalizeRhythmInstrumentType(instrumentType);
     var moduleMap = {
       bass: window.SparkBassModule,
+      drums: window.SparkDrumsModule,
       ukulele: window.SparkUkuleleModule,
       guitar: window.SparkGuitarModule,
       piano: window.SparkPianoModule
@@ -78,6 +79,7 @@
       return instrumentModule.getRhythmAdapter();
     }
     if (type === "bass" && typeof SparkBassRhythmAdapter === "function") return new SparkBassRhythmAdapter();
+    if (type === "drums" && typeof SparkDrumsRhythmAdapter === "function") return new SparkDrumsRhythmAdapter();
     if (type === "ukulele" && typeof SparkUkuleleRhythmAdapter === "function") return new SparkUkuleleRhythmAdapter();
     if (typeof SparkGuitarRhythmAdapter === "function") return new SparkGuitarRhythmAdapter();
     return {
@@ -85,9 +87,39 @@
     };
   }
 
+  function getRhythmHighwayCore() {
+    return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  }
+
+  function getRhythmHighwayAccessibilitySettings() {
+    var core = getRhythmHighwayCore();
+    var settings = core && typeof core.getAccessibilitySettings === "function"
+      ? core.getAccessibilitySettings()
+      : (S.settings && S.settings.accessibility ? S.settings.accessibility : null);
+    if (typeof SparkNormalizeAccessibilitySettings === "function") {
+      return SparkNormalizeAccessibilitySettings(settings || {});
+    }
+    settings = settings && typeof settings === "object" ? settings : {};
+    return {
+      reducedMotion: !!settings.reducedMotion,
+      highContrast: !!settings.highContrast,
+      noteSize: settings.noteSize || "normal",
+      laneLabels: settings.laneLabels !== false,
+      colorblindSafeLanes: !!settings.colorblindSafeLanes,
+      metronomeVisualOnly: !!settings.metronomeVisualOnly,
+      disableFailureAnimations: !!settings.disableFailureAnimations,
+      keyboardRemapping: settings.keyboardRemapping || {},
+      leftHandedLayout: !!settings.leftHandedLayout,
+      slowerDefaultSpeed: !!settings.slowerDefaultSpeed,
+      audioCueVolume: typeof settings.audioCueVolume === "number" ? settings.audioCueVolume : 0.8,
+      metronomeVolume: typeof settings.metronomeVolume === "number" ? settings.metronomeVolume : 0.6
+    };
+  }
+
   function startRhythmHighwaySegment(segmentId, presetName, loopSpec) {
-    if (!window.sparkCore || typeof window.sparkCore.getSegmentById !== "function") return false;
-    var segment = window.sparkCore.getSegmentById(segmentId);
+    var core = getRhythmHighwayCore();
+    if (!core || typeof core.getSegmentById !== "function") return false;
+    var segment = core.getSegmentById(segmentId);
     if (!segment || !segment.meta || !segment.meta.gameplayPayload) return false;
     return startRhythmHighwayPayload(segment.meta.gameplayPayload, presetName, {
       segmentId: segmentId,
@@ -165,10 +197,11 @@
   function finalizeRhythmHighway() {
     if (!runtime.engine) return;
     var result = runtime.engine.finalize();
+    var core = getRhythmHighwayCore();
     S.rhythmHighwayResult = result;
     S.rhythmHighwayFeedback = buildFeedback(result);
-    if (runtime.segmentId && window.sparkCore && typeof window.sparkCore.completeSession === "function") {
-      window.sparkCore.completeSession({
+    if (runtime.segmentId && core && typeof core.completeSession === "function") {
+      core.completeSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         itemId: runtime.segmentId,
         result: result,
@@ -197,14 +230,16 @@
     var snapshot = S.rhythmHighwaySnapshot;
     if (!snapshot) return '<div class="text-center"><p>No rhythm session active.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
 
-    var labels = getRhythmHighwayLaneLabels();
+    var accessibility = getRhythmHighwayAccessibilitySettings();
+    var labels = getRhythmHighwayLaneLabels(accessibility);
     var laneCount = labels.length;
     var activePreset = getCurrentAssistPreset();
+    var noteHeight = accessibility.noteSize === "large" ? 24 : (accessibility.noteSize === "compact" ? 14 : 18);
     var h = '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Rhythm Highway</h2>';
     h += '<p style="color:var(--text-dim);font-size:13px;margin-bottom:8px">Hold frets 1-5 and strum on time. Audio clock drives the run; this page only renders snapshots.</p>';
     h += '<div style="margin-bottom:14px">';
-    h += '<div style="font-size:11px;font-weight:800;color:var(--text-secondary);margin-bottom:6px">Assist Mode</div>';
-    h += '<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap">';
+    h += '<div class="metric-label" style="margin-bottom:6px">Assist Mode</div>';
+    h += '<div class="action-row" style="justify-content:center">';
     for (var pi = 0; pi < ASSIST_PRESETS.length; pi++) {
       var preset = ASSIST_PRESETS[pi];
       var presetActive = activePreset && activePreset.id === preset.id;
@@ -214,9 +249,9 @@
     h += '<div style="margin-top:6px;font-size:11px;color:var(--text-muted)">' + escHTML(activePreset ? activePreset.hint : "Switching assist mode restarts the run.") + '</div>';
     h += '</div>';
     h += '<div style="display:flex;justify-content:center;gap:18px;margin-bottom:12px">';
-    h += '<div><div style="font-size:24px;font-weight:900;color:#FFE66D">' + snapshot.gameplay.score + '</div><div style="font-size:10px;color:var(--text-muted)">Score</div></div>';
-    h += '<div><div style="font-size:24px;font-weight:900;color:#FF6B6B">' + snapshot.gameplay.maxCombo + 'x</div><div style="font-size:10px;color:var(--text-muted)">Max Combo</div></div>';
-    h += '<div><div style="font-size:24px;font-weight:900;color:#4ECDC4">' + Math.round((snapshot.gameplay.accuracy || 0) * 100) + '%</div><div style="font-size:10px;color:var(--text-muted)">Accuracy</div></div>';
+    h += '<div><div class="metric-value" style="font-size:24px;color:#FFE66D">' + snapshot.gameplay.score + '</div><div class="metric-label">Score</div></div>';
+    h += '<div><div class="metric-value" style="font-size:24px;color:#FF6B6B">' + snapshot.gameplay.maxCombo + 'x</div><div class="metric-label">Max Combo</div></div>';
+    h += '<div><div class="metric-value" style="font-size:24px;color:#4ECDC4">' + Math.round((snapshot.gameplay.accuracy || 0) * 100) + '%</div><div class="metric-label">Accuracy</div></div>';
     h += '</div>';
     if (S.rhythmHighwayLaunchContext && S.rhythmHighwayLaunchContext.label) {
       h += '<div style="margin-bottom:12px;font-size:11px;color:var(--text-muted);font-weight:700">Focused Drill: ' + escHTML(firstRhythmHighwayTextToken(S.rhythmHighwayLaunchContext.label, "current drill")) + '</div>';
@@ -226,24 +261,26 @@
     for (var lane = 0; lane < laneCount; lane++) {
       h += '<div style="position:relative;height:320px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));border:1px solid var(--border)">';
       h += '<div style="position:absolute;left:6px;right:6px;bottom:72px;height:4px;background:#FFE66D;border-radius:999px"></div>';
-      h += '<div style="position:absolute;left:0;right:0;bottom:12px;font-size:12px;font-weight:900;color:' + laneColor(lane) + '">' + labels[lane] + '</div>';
+      if (accessibility.laneLabels) {
+        h += '<div style="position:absolute;left:0;right:0;bottom:12px;font-size:12px;font-weight:900;color:' + laneColor(lane, accessibility) + '">' + labels[lane] + '</div>';
+      }
       for (var i = 0; i < snapshot.notes.length; i++) {
         var note = snapshot.notes[i];
         if (!maskHasLane(note.laneMask, lane)) continue;
         var bottom = Math.max(86, Math.min(286, 86 + ((3 - (note.timeSec - snapshot.songTimeSec)) * 66)));
-        h += '<div style="position:absolute;left:8px;right:8px;bottom:' + bottom + 'px;height:18px;border-radius:8px;background:' + laneColor(lane) + ';opacity:' + (note.hit ? 0.35 : 0.95) + ';box-shadow:0 8px 18px rgba(0,0,0,.24)" title="' + escHTML(firstRhythmHighwayTextToken(note.label)) + '"></div>';
+        h += '<div style="position:absolute;left:8px;right:8px;bottom:' + bottom + 'px;height:' + noteHeight + 'px;border-radius:8px;background:' + laneColor(lane, accessibility) + ';opacity:' + (note.hit ? 0.35 : 0.95) + ';box-shadow:' + (accessibility.reducedMotion ? "none" : "0 8px 18px rgba(0,0,0,.24)") + '" title="' + escHTML(firstRhythmHighwayTextToken(note.label)) + '"></div>';
       }
       h += '</div>';
     }
     h += '</div>';
 
-    h += '<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">';
+    h += '<div class="action-row" style="justify-content:center;margin-bottom:12px">';
     for (var fi = 0; fi < laneCount; fi++) {
       var active = maskHasLane(S.rhythmHighwayHeldMask, fi);
-      h += '<button class="btn" onclick="act(\'rhythmHighwayLane\',' + fi + ')" style="min-width:54px;background:' + (active ? laneColor(fi) : "var(--input-bg)") + ';color:' + (active ? "#fff" : "var(--text-secondary)") + ';font-weight:800">' + labels[fi] + '</button>';
+      h += '<button class="btn" onclick="act(\'rhythmHighwayLane\',' + fi + ')" style="min-width:54px;background:' + (active ? laneColor(fi, accessibility) : "var(--input-bg)") + ';color:' + (active ? "#fff" : "var(--text-secondary)") + ';font-weight:800">' + (accessibility.laneLabels ? labels[fi] : (fi + 1)) + '</button>';
     }
     h += '</div>';
-    h += '<div style="display:flex;justify-content:center;gap:10px">';
+    h += '<div class="action-row" style="justify-content:center">';
     h += '<button class="btn" onclick="act(\'rhythmHighwayStrum\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;font-size:18px;padding:14px 28px">Strum</button>';
     h += '<button class="btn" onclick="act(\'' + (S.rhythmHighwayLoop ? "rhythmHighwayClearLoop" : "rhythmHighwayLoopWindow") + '\')" style="background:' + (S.rhythmHighwayLoop ? "#4ECDC4" : "var(--input-bg)") + ';color:' + (S.rhythmHighwayLoop ? "#fff" : "var(--text-secondary)") + '">' + (S.rhythmHighwayLoop ? "Clear Loop" : "Loop Window") + '</button>';
     h += '<button class="btn" onclick="act(\'back\')" style="background:var(--input-bg);color:var(--text-secondary)">Exit</button>';
@@ -260,11 +297,12 @@
 
   function rhythmHighwayResultsPage() {
     var result = S.rhythmHighwayResult;
+    var accessibility = getRhythmHighwayAccessibilitySettings();
     var gameplay = result.gameplay || {};
     var learning = result.learning || {};
     var activePreset = getCurrentAssistPreset();
     var moduleGuidance = getRhythmHighwayModuleGuidance(result);
-    var h = '<div class="text-center" style="padding-top:16px"><div style="font-size:56px;animation:bn .6s ease">&#127928;</div>';
+    var h = '<div class="text-center" style="padding-top:16px"><div style="font-size:56px;' + (accessibility.reducedMotion ? "" : "animation:bn .6s ease") + '">&#127928;</div>';
     h += '<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Rhythm Highway Complete</h2>';
     if (activePreset) {
       h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Assist Mode: <span style="color:var(--text-primary);font-weight:800">' + escHTML(activePreset.label) + "</span></div>";
@@ -274,22 +312,22 @@
     }
     if (moduleGuidance) {
       h += '<div class="card mb16" style="text-align:left;background:linear-gradient(180deg,rgba(20,184,166,.12),rgba(20,184,166,.04));border:1px solid rgba(20,184,166,.28)">';
-      h += '<div style="font-size:13px;font-weight:900;color:var(--text-primary);margin-bottom:6px">' + escHTML(moduleGuidance.title) + '</div>';
+      h += '<div class="card-section-heading" style="margin-bottom:6px">' + escHTML(moduleGuidance.title) + '</div>';
       h += '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">' + escHTML(moduleGuidance.summary) + '</div>';
       h += '<div style="font-size:11px;color:var(--text-muted)">Next: ' + escHTML(moduleGuidance.nextStep) + '</div>';
       h += '</div>';
     }
-    h += '<div class="card mb16"><div style="display:flex;justify-content:space-around;text-align:center">';
-    h += '<div><div style="font-size:28px;font-weight:900;color:#FFE66D">' + gameplay.score + '</div><div style="font-size:11px;color:var(--text-muted)">Score</div></div>';
-    h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + Math.round((gameplay.accuracy || 0) * 100) + '%</div><div style="font-size:11px;color:var(--text-muted)">Accuracy</div></div>';
-    h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">' + (gameplay.maxCombo || 0) + 'x</div><div style="font-size:11px;color:var(--text-muted)">Max Combo</div></div>';
+    h += '<div class="card mb16"><div style="display:flex;justify-content:space-around;text-align:center;gap:12px">';
+    h += '<div><div class="metric-value" style="font-size:28px;color:#FFE66D">' + gameplay.score + '</div><div class="metric-label">Score</div></div>';
+    h += '<div><div class="metric-value" style="font-size:28px;color:#4ECDC4">' + Math.round((gameplay.accuracy || 0) * 100) + '%</div><div class="metric-label">Accuracy</div></div>';
+    h += '<div><div class="metric-value" style="font-size:28px;color:#FF6B6B">' + (gameplay.maxCombo || 0) + 'x</div><div class="metric-label">Max Combo</div></div>';
     h += '</div></div>';
-    h += '<div class="card mb16" style="text-align:left"><div style="font-size:13px;font-weight:800;color:var(--text-primary);margin-bottom:8px">Learning</div>';
+    h += '<div class="card mb16" style="text-align:left"><div class="card-section-heading" style="margin-bottom:8px">Learning</div>';
     h += '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">Skills:</div>';
     h += '<div style="font-size:12px;color:var(--text-muted)">' + escHTML(formatSkills(learning.skills || [])) + '</div>';
     h += '<div style="font-size:12px;color:var(--text-secondary);margin:8px 0 6px">Weak Areas:</div>';
     h += '<div style="font-size:12px;color:var(--text-muted)">' + escHTML(formatRhythmWeakAreas(learning.weakAreas || [])) + '</div></div>';
-    h += '<div style="display:flex;gap:10px;justify-content:center">';
+    h += '<div class="action-row" style="justify-content:center">';
     h += '<button class="btn" onclick="act(\'restartRhythmHighway\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Play Again</button>';
     if (S.rhythmHighwayLoop) {
       h += '<button class="btn" onclick="act(\'rhythmHighwayClearLoop\')" style="background:var(--input-bg);color:var(--text-secondary)">Play Full Run</button>';
@@ -369,18 +407,22 @@
     return ASSIST_PRESETS[0];
   }
 
-  function getRhythmHighwayLaneLabels() {
+  function getRhythmHighwayLaneLabels(accessibility) {
+    accessibility = accessibility || getRhythmHighwayAccessibilitySettings();
     var payload = runtime.activePayload || runtime.sourcePayload || null;
+    var labels;
     if (payload && Array.isArray(payload.laneLabels) && payload.laneLabels.length) {
-      return payload.laneLabels.slice();
+      labels = payload.laneLabels.slice();
+      return accessibility.leftHandedLayout ? labels.reverse() : labels;
     }
     var laneCount = payload && payload.laneCount ? payload.laneCount : 5;
     var instrumentType = normalizeRhythmInstrumentType(
       (S.rhythmHighwayLaunchContext && S.rhythmHighwayLaunchContext.instrument) || (payload && payload.adapterType) || null
     );
-    if (laneCount === 4 && instrumentType === "bass") return ["E", "A", "D", "G"];
-    if (laneCount === 4) return ["G", "C", "E", "A"];
-    return ["G", "R", "Y", "B", "O"];
+    if (laneCount === 4 && instrumentType === "bass") labels = ["E", "A", "D", "G"];
+    else if (laneCount === 4) labels = ["G", "C", "E", "A"];
+    else labels = ["G", "R", "Y", "B", "O"];
+    return accessibility.leftHandedLayout ? labels.reverse() : labels;
   }
 
   function buildRhythmHighwayLoopPayload(payload, loopSpec) {
@@ -515,8 +557,12 @@
     return out;
   }
 
-  function laneColor(index) {
-    return ["#4ade80", "#ef4444", "#facc15", "#3b82f6", "#f97316"][index] || "#999";
+  function laneColor(index, accessibility) {
+    accessibility = accessibility || getRhythmHighwayAccessibilitySettings();
+    var palette = accessibility.colorblindSafeLanes
+      ? ["#117733", "#882255", "#DDCC77", "#332288", "#CC6677"]
+      : ["#4ade80", "#ef4444", "#facc15", "#3b82f6", "#f97316"];
+    return palette[index] || "#999";
   }
 
   window.startRhythmHighwaySegment = startRhythmHighwaySegment;

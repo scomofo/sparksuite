@@ -1,0 +1,24 @@
+{
+  "id": "seven_nation_army_bass_chords",
+  "title": "Seven Nation Army",
+  "artist": "The White Stripes",
+  "bpm": 123,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "bass",
+  "audio": { "type": "silent" },
+  "phrases": [
+    { "id": 0, "name": "Verse", "startSec": 0, "endSec": 7.805 },
+    { "id": 1, "name": "Chorus", "startSec": 7.805, "endSec": 15.61 },
+    { "id": 2, "name": "Outro", "startSec": 15.61, "endSec": 23.415 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 0.488, "type": "tap", "chord": "E", "notes": ["E2"], "laneLabel": "E", "strum": "tap" },
+    { "id": 2, "t": 0.488, "dur": 0.488, "type": "tap", "chord": "E", "notes": ["E2"], "laneLabel": "E", "strum": "tap" },
+    { "id": 3, "t": 0.976, "dur": 0.488, "type": "tap", "chord": "G", "notes": ["G2"], "laneLabel": "G", "strum": "tap" },
+    { "id": 4, "t": 1.463, "dur": 0.489, "type": "tap", "chord": "E", "notes": ["E2"], "laneLabel": "E", "strum": "tap" },
+    { "id": 5, "t": 1.952, "dur": 0.488, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 6, "t": 2.44, "dur": 0.488, "type": "tap", "chord": "C", "notes": ["C2"], "laneLabel": "C", "strum": "tap" },
+    { "id": 7, "t": 2.928, "dur": 0.488, "type": "tap", "chord": "B", "notes": ["B1"], "laneLabel": "B", "strum": "tap" }
+  ]
+}

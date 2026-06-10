@@ -1,0 +1,1257 @@
+{
+  "version": "2026-04-24",
+  "instrument": "bass",
+  "title": "Bass 30-Day ADHD-First Track",
+  "session_count": 30,
+  "sessions": [
+    {
+      "id": "bass-d01",
+      "instrument": "bass",
+      "day": 1,
+      "title": "Make one note sound good",
+      "novelty_count": 1,
+      "new_elements": [
+        "open-e-pluck"
+      ],
+      "prerequisites": [],
+      "target_duration_min": 10,
+      "focus_song": "rock drums at 80 BPM",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d01-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d01-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d01-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d01-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "timed",
+        "detail": "3 min",
+        "prompt": "Stay with it for 3 min."
+      }
+    },
+    {
+      "id": "bass-d02",
+      "instrument": "bass",
+      "day": 2,
+      "title": "Tuning the bass",
+      "novelty_count": 1,
+      "new_elements": [
+        "tuner-use"
+      ],
+      "prerequisites": [
+        "bass-d01"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "tuner",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d02-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d02-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d02-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d02-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "bass-d03",
+      "instrument": "bass",
+      "day": 3,
+      "title": "Quarter notes on E",
+      "novelty_count": 1,
+      "new_elements": [
+        "steady-pulse"
+      ],
+      "prerequisites": [
+        "bass-d02"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "drums at 70",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d03-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d03-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d03-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d03-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "timed",
+        "detail": "3 min",
+        "prompt": "Stay with it for 3 min."
+      }
+    },
+    {
+      "id": "bass-d04",
+      "instrument": "bass",
+      "day": 4,
+      "title": "Open A too",
+      "novelty_count": 1,
+      "new_elements": [
+        "2-string-pulse"
+      ],
+      "prerequisites": [
+        "bass-d03"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "drums",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d04-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d04-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d04-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d04-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "timed",
+        "detail": "3 min",
+        "prompt": "Stay with it for 3 min."
+      }
+    },
+    {
+      "id": "bass-d05",
+      "instrument": "bass",
+      "day": 5,
+      "title": "E-A groove",
+      "novelty_count": 1,
+      "new_elements": [
+        "alternating-two-strings"
+      ],
+      "prerequisites": [
+        "bass-d04"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "rock loop",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d05-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d05-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d05-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d05-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "bass-d06",
+      "instrument": "bass",
+      "day": 6,
+      "title": "Fretting F on the E string",
+      "novelty_count": 1,
+      "new_elements": [
+        "first-fretted-note"
+      ],
+      "prerequisites": [
+        "bass-d05"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "pulse loop",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d06-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d06-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d06-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d06-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "count",
+        "detail": "8 clean",
+        "prompt": "Hit the target: 8 clean."
+      }
+    },
+    {
+      "id": "bass-d07",
+      "instrument": "bass",
+      "day": 7,
+      "title": "\"Seven Nation Army\" riff (simplified)",
+      "novelty_count": 1,
+      "new_elements": [
+        "whole-step-shape"
+      ],
+      "prerequisites": [
+        "bass-d06"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "the song",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d07-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d07-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d07-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d07-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "bass-d08",
+      "instrument": "bass",
+      "day": 8,
+      "title": "Eighth notes",
+      "novelty_count": 1,
+      "new_elements": [
+        "rhythmic-subdivision"
+      ],
+      "prerequisites": [
+        "bass-d07"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "same riff doubled",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d08-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d08-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d08-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d08-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "timed",
+        "detail": "3 min",
+        "prompt": "Stay with it for 3 min."
+      }
+    },
+    {
+      "id": "bass-d09",
+      "instrument": "bass",
+      "day": 9,
+      "title": "D and G strings",
+      "novelty_count": 1,
+      "new_elements": [
+        "all-4-strings-open"
+      ],
+      "prerequisites": [
+        "bass-d08"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "4-string pulse",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d09-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d09-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d09-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d09-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "bass-d10",
+      "instrument": "bass",
+      "day": 10,
+      "title": "Walking bassline on opens",
+      "novelty_count": 1,
+      "new_elements": [
+        "moving-pulse"
+      ],
+      "prerequisites": [
+        "bass-d09"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "jazz-ish drum",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d10-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d10-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d10-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d10-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "timed",
+        "detail": "3 min",
+        "prompt": "Stay with it for 3 min."
+      }
+    },
+    {
+      "id": "bass-d11",
+      "instrument": "bass",
+      "day": 11,
+      "title": "Review and free play",
+      "novelty_count": 0,
+      "new_elements": [],
+      "prerequisites": [
+        "bass-d10"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "user picks",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d11-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d11-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d11-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d11-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "bass-d12",
+      "instrument": "bass",
+      "day": 12,
+      "title": "The moveable anchor",
+      "novelty_count": 1,
+      "new_elements": [
+        "right-hand-floating-thumb"
+      ],
+      "prerequisites": [
+        "bass-d11"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "drills",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d12-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d12-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d12-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d12-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "bass-d13",
+      "instrument": "bass",
+      "day": 13,
+      "title": "\"Come As You Are\" riff",
+      "novelty_count": 1,
+      "new_elements": [
+        "chromatic-run"
+      ],
+      "prerequisites": [
+        "bass-d12"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "the song",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d13-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d13-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d13-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d13-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "bass-d14",
+      "instrument": "bass",
+      "day": 14,
+      "title": "Root-5th shape",
+      "novelty_count": 1,
+      "new_elements": [
+        "interval-shape"
+      ],
+      "prerequisites": [
+        "bass-d13"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "I-V in E",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d14-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d14-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d14-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d14-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "timed",
+        "detail": "3 min",
+        "prompt": "Stay with it for 3 min."
+      }
+    },
+    {
+      "id": "bass-d15",
+      "instrument": "bass",
+      "day": 15,
+      "title": "Root-5-octave shape",
+      "novelty_count": 1,
+      "new_elements": [
+        "upper-octave"
+      ],
+      "prerequisites": [
+        "bass-d14"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "12-bar in E",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d15-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d15-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d15-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d15-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "bass-d16",
+      "instrument": "bass",
+      "day": 16,
+      "title": "Minor pentatonic (first 3 notes)",
+      "novelty_count": 1,
+      "new_elements": [
+        "scale-fragment"
+      ],
+      "prerequisites": [
+        "bass-d15"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "E-min vamp",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d16-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d16-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d16-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d16-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "timed",
+        "detail": "3 min",
+        "prompt": "Stay with it for 3 min."
+      }
+    },
+    {
+      "id": "bass-d17",
+      "instrument": "bass",
+      "day": 17,
+      "title": "\"Sunshine of Your Love\" intro",
+      "novelty_count": 1,
+      "new_elements": [
+        "pentatonic-in-action"
+      ],
+      "prerequisites": [
+        "bass-d16"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "the song",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d17-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d17-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d17-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d17-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "bass-d18",
+      "instrument": "bass",
+      "day": 18,
+      "title": "Blues scale (6 notes)",
+      "novelty_count": 1,
+      "new_elements": [
+        "added-b5"
+      ],
+      "prerequisites": [
+        "bass-d17"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "12-bar blues",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d18-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d18-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d18-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d18-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "timed",
+        "detail": "3 min",
+        "prompt": "Stay with it for 3 min."
+      }
+    },
+    {
+      "id": "bass-d19",
+      "instrument": "bass",
+      "day": 19,
+      "title": "Review and free play",
+      "novelty_count": 0,
+      "new_elements": [],
+      "prerequisites": [
+        "bass-d18"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "user picks",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d19-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d19-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d19-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d19-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "bass-d20",
+      "instrument": "bass",
+      "day": 20,
+      "title": "Sliding between notes",
+      "novelty_count": 1,
+      "new_elements": [
+        "legato-lh"
+      ],
+      "prerequisites": [
+        "bass-d19"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "slide drills",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d20-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d20-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d20-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d20-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "bass-d21",
+      "instrument": "bass",
+      "day": 21,
+      "title": "\"Another One Bites the Dust\" riff",
+      "novelty_count": 1,
+      "new_elements": [
+        "iconic-disco"
+      ],
+      "prerequisites": [
+        "bass-d20"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "the song",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d21-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d21-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d21-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d21-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "bass-d22",
+      "instrument": "bass",
+      "day": 22,
+      "title": "Muting with the picking hand",
+      "novelty_count": 1,
+      "new_elements": [
+        "right-hand-mute"
+      ],
+      "prerequisites": [
+        "bass-d21"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "funk loop",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d22-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d22-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d22-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d22-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "timed",
+        "detail": "3 min",
+        "prompt": "Stay with it for 3 min."
+      }
+    },
+    {
+      "id": "bass-d23",
+      "instrument": "bass",
+      "day": 23,
+      "title": "Syncopation basics",
+      "novelty_count": 1,
+      "new_elements": [
+        "off-beat-emphasis"
+      ],
+      "prerequisites": [
+        "bass-d22"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "funk groove",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d23-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d23-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d23-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d23-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "timed",
+        "detail": "3 min",
+        "prompt": "Stay with it for 3 min."
+      }
+    },
+    {
+      "id": "bass-d24",
+      "instrument": "bass",
+      "day": 24,
+      "title": "Review and free play",
+      "novelty_count": 0,
+      "new_elements": [],
+      "prerequisites": [
+        "bass-d23"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "user picks",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d24-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d24-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d24-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d24-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "bass-d25",
+      "instrument": "bass",
+      "day": 25,
+      "title": "Ghost notes",
+      "novelty_count": 1,
+      "new_elements": [
+        "percussive-mute"
+      ],
+      "prerequisites": [
+        "bass-d24"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "funk",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d25-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d25-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d25-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d25-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "bass-d26",
+      "instrument": "bass",
+      "day": 26,
+      "title": "Root motion over changes",
+      "novelty_count": 1,
+      "new_elements": [
+        "following-chords"
+      ],
+      "prerequisites": [
+        "bass-d25"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "I-IV-V in A",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d26-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d26-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d26-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d26-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "timed",
+        "detail": "4 min",
+        "prompt": "Stay with it for 4 min."
+      }
+    },
+    {
+      "id": "bass-d27",
+      "instrument": "bass",
+      "day": 27,
+      "title": "Improvising over a vamp",
+      "novelty_count": 1,
+      "new_elements": [
+        "mix-pentatonic-and-groove"
+      ],
+      "prerequisites": [
+        "bass-d26"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "E-min vamp",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d27-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d27-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d27-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d27-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "timed",
+        "detail": "4 min",
+        "prompt": "Stay with it for 4 min."
+      }
+    },
+    {
+      "id": "bass-d28",
+      "instrument": "bass",
+      "day": 28,
+      "title": "Review and free play",
+      "novelty_count": 0,
+      "new_elements": [],
+      "prerequisites": [
+        "bass-d27"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "user picks",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d28-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d28-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d28-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d28-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "bass-d29",
+      "instrument": "bass",
+      "day": 29,
+      "title": "Showcase prep",
+      "novelty_count": 0,
+      "new_elements": [],
+      "prerequisites": [
+        "bass-d28"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "user's song",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d29-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d29-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d29-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d29-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "self_report",
+        "prompt": "Did this feel playable today?"
+      }
+    },
+    {
+      "id": "bass-d30",
+      "instrument": "bass",
+      "day": 30,
+      "title": "Showcase day",
+      "novelty_count": 1,
+      "new_elements": [
+        "record-yourself"
+      ],
+      "prerequisites": [
+        "bass-d29"
+      ],
+      "target_duration_min": 10,
+      "focus_song": "user's song",
+      "blocks": [
+        {
+          "type": "warm_engine",
+          "activity_id": "bass-d30-warm_engine",
+          "duration_sec": 90
+        },
+        {
+          "type": "drill",
+          "activity_id": "bass-d30-drill",
+          "duration_sec": 180
+        },
+        {
+          "type": "song",
+          "activity_id": "bass-d30-song",
+          "duration_sec": 240
+        },
+        {
+          "type": "cooldown",
+          "activity_id": "bass-d30-cooldown",
+          "duration_sec": 90
+        }
+      ],
+      "completion_criteria": {
+        "type": "record_save",
+        "prompt": "Record a take you want to keep."
+      }
+    }
+  ],
+  "required_chords": [],
+  "required_scales": [],
+  "required_notes_and_scales": [
+    "All fretted notes on E and A strings up to fret 7",
+    "Open D and G",
+    "E-minor pentatonic (one-octave position)",
+    "E blues scale (one-octave)",
+    "Root-5-octave movable pattern"
+  ],
+  "required_songs": [
+    "Seven Nation Army",
+    "Come As You Are",
+    "Sunshine of Your Love",
+    "Another One Bites the Dust",
+    "12-bar blues in E",
+    "funk vamp in E"
+  ],
+  "required_pieces": []
+}

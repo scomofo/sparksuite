@@ -22,12 +22,16 @@ function getSharedPageInstrument(){
   return inst;
 }
 
+function getSharedCoreView(){
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  if (!core || typeof core.getActiveSessionView !== "function") return null;
+  return core.getActiveSessionView();
+}
+
 function getLegacyChordDetectRuntime(){
   var runtime = null;
-  if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
-    var view = window.sparkCore.getActiveSessionView();
-    runtime = view && view.runtimeState ? view.runtimeState : null;
-  }
+  var view = getSharedCoreView();
+  runtime = view && view.runtimeState ? view.runtimeState : null;
   return {
     active: typeof S.chordDetectOn === "boolean" ? S.chordDetectOn : !!(runtime && runtime.chordDetectActive),
     notes: Array.isArray(S.detectedNotes) ? S.detectedNotes : (runtime && Array.isArray(runtime.chordDetectNotes) ? runtime.chordDetectNotes : []),
@@ -159,18 +163,16 @@ function updateDailyTimerUI(){
 // ===== FINGER EXERCISES CARD =====
 function fingerExerciseCard(){
   var runtime = null;
-  if (window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function") {
-    var view = window.sparkCore.getActiveSessionView();
-    runtime = view && view.runtimeState ? view.runtimeState : null;
-  }
+  var view = getSharedCoreView();
+  runtime = view && view.runtimeState ? view.runtimeState : null;
   var fingerExActive = typeof S.fingerExActive === "boolean" ? S.fingerExActive : !!(runtime && runtime.legacyFingerExerciseActive);
   var fingerExId = typeof S.fingerExId === "string" ? S.fingerExId : (runtime ? runtime.legacyFingerExerciseId : null);
   var fingerExTimer = typeof S.fingerExTimer === "number" ? S.fingerExTimer : (runtime && typeof runtime.legacyPracticeRemainingSec === "number" ? runtime.legacyPracticeRemainingSec : 0);
   var fingerExCount = typeof S.fingerExCount === "number"
     ? S.fingerExCount
     : (runtime && typeof runtime.legacyFingerExerciseCount === "number" ? runtime.legacyFingerExerciseCount : 0);
-  var h='<div class="card" style="margin-top:12px">';
-  h+='<h3 style="margin:0 0 10px;font-size:15px;font-weight:800;color:var(--text-primary)">&#9995; Finger Exercises</h3>';
+  var h='<div class="card'+(fingerExActive&&fingerExId?' live-timer-surface':'')+'" style="margin-top:12px">';
+  h+='<h3 class="card-section-heading">&#9995; Finger Exercises</h3>';
 
   // Active exercise
   if(fingerExActive&&fingerExId){
@@ -179,8 +181,8 @@ function fingerExerciseCard(){
     if(ex){
       var m=Math.floor(fingerExTimer/60),s=fingerExTimer%60;
       h+='<div style="background:var(--input-bg);border-radius:14px;padding:14px;margin-bottom:10px;border-left:4px solid #FF6B6B">';
-      h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-      h+='<div style="font-size:14px;font-weight:800;color:var(--text-primary)">'+escHTML(ex.name)+'</div>';
+      h+='<div class="split-row" style="margin-bottom:8px">';
+      h+='<div class="card-micro-heading">'+escHTML(ex.name)+'</div>';
       h+='<div style="font-size:20px;font-weight:900;color:#FF6B6B">'+m+':'+(s<10?'0':'')+s+'</div>';
       h+='</div>';
       h+='<p style="margin:0 0 8px;font-size:12px;color:var(--text-secondary);line-height:1.5">'+escHTML(ex.desc)+'</p>';
@@ -203,7 +205,7 @@ function fingerExerciseCard(){
     var t=tiers[ti];
     var exs=FINGER_EXERCISES.filter(function(e){return e.tier===t.num;});
     if(!exs.length)continue;
-    h+='<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin:8px 0 4px">'+t.icon+' Tier '+t.num+': '+t.label+'</div>';
+    h+='<div class="card-micro-heading" style="color:var(--text-muted);margin:8px 0 4px">'+t.icon+' Tier '+t.num+': '+t.label+'</div>';
     for(var ei=0;ei<exs.length;ei++){
       var ex=exs[ei];
       var done=(typeof SparkFingerStats !== "undefined" ? SparkFingerStats.get(ex.id) : (S.fingerStats && S.fingerStats[ex.id]))||0;
@@ -213,7 +215,7 @@ function fingerExerciseCard(){
       var m=Math.floor(ex.duration/60),s=ex.duration%60;
       h+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;'+(ei>0?'border-top:1px solid var(--border);':'')+'">';
       h+='<div style="flex:1">';
-      h+='<div style="font-size:13px;font-weight:700;color:var(--text-primary)">'+escHTML(ex.name);
+      h+='<div class="card-micro-heading">'+escHTML(ex.name);
       if(done>0)h+=' <span style="font-size:10px;color:#4ECDC4">&#9989; '+done+'x</span>';
       h+='</div>';
       h+='<div style="font-size:11px;color:var(--text-muted)">'+m+':'+(s<10?'0':'')+s+' &bull; '+escHTML(ex.frequency);
@@ -248,10 +250,10 @@ function strumTrackCard(){
   var nextIdx=Math.min(idx+1,STRUM_PATTERNS.length-1);
   var nextSp=STRUM_PATTERNS[nextIdx];
   var h='<div class="card" style="margin-top:12px">';
-  h+='<h3 style="margin:0 0 8px;font-size:15px;font-weight:800;color:var(--text-primary)">&#127925; Your Strum Track</h3>';
+  h+='<h3 class="card-section-heading">&#127925; Your Strum Track</h3>';
   h+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">';
   h+='<div style="flex:1">';
-  h+='<div style="font-size:14px;font-weight:700;color:#4ECDC4;margin-bottom:2px">'+sp.name+'</div>';
+  h+='<div class="card-micro-heading" style="color:#4ECDC4;margin-bottom:2px">'+sp.name+'</div>';
   h+='<div style="font-size:12px;color:var(--text-muted)">'+sp.desc+' &bull; '+formatSharedBpm(sp.bpm, "--")+' BPM</div>';
   h+='</div>';
   h+='<button onclick="act(\'tab\',\'strum\')" style="padding:8px 14px;border-radius:12px;font-size:12px;font-weight:700;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff">Practice</button>';
@@ -290,11 +292,11 @@ function shortcutOverlay(){
     ["1-9","Quick tab switch"],
     ["0","Stats tab"]
   ];
-  var h='<div class="shortcut-overlay" onclick="act(\'toggleShortcuts\')" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">';
+  var h='<div class="shortcut-overlay" onclick="act(\'toggleShortcuts\')" onkeydown="if(event.key===\'Escape\'){event.preventDefault();act(\'toggleShortcuts\')}" role="dialog" tabindex="0" aria-modal="true" aria-label="Keyboard shortcuts">';
   h+='<div class="shortcut-modal" onclick="event.stopPropagation()">';
-  h+='<h3 style="margin:0 0 16px;font-size:18px;font-weight:800;color:var(--text-primary)">&#9000; Keyboard Shortcuts</h3>';
+  h+='<h3 class="card-section-heading">&#9000; Keyboard Shortcuts</h3>';
   for(var i=0;i<shortcuts.length;i++){
-    h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">';
+    h+='<div class="split-row" style="padding:6px 0;border-bottom:1px solid var(--border)">';
     h+='<kbd style="background:var(--input-bg);padding:3px 10px;border-radius:6px;font-size:13px;font-weight:700;font-family:monospace;color:var(--text-primary);border:1px solid var(--border)">'+shortcuts[i][0]+'</kbd>';
     h+='<span style="font-size:13px;color:var(--text-muted)">'+shortcuts[i][1]+'</span>';
     h+='</div>';

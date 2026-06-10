@@ -57,11 +57,21 @@ function _normalizeGamesCount(value, fallback) {
   return Math.round(numeric);
 }
 
+function getGamesCoreView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  return core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+}
+
+function getGamesScaleRenderer() {
+  var inst = getGamesPageInstrument();
+  return inst && typeof inst.getScaleRenderer === "function" ? inst.getScaleRenderer() : null;
+}
+
 // ===== RHYTHM GAME TAB =====
 function getLegacyRhythmRuntime(){
-  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var runtime = getGamesCoreView();
   runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
   return {
     active: typeof S.rhythmActive === "boolean" ? S.rhythmActive : !!(runtime && runtime.legacyRhythmActive),
@@ -79,7 +89,7 @@ function rhythmTab(){
   var rhythmBpm = _normalizeGamesBpm(S.rhythmBpm, 90);
   if(runtime.results)return rhythmResultsPage();
   if(runtime.active)return rhythmGamePage();
-  var h='<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Rhythm Game &#129345;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Tap in time with the beat!</p>';
+  var h='<div class="text-center"><h2 class="card-section-heading">Rhythm Game &#129345;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Tap in time with the beat!</p>';
   h+='<div class="card"><div style="font-size:48px;margin-bottom:12px">&#127928;</div>';
   h+='<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px"><button onclick="act(\'rhythmBpm\',\''+(rhythmBpm-10)+'\')" style="width:32px;height:32px;border-radius:50%;background:var(--input-bg);font-size:18px;font-weight:700;color:var(--text-secondary)">-</button>';
   h+='<div style="text-align:center;min-width:60px"><div style="font-size:24px;font-weight:900;color:var(--text-primary)">'+rhythmBpm+'</div><div style="font-size:10px;color:var(--text-muted)">BPM</div></div>';
@@ -122,23 +132,21 @@ function rhythmResultsPage(){
   var rhythmAccuracy = _normalizeGamesCount(r.accuracy, 0);
   var rhythmMaxCombo = _normalizeGamesCount(r.maxCombo, 0);
   var h='<div class="text-center" style="padding-top:20px"><div style="font-size:56px;animation:bn .6s ease">&#129345;</div>';
-  h+='<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Results!</h2>';
+  h+='<h2 class="card-section-heading">Results!</h2>';
   h+='<div class="card mb16" style="margin-top:12px"><div style="display:flex;justify-content:space-around;text-align:center">';
   h+='<div><div style="font-size:32px;font-weight:900;color:#FFE66D">'+rhythmScore+'</div><div style="font-size:11px;color:var(--text-muted)">Score</div></div>';
   h+='<div><div style="font-size:32px;font-weight:900;color:#4ECDC4">'+rhythmAccuracy+'%</div><div style="font-size:11px;color:var(--text-muted)">Accuracy</div></div>';
   h+='<div><div style="font-size:32px;font-weight:900;color:#FF6B6B">'+rhythmMaxCombo+'x</div><div style="font-size:11px;color:var(--text-muted)">Max Combo</div></div>';
   h+='</div></div>';
-  h+='<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="S.rhythmResults=null;act(\'startRhythm\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Play Again</button>';
-  h+='<button class="btn" onclick="S.rhythmResults=null;render()" style="background:#4ECDC4;color:#fff">&#127968; Back</button></div>';
+  h+='<div class="action-row" style="justify-content:center"><button class="btn" onclick="act(\'rhythmResultsReplay\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Play Again</button>';
+  h+='<button class="btn" onclick="act(\'rhythmResultsBack\')" style="background:#4ECDC4;color:#fff">&#127968; Back</button></div>';
   h+='</div>';
   return h;
 }
 
 // ===== CHORD RUNNER TAB =====
 function getLegacyRunnerRuntime(D){
-  var runtime = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var runtime = getGamesCoreView();
   runtime = runtime && runtime.runtimeState ? runtime.runtimeState : null;
   var target = S.runnerTarget || null;
   if(!target && runtime && runtime.legacyRunnerTargetName && D && Array.isArray(D.ALL_CHORDS)){
@@ -168,7 +176,7 @@ function runnerTab(){
   var runtime = getLegacyRunnerRuntime(D);
   if(runtime.results)return runnerResultsPage();
   if(runtime.active)return runnerGamePage();
-  var h='<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Chord Runner &#127918;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Strum the right chords as they scroll by!</p>';
+  var h='<div class="text-center"><h2 class="card-section-heading">Chord Runner &#127918;</h2><p style="color:var(--text-dim);font-size:13px;margin-bottom:16px">Strum the right chords as they scroll by!</p>';
   h+='<div class="card"><div style="font-size:48px;margin-bottom:12px">&#127928;</div>';
   h+='<div style="margin-bottom:16px;font-size:13px;color:var(--text-secondary);line-height:1.5">Chord names scroll across the screen.<br><strong>Strum</strong> when the <strong>target chord</strong> reaches you.<br>Let wrong chords pass! 3 lives.</div>';
   if(_normalizeGamesCount(S.runnerHighScore, 0)>0)h+='<div style="margin-bottom:12px;font-size:15px;font-weight:800;color:#FFE66D">&#127942; High Score: '+_normalizeGamesCount(S.runnerHighScore, 0)+'</div>';
@@ -184,7 +192,7 @@ function runnerGamePage(){
   var runtime = getLegacyRunnerRuntime(D);
   var h='<div>';
   // Lives, Score, Combo row
-  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:0 4px">';
+  h+='<div class="split-row" style="margin-bottom:8px;padding:0 4px">';
   h+='<div style="font-size:18px;letter-spacing:2px">';
   for(var i=0;i<3;i++)h+=(i<runtime.lives?'&#10084;&#65039;':'&#128420;');
   h+='</div>';
@@ -193,12 +201,12 @@ function runnerGamePage(){
   h+='</div>';
 
   // Target chord card
-  h+='<div class="card mb12" style="padding:10px 16px;display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(78,205,196,.12),rgba(69,183,209,.12));border:2px solid rgba(78,205,196,.3)">';
+  h+='<div class="card live-timer-surface mb12" style="padding:10px 16px;display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(78,205,196,.12),rgba(69,183,209,.12));border:2px solid rgba(78,205,196,.3)">';
   if(runtime.target){
     var targetShort = _firstGamesTextToken(runtime.target.short, runtime.target.name, "?");
     var targetName = _firstGamesTextToken(runtime.target.name, runtime.target.short, "Target chord");
     h+=UI.chord(runtime.target,55);
-    h+='<div style="flex:1"><div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">Target Chord</div>';
+    h+='<div style="flex:1"><div class="metric-label">Target Chord</div>';
     h+='<div style="font-size:22px;font-weight:900;color:var(--text-primary)">'+escHTML(targetShort)+'</div>';
     h+='<div style="font-size:11px;color:var(--text-muted)">'+escHTML(targetName)+'</div></div>';
   }
@@ -246,15 +254,15 @@ function runnerResultsPage(){
   var runnerHighScore = _normalizeGamesCount(S.runnerHighScore, 0);
   var isHigh=runnerScore>=runnerHighScore&&runnerScore>0;
   var h='<div class="text-center" style="padding-top:20px"><div style="font-size:56px;animation:bn .6s ease">&#127918;</div>';
-  h+='<h2 style="font-size:26px;font-weight:900;color:var(--text-primary)">Game Over!</h2>';
+  h+='<h2 class="card-section-heading">Game Over!</h2>';
   if(isHigh)h+='<div style="font-size:16px;font-weight:800;color:#FFE66D;margin:8px 0;animation:bn .8s ease">&#127942; New High Score!</div>';
   h+='<div class="card mb16" style="margin-top:12px"><div style="display:flex;justify-content:space-around;text-align:center">';
   h+='<div><div style="font-size:32px;font-weight:900;color:#FFE66D">'+runnerScore+'</div><div style="font-size:11px;color:var(--text-muted)">Score</div></div>';
   h+='<div><div style="font-size:32px;font-weight:900;color:#4ECDC4">'+runnerMaxCombo+'x</div><div style="font-size:11px;color:var(--text-muted)">Max Combo</div></div>';
   h+='<div><div style="font-size:32px;font-weight:900;color:#FF6B6B">'+runnerDistance+'m</div><div style="font-size:11px;color:var(--text-muted)">Distance</div></div>';
   h+='</div></div>';
-  h+='<div style="display:flex;gap:10px;justify-content:center"><button class="btn" onclick="S.runnerResults=null;act(\'startRunner\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Play Again</button>';
-  h+='<button class="btn" onclick="S.runnerResults=null;render()" style="background:#4ECDC4;color:#fff">&#127968; Back</button></div>';
+  h+='<div class="action-row" style="justify-content:center"><button class="btn" onclick="act(\'runnerResultsReplay\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">Play Again</button>';
+  h+='<button class="btn" onclick="act(\'runnerResultsBack\')" style="background:#4ECDC4;color:#fff">&#127968; Back</button></div>';
   h+='</div>';
   return h;
 }
@@ -265,7 +273,7 @@ function buildTab(){
   var D = inst && inst.getData ? inst.getData() : {};
   var UI = inst && inst.ui ? inst.ui : {};
   var progBpm = _normalizeGamesBpm(S.progBpm, 80);
-  var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Progression Builder &#128295;</h2><p style="color:var(--text-dim);font-size:13px">Build and play chord progressions</p></div>';
+  var h='<div class="text-center mb16"><h2 class="card-section-heading">Progression Builder &#128295;</h2><p style="color:var(--text-dim);font-size:13px">Build and play chord progressions</p></div>';
 
   // Progression display
   h+='<div class="prog-blocks mb12">';
@@ -276,7 +284,7 @@ function buildTab(){
       var cn=S.progChords[i];
       var ch=null;for(var j=0;j<D.ALL_CHORDS.length;j++)if(D.ALL_CHORDS[j].name===cn)ch=D.ALL_CHORDS[j];
       var short=ch?ch.short:cn;
-      h+='<div class="prog-block'+(S.progPlaying&&S.progBeat===i?" active":"")+'"><div class="del-btn" onclick="act(\'progRemove\',\''+i+'\')">&times;</div>';
+      h+='<div class="prog-block'+(S.progPlaying&&S.progBeat===i?" active":"")+'"><button class="del-btn" onclick="act(\'progRemove\',\''+i+'\')" aria-label="Remove chord '+escHTML(String(short))+'">&times;</button>';
       h+='<div class="chord-label">'+short+'</div>';
       h+='<div class="move-btns">';
       if(i>0)h+='<button onclick="act(\'progMove\',\''+i+':left\')">&#8592;</button>';
@@ -289,7 +297,7 @@ function buildTab(){
 
   // Chord picker
   if(S.progPickerOpen){
-    h+='<div class="card mb12"><h4 style="margin:0 0 8px;font-size:14px;font-weight:800;color:var(--text-primary)">Add Chord</h4><div class="chord-picker">';
+    h+='<div class="card mb12"><h4 class="card-micro-heading">Add Chord</h4><div class="chord-picker">';
     for(var l=1;l<=S.level;l++){
       var cs=D.CHORDS[l]||[];
       for(var i=0;i<cs.length;i++){
@@ -300,7 +308,7 @@ function buildTab(){
   }
 
   // Templates
-  h+='<div class="card mb12"><h4 style="margin:0 0 8px;font-size:14px;font-weight:800;color:var(--text-primary)">&#127932; Templates</h4><div style="display:flex;flex-wrap:wrap;gap:6px">';
+  h+='<div class="card mb12"><h4 class="card-micro-heading">&#127932; Templates</h4><div style="display:flex;flex-wrap:wrap;gap:6px">';
   for(var i=0;i<COMMON_PROGRESSIONS.length;i++){
     var cp=COMMON_PROGRESSIONS[i];
     h+='<button class="chord-pick-btn" onclick="act(\'progTemplate\',\''+i+'\')">'+cp.name+' ('+cp.key+')</button>';
@@ -321,7 +329,7 @@ function buildTab(){
       }
     }
     if(scaleKey&&SCALES[scaleKey]){
-      h+='<div class="card mb12"><h4 style="margin:0 0 8px;font-size:14px;font-weight:800;color:var(--text-primary)">&#127926; Scale Explorer <span style="font-size:11px;color:var(--text-muted);font-weight:600">(Key of '+scaleKey+')</span></h4>';
+      h+='<div class="card mb12"><h4 class="card-micro-heading">&#127926; Scale Explorer <span class="metric-label">(Key of '+scaleKey+')</span></h4>';
       h+='<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;justify-content:center">';
       var scaleTypes=["pentatonic","major","minor","minorPent","blues"];
       for(var i=0;i<scaleTypes.length;i++){
@@ -330,7 +338,8 @@ function buildTab(){
       }
       h+='</div>';
       var positions=getScaleFrets(scaleKey,S.selectedScale);
-      h+='<div class="flex-center">'+scaleSVG(positions,scaleKey,SCALE_NAMES[S.selectedScale])+'</div>';
+      var renderScale = getGamesScaleRenderer();
+      h+='<div class="flex-center">'+(renderScale ? renderScale(positions,scaleKey,SCALE_NAMES[S.selectedScale]) : "")+'</div>';
       h+='</div>';
     }
   }
@@ -340,7 +349,7 @@ function buildTab(){
     var cn=S.progChords[S.progBeat];
     var ch=null;for(var i=0;i<D.ALL_CHORDS.length;i++)if(D.ALL_CHORDS[i].name===cn)ch=D.ALL_CHORDS[i];
     if(ch){
-      h+='<div class="card mb12 text-center"><h4 style="margin:0 0 4px;font-size:14px;color:#FF6B6B">Now: '+ch.name+'</h4><div class="flex-center">'+UI.chord(ch,160)+'</div></div>';
+      h+='<div class="card live-timer-surface mb12 text-center"><h4 class="card-micro-heading" style="color:#FF6B6B">Now: '+ch.name+'</h4><div class="flex-center">'+UI.chord(ch,160)+'</div></div>';
     }
   }
 
@@ -350,9 +359,18 @@ function buildTab(){
   h+='<div style="text-align:center;min-width:60px"><div style="font-size:20px;font-weight:900;color:var(--text-primary)">'+progBpm+'</div><div style="font-size:10px;color:var(--text-muted)">BPM</div></div>';
   h+='<button onclick="act(\'progBpm\',\''+(progBpm+5)+'\')" style="width:32px;height:32px;border-radius:50%;background:var(--input-bg);font-size:18px;font-weight:700;color:var(--text-secondary)">+</button></div>';
   var canPlay=S.progChords.length>=2;
-  h+='<div style="display:flex;gap:10px;justify-content:center">';
+  h+='<div class="action-row" style="justify-content:center">';
   h+='<button class="btn" onclick="act(\'progPlay\')" style="background:'+(S.progPlaying?"#FFE66D":"linear-gradient(135deg,#FF6B6B,#FF8A5C)")+';color:'+(S.progPlaying?"var(--text-primary)":"#fff")+';opacity:'+(canPlay?1:0.5)+'">'+(S.progPlaying?"&#9632; Stop":"&#9654; Play")+'</button>';
   if(S.progChords.length>0)h+='<button class="btn" onclick="act(\'progClear\')" style="background:var(--input-bg);color:var(--text-muted)">Clear</button>';
   h+='</div></div>';
   return h;
 }
+
+(function(root){
+  if(!root)return;
+  root.SparkSharedGameRenderers = {
+    rhythmTab: rhythmTab,
+    runnerTab: runnerTab,
+    buildTab: buildTab
+  };
+})(typeof window !== "undefined" ? window : (typeof global !== "undefined" ? global : null));

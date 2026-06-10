@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-06-10 — v1.1.0: Master/convergence reconciliation
+
+Merged `master` into `feature/convergence`, ending six weeks of divergence (forked 2026-04-28). This brings in everything master had that releases lacked: per-instrument content packs, the action-family dispatcher (replacing the 2,269-line act() monolith), the split render pipeline with deferred instrument loading, the learning-path home, the song library, namespaced piano pages, ~60 additional test files including e2e suites, and the curriculum/content tooling.
+
+Merge-integration fixes (bugs present on master itself, exposed during verification):
+
+- `buildPracticePlan`'s legacy fallback called selector names that never existed (`selectWarmupItem` et al.) — every plan rebuild without the core engine threw; now calls the `*Candidate` selectors
+- `js/sparksuite/core/storage.js` script tag restored — without it `createDefaultSparkCore()` threw and the entire engine path was dead in the browser (Node tests load files explicitly, so they stayed green)
+- Practice-plan launchers now understand engine-generated items (`toLegacyPracticePlan` collapses everything to type "practice"; route from `meta.exerciseType` / `meta.guidedSession` / `meta.durationSec`) — plan "Go" buttons launch real flows on every instrument
+- Two stale master tests updated to current contracts (ukulele curriculum-lesson shape; stats markup)
+
+Verified: 141 test files + e2e + UI business-logic scan green, and master's full browser clickthrough smoke passes (it fails on pristine master). Browser smoke added to CI.
+
+Kept from the convergence side: the release pipeline (GitHub Releases + electron-updater with restart prompt, single-instance lock), the 1400x900 window, persistence fixes, packaged CSS/instrument images, and the engine work (timing core, transport engine).
+
 ## 2026-06-09 — v1.0.4: Restore instrument card/hero images in packaged builds
 
 The showroom references `resources/instruments/<id>/card.png` and `hero.jpg` relative to index.html, so the images must live inside the asar. v1.0.3 only shipped them as extraResources outside the asar, which 404'd in packaged builds and fell back to SVG silhouettes. The images are now packaged into the asar (and no longer duplicated into extraResources).

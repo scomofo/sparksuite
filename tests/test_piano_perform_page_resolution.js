@@ -54,6 +54,8 @@ function test(name, fn) {
   try {
     resetEnvironment();
     global.eval(loadJS("js/instruments/piano/pages/perform_song.js"));
+    global.eval(loadJS("js/sparksuite/core/progress_engine.js"));
+    global.sparkCore = { progressEngine: new SparkSuiteProgressEngine() };
     global.eval(loadJS("js/instruments/piano/pages/perform_results.js"));
     fn();
     console.log("  PASS: " + name);
@@ -114,7 +116,7 @@ test("piano perform song page ignores malformed best accuracy and detected BPM",
 
   var html = pianoPerformSongPage();
 
-  assert.ok(html.indexOf("Best Accuracy: 0%") >= 0);
+  assert.ok(/<span class="metric-label">Best Accuracy<\/span><span class="metric-value">0%<\/span>/.test(html));
   assert.ok(html.indexOf("Detected BPM:") === -1);
   assert.ok(html.indexOf("NaN") === -1);
 });

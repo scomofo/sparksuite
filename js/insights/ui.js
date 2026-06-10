@@ -2,7 +2,7 @@ function prettyInsightUiToken(value){
   var text;
   var lower;
   if(value == null) return "";
-  if(typeof value === "number" || typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
+  if(typeof value !== "string" && typeof value !== "number") return "";
   text = String(value || "").replace(/_/g, " ").trim();
   if(!text) return "";
   lower = text.toLowerCase();
@@ -18,8 +18,10 @@ function buildInsightSkillLabel(entry) {
 }
 
 function insightsDashboardPage(){
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
+  var core = (typeof window !== "undefined" && window.sparkCore)
+    || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  var coreView = core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
     : null;
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var pi = runtimeState && runtimeState.dashboardInsights ? runtimeState.dashboardInsights : S.personalInsights;
@@ -29,7 +31,7 @@ function insightsDashboardPage(){
   }
   var h = '';
   h += '<div class="card mb16">';
-  h += '<div><b>Personal Progress Insights</b></div>';
+  h += '<div class="card-section-heading">Personal Progress Insights</div>';
   h += '<div class="muted">Your strongest areas, weak spots, trends, and career progress.</div>';
   h += '</div>';
   h += renderStrengthWeaknessCard(pi);
@@ -42,15 +44,15 @@ function insightsDashboardPage(){
 
 function renderStrengthWeaknessCard(pi){
   var h = '<div class="card mb16">';
-  h += '<div><b>Strengths & Weak Spots</b></div>';
-  h += '<div style="margin-top:8px"><b>Strongest</b></div>';
+  h += '<div class="card-section-heading">Strengths & Weak Spots</div>';
+  h += '<div class="card-micro-heading" style="margin-top:8px">Strongest</div>';
   var strong = pi.strongestSkills || [];
   for(var i=0;i<strong.length;i++){
     var strongLabel = buildInsightSkillLabel(strong[i]);
     if(!strongLabel) continue;
     h += '<div>'+escHTML(strongLabel)+'  '+Math.round((strong[i].value || 0)*100)+'%</div>';
   }
-  h += '<div style="margin-top:8px"><b>Weakest</b></div>';
+  h += '<div class="card-micro-heading" style="margin-top:8px">Weakest</div>';
   var weak = pi.weakestSkills || [];
   for(var j=0;j<weak.length;j++){
     var weakLabel = buildInsightSkillLabel(weak[j]);
@@ -63,7 +65,7 @@ function renderStrengthWeaknessCard(pi){
 
 function renderMasteryTrendCard(pi){
   var h = '<div class="card mb16">';
-  h += '<div><b>Mastery Trend</b></div>';
+  h += '<div class="card-section-heading">Mastery Trend</div>';
   h += renderInsightLineChart((pi.masteryTrend && pi.masteryTrend.chords) || [], 320, 120);
   h += '</div>';
   return h;
@@ -71,7 +73,7 @@ function renderMasteryTrendCard(pi){
 
 function renderPracticeTrendCard(pi){
   var h = '<div class="card mb16">';
-  h += '<div><b>Practice Trend</b></div>';
+  h += '<div class="card-section-heading">Practice Trend</div>';
   h += renderInsightLineChart((pi.practiceTrend && pi.practiceTrend.minutes) || [], 320, 120);
   h += '</div>';
   return h;
@@ -79,12 +81,12 @@ function renderPracticeTrendCard(pi){
 
 function renderRecommendationInsightCard(pi){
   var h = '<div class="card mb16">';
-  h += '<div><b>Recommendation Use</b></div>';
+  h += '<div class="card-section-heading">Recommendation Use</div>';
   var rq = (pi.recommendationQuality || {});
   h += '<div>Total accepted: '+(rq.totalAccepted || 0)+'</div>';
   var focusedTechniqueLabel = prettyFocusedTechniqueInsight(rq.focusedTechnique);
   if(focusedTechniqueLabel){
-    h += '<div style="margin-top:8px;color:#8fd5c4"><b>Focused Technique</b></div>';
+    h += '<div class="card-micro-heading" style="margin-top:8px;color:#8fd5c4">Focused Technique</div>';
     h += '<div>' + escHTML(focusedTechniqueLabel) + '</div>';
   }
   h += '</div>';
@@ -101,7 +103,7 @@ function prettyFocusedTechniqueInsight(insight){
 
 function renderCareerInsightCard(pi){
   var h = '<div class="card mb16">';
-  h += '<div><b>Career Progress</b></div>';
+  h += '<div class="card-section-heading">Career Progress</div>';
   var c = pi.careerTrend || {};
   var averageStars = typeof c.averageStars === "number" ? c.averageStars.toFixed(2) : (c.averageStars || 0);
   h += '<div>Cleared songs: '+(c.clearedSongs || 0)+'</div>';

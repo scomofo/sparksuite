@@ -54,6 +54,23 @@
 
     getExercises: function(skillOrLessonId) {
       var lib = window.SparkVocalsExercises || {};
+      var seen;
+      var out;
+      var key;
+      var i;
+      if (!skillOrLessonId) {
+        seen = {};
+        out = [];
+        for (key in lib) {
+          if (!Object.prototype.hasOwnProperty.call(lib, key)) continue;
+          for (i = 0; i < lib[key].length; i++) {
+            if (seen[lib[key][i].id]) continue;
+            seen[lib[key][i].id] = true;
+            out.push(lib[key][i]);
+          }
+        }
+        return out;
+      }
       return lib[skillOrLessonId] || [];
     },
 

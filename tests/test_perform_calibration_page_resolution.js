@@ -60,13 +60,70 @@ test("performCalibrationPage ignores malformed cached calibration state", functi
   assert.strictEqual(view.globalOffsetMs, 0);
   assert.strictEqual(view.midiOffsetMs, 0);
   assert.strictEqual(view.micOffsetMs, 0);
-  assert.ok(html.indexOf("Global Offset: 0 ms") >= 0);
-  assert.ok(html.indexOf("MIDI Offset: 0 ms") >= 0);
-  assert.ok(html.indexOf("Mic Offset: 0 ms") >= 0);
-  assert.ok(html.indexOf("Captured Hits:</b> 0") >= 0);
-  assert.ok(html.indexOf("Suggested Offset: 0 ms") >= 0);
+  assert.ok(html.indexOf('<span class="metric-label">Global Offset:</span> <span class="metric-value" style="font-size:13px">0 ms</span>') >= 0);
+  assert.ok(html.indexOf('<span class="metric-label">MIDI Offset:</span> <span class="metric-value" style="font-size:13px">0 ms</span>') >= 0);
+  assert.ok(html.indexOf('<span class="metric-label">Mic Offset:</span> <span class="metric-value" style="font-size:13px">0 ms</span>') >= 0);
+  assert.ok(html.indexOf('<span class="metric-label">Captured Hits:</span> <span class="metric-value">0</span>') >= 0);
+  assert.ok(html.indexOf('<span class="metric-label">Suggested Offset:</span> <span class="metric-value" style="font-size:13px">0 ms</span>') >= 0);
   assert.ok(html.indexOf(">0</div>") >= 0);
   assert.ok(html.indexOf("NaN") === -1);
+});
+
+test("performCalibrationPage can resolve sparkCore from the global binding", function() {
+  global.window = {};
+  global.S.performCalibrationSource = "undefined";
+  global.S.performCalibrationMode = false;
+  global.S.performTimingOffsetMs = "NaN";
+  global.S.performMidiOffsetMs = "NaN";
+  global.S.performMicOffsetMs = "NaN";
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          performanceCalibrationSource: "mic",
+          performanceCalibrationMode: true,
+          performanceTimingOffsetMs: 24,
+          performanceMidiOffsetMs: 12,
+          performanceMicOffsetMs: 36
+        }
+      };
+    }
+  };
+  global.computeCalibrationOffsetMs = function() { return 18; };
+  global.getCalibrationBeatIndex = function() { return 3; };
+
+  global.eval(loadJS("js/pages/perform_calibration.js"));
+
+  var html = performCalibrationPage();
+  var view = getPerformanceCalibrationView();
+  assert.strictEqual(view.source, "mic");
+  assert.strictEqual(view.mode, true);
+  assert.strictEqual(view.globalOffsetMs, 24);
+  assert.strictEqual(view.midiOffsetMs, 12);
+  assert.strictEqual(view.micOffsetMs, 36);
+  assert.ok(html.indexOf('<span class="metric-label">Global Offset:</span> <span class="metric-value" style="font-size:13px">24 ms</span>') >= 0);
+  assert.ok(html.indexOf('<span class="metric-label">MIDI Offset:</span> <span class="metric-value" style="font-size:13px">12 ms</span>') >= 0);
+  assert.ok(html.indexOf('<span class="metric-label">Mic Offset:</span> <span class="metric-value" style="font-size:13px">36 ms</span>') >= 0);
+  assert.ok(html.indexOf(">3</div>") >= 0);
+  assert.ok(html.indexOf('<span class="metric-label">Suggested Offset:</span> <span class="metric-value" style="font-size:13px">18 ms</span>') >= 0);
+});
+
+test("perform page calibration controls route through actions", function() {
+  var source = loadJS("js/pages/perform.js");
+  assert.ok(source.indexOf('onclick="act(\\\'performCalibrationTap\\\')"') >= 0);
+  assert.ok(source.indexOf('onclick="act(\\\'performCalibrationCancel\\\')"') >= 0);
+});
+
+test("performCalibrationPage uses shared visual contract classes", function() {
+  var html = performCalibrationPage();
+  var source = loadJS("js/pages/perform_calibration.js");
+
+  assert.strictEqual(html.indexOf("<b>"), -1);
+  assert.strictEqual(source.indexOf("<b>"), -1);
+  assert.ok(html.indexOf('class="card-section-heading mb12"') >= 0);
+  assert.ok(html.indexOf('class="metric-label"') >= 0);
+  assert.ok(html.indexOf('class="metric-value"') >= 0);
+  assert.ok(html.indexOf('class="action-row"') >= 0);
 });
 
 if (process.exitCode) process.exit(process.exitCode);

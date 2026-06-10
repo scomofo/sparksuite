@@ -1,5 +1,19 @@
 # Dockable Filterable Overlay Handoff
 
+## Status
+
+Implemented. `js/dev/dev_panel.js` now provides the unified gated dev surface, and `index.html` loads it with the validator, highlighter, overlay, and reload client before `app.js`.
+
+The panel includes:
+
+- Status, Issues, and Reload tabs
+- left/right docking persisted in `spark_dev_dock_position`
+- collapsed badge state persisted in `spark_dev_panel_open`
+- issue type/severity filters persisted in `spark_dev_filter_type` and `spark_dev_filter_severity`
+- click-to-navigate issue rows using structured validator nav hints
+
+The older overlay and curriculum issue nav remain in place for compatibility, but the unified panel hides their DOM when active.
+
 ## Goal
 
 Upgrade dev overlay and error navigation into a single dockable,

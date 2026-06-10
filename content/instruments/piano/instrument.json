@@ -1,0 +1,20 @@
+{
+  "id": "piano",
+  "name": "Piano",
+  "version": 1,
+  "tuning": {
+    "strings": [],
+    "stringCount": 0,
+    "type": "keyboard"
+  },
+  "capabilities": {
+    "stringCount": 0,
+    "supportsChords": true,
+    "supportsScales": true,
+    "supportsStrumming": false,
+    "supportsFingerpicking": false,
+    "supportsMelody": true,
+    "preferredRenderer": "keyboard-roll",
+    "inputModes": ["keyboard", "midi"]
+  }
+}

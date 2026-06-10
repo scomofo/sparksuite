@@ -3,305 +3,985 @@
     "id": "wonderful_tonight",
     "title": "Wonderful Tonight",
     "artist": "Eric Clapton",
+    "spotifyTrackUri": "spotify:track:6zC0mpGYwbNTpk9SKwh08f",
     "chartId": "wonderful_tonight_chords",
-    "midi": "content/songs/midi/wonderful_tonight.mid"
+    "midi": "content/songs/midi/wonderful_tonight.mid",
+    "familyId": "wonderful_tonight",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "knockin_on_heavens_door",
     "title": "Knockin' on Heaven's Door",
     "artist": "Bob Dylan",
+    "spotifyTrackUri": "spotify:track:0DIl8igaw4Zo9smXH9IEuL",
     "chartId": "knockin_on_heavens_door_chords",
-    "midi": "content/songs/midi/knockin_on_heavens_door.mid"
+    "midi": "content/songs/midi/knockin_on_heavens_door.mid",
+    "familyId": "knockin_on_heavens_door",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "three_little_birds",
     "title": "Three Little Birds",
     "artist": "Bob Marley",
+    "spotifyTrackUri": "spotify:track:4VkU4kB67NwGidDHQNsvlM",
     "chartId": "three_little_birds_chords",
-    "midi": "content/songs/midi/three_little_birds.mid"
+    "midi": "content/songs/midi/three_little_birds.mid",
+    "familyId": "three_little_birds",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "la_bamba",
     "title": "La Bamba",
     "artist": "Ritchie Valens",
+    "spotifyTrackUri": "spotify:track:4JOfxW1YJhYgC6npqhccNe",
     "chartId": "la_bamba_chords",
-    "midi": "content/songs/midi/la_bamba.mid"
+    "midi": "content/songs/midi/la_bamba.mid",
+    "familyId": "la_bamba",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "hotel_california",
     "title": "Hotel California",
     "artist": "Eagles",
+    "spotifyTrackUri": "spotify:track:4GkOfUKUqDDgoeiov8Uqyi",
     "chartId": "hotel_california_chords",
-    "midi": "content/songs/midi/hotel_california.mid"
+    "midi": "content/songs/midi/hotel_california.mid",
+    "familyId": "hotel_california",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "horse_with_no_name",
+    "title": "Horse With No Name",
+    "artist": "America",
+    "chartId": "horse_with_no_name_chords",
+    "familyId": "horse_with_no_name",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords",
+    "spotifyTrackUri": "spotify:track:55SkUa0ZpwWz9p4LMICXMh"
   },
   {
     "id": "have_you_ever_seen_the_rain",
     "title": "Have You Ever Seen the Rain",
     "artist": "CCR",
+    "spotifyTrackUri": "spotify:track:0yDVco6hLy1o9NklCle3jT",
     "chartId": "have_you_ever_seen_the_rain_chords",
-    "midi": "content/songs/midi/have_you_ever_seen_the_rain.mid"
+    "midi": "content/songs/midi/have_you_ever_seen_the_rain.mid",
+    "familyId": "have_you_ever_seen_the_rain",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "brown_eyed_girl",
     "title": "Brown Eyed Girl",
     "artist": "Van Morrison",
+    "spotifyTrackUri": "spotify:track:7oR7NOHGNoZzOvPHSkiMIW",
     "chartId": "brown_eyed_girl_chords",
-    "midi": "content/songs/midi/brown_eyed_girl.mid"
+    "midi": "content/songs/midi/brown_eyed_girl.mid",
+    "familyId": "brown_eyed_girl",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "bad_moon_rising",
     "title": "Bad Moon Rising",
     "artist": "CCR",
+    "spotifyTrackUri": "spotify:track:2bMlSOpa1WVMQZT9zWYUZc",
     "chartId": "bad_moon_rising_chords",
-    "midi": "content/songs/midi/bad_moon_rising.mid"
+    "midi": "content/songs/midi/bad_moon_rising.mid",
+    "familyId": "bad_moon_rising",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "achy_breaky_heart",
     "title": "Achy Breaky Heart",
     "artist": "Billy Ray Cyrus",
     "chartId": "achy_breaky_heart_chords",
-    "midi": "content/songs/midi/achy_breaky_heart.mid"
+    "midi": "content/songs/midi/achy_breaky_heart.mid",
+    "familyId": "achy_breaky_heart",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "jambalaya",
     "title": "Jambalaya",
     "artist": "Hank Williams",
     "chartId": "jambalaya_chords",
-    "midi": "content/songs/midi/jambalaya.mid"
+    "midi": "content/songs/midi/jambalaya.mid",
+    "familyId": "jambalaya",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "coconut",
+    "title": "Coconut",
+    "artist": "Harry Nilsson",
+    "chartId": "coconut_chords",
+    "familyId": "coconut",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "stand_by_me",
     "title": "Stand By Me",
     "artist": "Ben E. King",
+    "spotifyTrackUri": "spotify:track:2XqTTDg835sjCyyFEvhYyr",
     "chartId": "stand_by_me_chords",
-    "midi": "content/songs/midi/stand_by_me.mid"
+    "midi": "content/songs/midi/stand_by_me.mid",
+    "familyId": "stand_by_me",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "love_me_do",
     "title": "Love Me Do",
     "artist": "The Beatles",
+    "spotifyTrackUri": "spotify:track:3VbGCXWRiouAq8VyMYN2MI",
     "chartId": "love_me_do_chords",
-    "midi": "content/songs/midi/love_me_do.mid"
+    "midi": "content/songs/midi/love_me_do.mid",
+    "familyId": "love_me_do",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "wish_you_were_here",
     "title": "Wish You Were Here",
     "artist": "Pink Floyd",
+    "spotifyTrackUri": "spotify:track:6iMjntVYkchLBJcqsiSNYZ",
     "chartId": "wish_you_were_here_chords",
-    "midi": "content/songs/midi/wish_you_were_here.mid"
+    "midi": "content/songs/midi/wish_you_were_here.mid",
+    "familyId": "wish_you_were_here",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "riptide",
+    "title": "Riptide",
+    "artist": "Vance Joy",
+    "chartId": "riptide_chords",
+    "familyId": "riptide",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords",
+    "spotifyTrackUri": "spotify:track:58kfIS8Q89gnj6O96QNQ4y"
+  },
+  {
+    "id": "leaving_on_a_jet_plane",
+    "title": "Leaving on a Jet Plane",
+    "artist": "John Denver",
+    "chartId": "leaving_on_a_jet_plane_chords",
+    "familyId": "leaving_on_a_jet_plane",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "hey_soul_sister",
+    "title": "Hey Soul Sister",
+    "artist": "Train",
+    "chartId": "hey_soul_sister_chords",
+    "familyId": "hey_soul_sister",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords",
+    "spotifyTrackUri": "spotify:track:4HlFJV71xXKIGcU3kRyttv"
   },
   {
     "id": "let_it_be",
     "title": "Let It Be",
     "artist": "The Beatles",
+    "spotifyTrackUri": "spotify:track:2IEWy03b7dy4JlccWSTWjA",
     "chartId": "let_it_be_chords",
-    "midi": "content/songs/midi/let_it_be.mid"
+    "midi": "content/songs/midi/let_it_be.mid",
+    "familyId": "let_it_be",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "get_the_party_started",
     "title": "Get the Party Started",
     "artist": "Pink",
     "chartId": "get_the_party_started_chords",
-    "midi": "content/songs/midi/get_the_party_started.mid"
+    "midi": "content/songs/midi/get_the_party_started.mid",
+    "familyId": "get_the_party_started",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "do_i_wanna_know",
+    "title": "Do I Wanna Know",
+    "artist": "Arctic Monkeys",
+    "chartId": "do_i_wanna_know_chords",
+    "familyId": "do_i_wanna_know",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "run_through_the_jungle",
     "title": "Run Through the Jungle",
     "artist": "CCR",
     "chartId": "run_through_the_jungle_chords",
-    "midi": "content/songs/midi/run_through_the_jungle.mid"
+    "midi": "content/songs/midi/run_through_the_jungle.mid",
+    "familyId": "run_through_the_jungle",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "fever",
+    "title": "Fever",
+    "artist": "Peggy Lee",
+    "chartId": "fever_chords",
+    "familyId": "fever",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "smokestack_lightning",
+    "title": "Smokestack Lightning",
+    "artist": "Howlin' Wolf",
+    "chartId": "smokestack_lightning_chords",
+    "familyId": "smokestack_lightning",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "mannish_boy",
+    "title": "Mannish Boy",
+    "artist": "Muddy Waters",
+    "chartId": "mannish_boy_chords",
+    "familyId": "mannish_boy",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "tomorrow_never_knows",
     "title": "Tomorrow Never Knows",
     "artist": "The Beatles",
     "chartId": "tomorrow_never_knows_chords",
-    "midi": "content/songs/midi/tomorrow_never_knows.mid"
+    "midi": "content/songs/midi/tomorrow_never_knows.mid",
+    "familyId": "tomorrow_never_knows",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "tears_in_heaven",
     "title": "Tears in Heaven",
     "artist": "Eric Clapton",
+    "spotifyTrackUri": "spotify:track:4AG8RrvbjtDNdR6v4zfCv3",
     "chartId": "tears_in_heaven_chords",
-    "midi": "content/songs/midi/tears_in_heaven.mid"
+    "midi": "content/songs/midi/tears_in_heaven.mid",
+    "familyId": "tears_in_heaven",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "hallelujah",
+    "title": "Hallelujah",
+    "artist": "Leonard Cohen",
+    "chartId": "hallelujah_chords",
+    "familyId": "hallelujah",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords",
+    "spotifyTrackUri": "spotify:track:5UCeQRRZOPwaCiUVsMRBax"
   },
   {
     "id": "creep",
     "title": "Creep",
     "artist": "Radiohead",
+    "spotifyTrackUri": "spotify:track:3HfB5hBU0dmBt8T0iCmH42",
     "chartId": "creep_chords",
-    "midi": "content/songs/midi/creep.mid"
+    "midi": "content/songs/midi/creep.mid",
+    "familyId": "creep",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "eleanor_rigby",
     "title": "Eleanor Rigby",
     "artist": "The Beatles",
     "chartId": "eleanor_rigby_chords",
-    "midi": "content/songs/midi/eleanor_rigby.mid"
+    "midi": "content/songs/midi/eleanor_rigby.mid",
+    "familyId": "eleanor_rigby",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "boom_boom",
     "title": "Boom Boom",
     "artist": "John Lee Hooker",
     "chartId": "boom_boom_chords",
-    "midi": "content/songs/midi/boom_boom.mid"
+    "midi": "content/songs/midi/boom_boom.mid",
+    "familyId": "boom_boom",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "the_beat_goes_on",
+    "title": "The Beat Goes On",
+    "artist": "Sonny & Cher",
+    "chartId": "the_beat_goes_on_chords",
+    "familyId": "the_beat_goes_on",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "peter_gunn",
     "title": "Peter Gunn",
     "artist": "Henry Mancini",
     "chartId": "peter_gunn_chords",
-    "midi": "content/songs/midi/peter_gunn.mid"
+    "midi": "content/songs/midi/peter_gunn.mid",
+    "familyId": "peter_gunn",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "royals",
     "title": "Royals",
     "artist": "Lorde",
     "chartId": "royals_chords",
-    "midi": "content/songs/midi/royals.mid"
+    "midi": "content/songs/midi/royals.mid",
+    "familyId": "royals",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "ill_take_you_there",
+    "title": "I'll Take You There",
+    "artist": "The Staple Singers",
+    "chartId": "ill_take_you_there_chords",
+    "familyId": "ill_take_you_there",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "whole_lotta_love",
     "title": "Whole Lotta Love",
     "artist": "Led Zeppelin",
     "chartId": "whole_lotta_love_chords",
-    "midi": "content/songs/midi/whole_lotta_love.mid"
+    "midi": "content/songs/midi/whole_lotta_love.mid",
+    "familyId": "whole_lotta_love",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "shakedown_street",
+    "title": "Shakedown Street",
+    "artist": "Grateful Dead",
+    "chartId": "shakedown_street_chords",
+    "familyId": "shakedown_street",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "what_i_got",
     "title": "What I Got",
     "artist": "Sublime",
     "chartId": "what_i_got_chords",
-    "midi": "content/songs/midi/what_i_got.mid"
+    "midi": "content/songs/midi/what_i_got.mid",
+    "familyId": "what_i_got",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "music",
     "title": "Music",
     "artist": "Madonna",
     "chartId": "music_chords",
-    "midi": "content/songs/midi/music.mid"
+    "midi": "content/songs/midi/music.mid",
+    "familyId": "music",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "get_up_stand_up",
     "title": "Get Up Stand Up",
     "artist": "Bob Marley",
     "chartId": "get_up_stand_up_chords",
-    "midi": "content/songs/midi/get_up_stand_up.mid"
+    "midi": "content/songs/midi/get_up_stand_up.mid",
+    "familyId": "get_up_stand_up",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "chain_of_fools",
     "title": "Chain of Fools",
     "artist": "Aretha Franklin",
     "chartId": "chain_of_fools_chords",
-    "midi": "content/songs/midi/chain_of_fools.mid"
+    "midi": "content/songs/midi/chain_of_fools.mid",
+    "familyId": "chain_of_fools",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "moves_like_jagger",
     "title": "Moves Like Jagger",
     "artist": "Maroon 5",
     "chartId": "moves_like_jagger_chords",
-    "midi": "content/songs/midi/moves_like_jagger.mid"
+    "midi": "content/songs/midi/moves_like_jagger.mid",
+    "familyId": "moves_like_jagger",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "jump_into_the_fire",
+    "title": "Jump into the Fire",
+    "artist": "Harry Nilsson",
+    "chartId": "jump_into_the_fire_chords",
+    "familyId": "jump_into_the_fire",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "its_all_good",
+    "title": "Its All Good",
+    "artist": "Bob Dylan",
+    "chartId": "its_all_good_chords",
+    "familyId": "its_all_good",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "who_is_he",
+    "title": "Who is He",
+    "artist": "Bill Withers",
+    "chartId": "who_is_he_chords",
+    "familyId": "who_is_he",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "within_you_without_you",
+    "title": "Within You Without You",
+    "artist": "The Beatles",
+    "chartId": "within_you_without_you_chords",
+    "familyId": "within_you_without_you",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "dreams",
+    "title": "Dreams",
+    "artist": "Fleetwood Mac",
+    "chartId": "dreams_chords",
+    "familyId": "dreams",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords",
+    "spotifyTrackUri": "spotify:track:4CC9PdEdYWy754Bs3Zpetu"
+  },
+  {
+    "id": "row_row_row_your_boat",
+    "title": "Row Row Row Your Boat",
+    "artist": "Traditional",
+    "familyId": "row_row_row_your_boat"
+  },
+  {
+    "id": "twinkle_twinkle",
+    "title": "Twinkle Twinkle",
+    "artist": "Traditional",
+    "familyId": "twinkle_twinkle"
+  },
+  {
+    "id": "happy_birthday",
+    "title": "Happy Birthday",
+    "artist": "Traditional",
+    "familyId": "happy_birthday"
+  },
+  {
+    "id": "all_of_me",
+    "title": "All of Me",
+    "artist": "John Legend",
+    "familyId": "all_of_me",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords",
+    "spotifyTrackUri": "spotify:track:4pYhOCTjet9VnhD5zFZBrP"
+  },
+  {
+    "id": "autumn_leaves",
+    "title": "Autumn Leaves",
+    "artist": "Jazz Standard",
+    "familyId": "autumn_leaves",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "piano_man",
+    "title": "Piano Man",
+    "artist": "Billy Joel",
+    "familyId": "piano_man",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords",
+    "spotifyTrackUri": "spotify:track:1v6v9y8E1aY1Kw2cDkVLBU"
+  },
+  {
+    "id": "wonderwall",
+    "title": "Wonderwall",
+    "artist": "Oasis",
+    "familyId": "wonderwall",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords",
+    "spotifyTrackUri": "spotify:track:2CT3r93YuSHtm57mjxvjhH"
+  },
+  {
+    "id": "country_roads",
+    "title": "Country Roads",
+    "artist": "John Denver",
+    "familyId": "country_roads",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords",
+    "spotifyTrackUri": "spotify:track:4KcU0M7ZuKV05v3aUCZNtx"
+  },
+  {
+    "id": "perfect",
+    "title": "Perfect",
+    "artist": "Ed Sheeran",
+    "familyId": "perfect",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords",
+    "spotifyTrackUri": "spotify:track:02SNs059h9laDjiIBqTVQC"
+  },
+  {
+    "id": "someone_like_you",
+    "title": "Someone Like You",
+    "artist": "Adele",
+    "familyId": "someone_like_you",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords",
+    "spotifyTrackUri": "spotify:track:4etypRtRn8IgsxZu6BhRS6"
+  },
+  {
+    "id": "lean_on_me",
+    "title": "Lean on Me",
+    "artist": "Bill Withers",
+    "familyId": "lean_on_me",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords",
+    "spotifyTrackUri": "spotify:track:3M8FzayQWtkvOhqMn2V4T2"
+  },
+  {
+    "id": "cant_help_falling_in_love",
+    "title": "Can't Help Falling in Love",
+    "artist": "Elvis Presley",
+    "familyId": "cant_help_falling_in_love",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords",
+    "spotifyTrackUri": "spotify:track:39MjYdcq5leHFqRuZPjHRn"
+  },
+  {
+    "id": "viva_la_vida",
+    "title": "Viva la Vida",
+    "artist": "Coldplay",
+    "familyId": "viva_la_vida",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords",
+    "spotifyTrackUri": "spotify:track:5W8dV1INuOdMPzUlTq0f2D"
+  },
+  {
+    "id": "stay_with_me",
+    "title": "Stay With Me",
+    "artist": "Sam Smith",
+    "familyId": "stay_with_me",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "skinny_love",
+    "title": "Skinny Love",
+    "artist": "Bon Iver",
+    "familyId": "skinny_love",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "imagine",
+    "title": "Imagine",
+    "artist": "John Lennon",
+    "familyId": "imagine",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "fly_me_to_the_moon",
+    "title": "Fly Me to the Moon",
+    "artist": "Frank Sinatra",
+    "familyId": "fly_me_to_the_moon",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "clocks",
+    "title": "Clocks",
+    "artist": "Coldplay",
+    "familyId": "clocks",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "bohemian_rhapsody",
+    "title": "Bohemian Rhapsody",
+    "artist": "Queen",
+    "familyId": "bohemian_rhapsody",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "moonlight_sonata",
+    "title": "Moonlight Sonata",
+    "artist": "Beethoven",
+    "familyId": "moonlight_sonata",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "prelude_in_c",
+    "title": "Prelude in C",
+    "artist": "J.S. Bach",
+    "familyId": "prelude_in_c",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "river_flows_in_you",
+    "title": "River Flows in You",
+    "artist": "Yiruma",
+    "familyId": "river_flows_in_you",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "twelve_bar_blues",
+    "title": "12-Bar Blues",
+    "artist": "Traditional",
+    "familyId": "twelve_bar_blues",
+    "defaultInstrument": "piano",
+    "highwaySource": "generated",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "island_loop",
+    "title": "Island Loop",
+    "artist": "SparkSuite",
+    "chartId": "ukulele_island_package",
+    "familyId": "island_loop",
+    "defaultInstrument": "ukulele",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "sunset_switches",
+    "title": "Sunset Switches",
+    "artist": "SparkSuite",
+    "chartId": "ukulele_switch_flow_package",
+    "familyId": "sunset_switches",
+    "defaultInstrument": "ukulele",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "palm_arpeggio",
+    "title": "Palm Arpeggio",
+    "artist": "SparkSuite",
+    "familyId": "palm_arpeggio"
+  },
+  {
+    "id": "moonlit_picking",
+    "title": "Moonlit Picking",
+    "artist": "SparkSuite",
+    "chartId": "ukulele_moonlit_picking_package",
+    "familyId": "moonlit_picking",
+    "defaultInstrument": "ukulele",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
+  },
+  {
+    "id": "somewhere_over_the_rainbow",
+    "title": "Somewhere Over the Rainbow",
+    "artist": "IZ",
+    "familyId": "somewhere_over_the_rainbow",
+    "spotifyTrackUri": "spotify:track:3oQomOPRNQ5NVFUmLJHbAV"
+  },
+  {
+    "id": "im_yours",
+    "title": "I'm Yours",
+    "artist": "Jason Mraz",
+    "familyId": "im_yours",
+    "spotifyTrackUri": "spotify:track:36j4mlX0IWUtWlWqiwvWXI"
+  },
+  {
+    "id": "count_on_me",
+    "title": "Count on Me",
+    "artist": "Bruno Mars",
+    "familyId": "count_on_me",
+    "spotifyTrackUri": "spotify:track:5F2lAgzCRoc2nTI6LG4dbD"
+  },
+  {
+    "id": "lava",
+    "title": "Lava",
+    "artist": "Disney",
+    "familyId": "lava"
   },
   {
     "id": "come_together",
     "title": "Come Together",
     "artist": "The Beatles",
-    "midi": "content/songs/midi/come_together.mid"
+    "chartId": "come_together_bass_chords",
+    "midi": "content/songs/midi/come_together.mid",
+    "familyId": "come_together",
+    "defaultInstrument": "bass",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "with_or_without_you",
     "title": "With or Without You",
     "artist": "U2",
-    "midi": "content/songs/midi/with_or_without_you.mid"
+    "spotifyTrackUri": "spotify:track:6ADSaE87h8Y3lccZlBJdXH",
+    "chartId": "with_or_without_you_chords",
+    "midi": "content/songs/midi/with_or_without_you.mid",
+    "familyId": "with_or_without_you",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "billie_jean",
     "title": "Billie Jean",
     "artist": "Michael Jackson",
-    "midi": "content/songs/midi/billie_jean.mid"
+    "spotifyTrackUri": "spotify:track:7J1uxwnxfQLu4APicE5Rnj",
+    "chartId": "billie_jean_bass_chords",
+    "midi": "content/songs/midi/billie_jean.mid",
+    "familyId": "billie_jean",
+    "defaultInstrument": "bass",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "sunshine_of_your_love",
     "title": "Sunshine of Your Love",
     "artist": "Cream",
-    "midi": "content/songs/midi/sunshine_of_your_love.mid"
+    "chartId": "sunshine_of_your_love_bass_chords",
+    "midi": "content/songs/midi/sunshine_of_your_love.mid",
+    "familyId": "sunshine_of_your_love",
+    "defaultInstrument": "bass",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "another_one_bites_the_dust",
     "title": "Another One Bites the Dust",
     "artist": "Queen",
-    "midi": "content/songs/midi/another_one_bites_the_dust.mid"
+    "spotifyTrackUri": "spotify:track:2k1yPYf9WGA4LiqcLVwtzn",
+    "chartId": "another_one_bites_the_dust_bass_chords",
+    "midi": "content/songs/midi/another_one_bites_the_dust.mid",
+    "familyId": "another_one_bites_the_dust",
+    "defaultInstrument": "bass",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "seven_nation_army",
     "title": "Seven Nation Army",
     "artist": "The White Stripes",
-    "midi": "content/songs/midi/seven_nation_army.mid"
+    "spotifyTrackUri": "spotify:track:3dPQuX8Gs42Y7b454ybpMR",
+    "chartId": "seven_nation_army_bass_chords",
+    "midi": "content/songs/midi/seven_nation_army.mid",
+    "familyId": "seven_nation_army",
+    "defaultInstrument": "bass",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "under_pressure",
     "title": "Under Pressure",
     "artist": "Queen & David Bowie",
-    "midi": "content/songs/midi/under_pressure.mid"
+    "chartId": "under_pressure_bass_chords",
+    "midi": "content/songs/midi/under_pressure.mid",
+    "familyId": "under_pressure",
+    "defaultInstrument": "bass",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "longview",
     "title": "Longview",
     "artist": "Green Day",
-    "midi": "content/songs/midi/longview.mid"
+    "chartId": "longview_bass_chords",
+    "midi": "content/songs/midi/longview.mid",
+    "familyId": "longview",
+    "defaultInstrument": "bass",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "zombie",
     "title": "Zombie",
     "artist": "The Cranberries",
-    "midi": "content/songs/midi/zombie.mid"
+    "spotifyTrackUri": "spotify:track:2IZZqH4K02UIYg5EohpNHF",
+    "chartId": "zombie_chords",
+    "midi": "content/songs/midi/zombie.mid",
+    "familyId": "zombie",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "pumped_up_kicks",
     "title": "Pumped Up Kicks",
     "artist": "Foster the People",
-    "midi": "content/songs/midi/pumped_up_kicks.mid"
+    "chartId": "pumped_up_kicks_chords",
+    "midi": "content/songs/midi/pumped_up_kicks.mid",
+    "familyId": "pumped_up_kicks",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "feel_good_inc",
     "title": "Feel Good Inc",
     "artist": "Gorillaz",
-    "midi": "content/songs/midi/feel_good_inc.mid"
+    "spotifyTrackUri": "spotify:track:0d28khcov6AiegSCpG5TuT",
+    "chartId": "feel_good_inc_bass_chords",
+    "midi": "content/songs/midi/feel_good_inc.mid",
+    "familyId": "feel_good_inc",
+    "defaultInstrument": "bass",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "higher_ground",
     "title": "Higher Ground",
     "artist": "Stevie Wonder",
-    "midi": "content/songs/midi/higher_ground.mid"
+    "spotifyTrackUri": "spotify:track:0dMd4rilfd6gPbXaLpNYhu",
+    "chartId": "higher_ground_bass_chords",
+    "midi": "content/songs/midi/higher_ground.mid",
+    "familyId": "higher_ground",
+    "defaultInstrument": "bass",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "come_as_you_are",
     "title": "Come As You Are",
     "artist": "Nirvana",
-    "midi": "content/songs/midi/come_as_you_are.mid"
+    "spotifyTrackUri": "spotify:track:4P5KoWXOxwuobLmHXLMobV",
+    "chartId": "come_as_you_are_bass_chords",
+    "midi": "content/songs/midi/come_as_you_are.mid",
+    "familyId": "come_as_you_are",
+    "defaultInstrument": "bass",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "hysteria",
     "title": "Hysteria",
     "artist": "Muse",
-    "midi": "content/songs/midi/hysteria.mid"
+    "chartId": "hysteria_bass_chords",
+    "midi": "content/songs/midi/hysteria.mid",
+    "familyId": "hysteria",
+    "defaultInstrument": "bass",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "money",
     "title": "Money",
     "artist": "Pink Floyd",
-    "midi": "content/songs/midi/money.mid"
+    "spotifyTrackUri": "spotify:track:0vFOzaXqZHahrZp6enQwQb",
+    "chartId": "money_bass_chords",
+    "midi": "content/songs/midi/money.mid",
+    "familyId": "money",
+    "defaultInstrument": "bass",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "smells_like_teen_spirit",
     "title": "Smells Like Teen Spirit",
     "artist": "Nirvana",
-    "midi": "content/songs/midi/smells_like_teen_spirit.mid"
+    "spotifyTrackUri": "spotify:track:27ewqhDTQmJPj1qGbA8Rmv",
+    "chartId": "smells_like_teen_spirit_chords",
+    "midi": "content/songs/midi/smells_like_teen_spirit.mid",
+    "familyId": "smells_like_teen_spirit",
+    "defaultInstrument": "guitar",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   },
   {
     "id": "sweet_child_o_mine",
     "title": "Sweet Child O' Mine",
     "artist": "Guns N' Roses",
-    "midi": "content/songs/midi/sweet_child_o_mine.mid"
+    "chartId": "sweet_child_o_mine_bass_chords",
+    "midi": "content/songs/midi/sweet_child_o_mine.mid",
+    "familyId": "sweet_child_o_mine",
+    "defaultInstrument": "bass",
+    "highwaySource": "chart",
+    "arrangementType": "chords"
   }
 ]

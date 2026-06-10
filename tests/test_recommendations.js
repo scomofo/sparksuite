@@ -28,6 +28,7 @@ function resetState() {
   global.escHTML = function(value) { return String(value); };
   global.S = {
     completedLessons: ["bass_level_1", "bass_level_2", "bass_level_3"],
+    curriculumV2CompletedSessions: {},
     mastery: { lessons: {} },
     performanceStats: {},
     practiceHistory: [],
@@ -42,6 +43,12 @@ function resetState() {
         movement: 0.53
       }
     }
+  };
+  global.recordRecommendationUse = function(recommendation) {
+    S.recommendationHistory.push(recommendation && recommendation.id ? recommendation.id : recommendation);
+  };
+  global.launchPracticeItem = function() {
+    return true;
   };
   global.saveState = function() {};
   global.getAverageMastery = function() { return 1; };
@@ -116,15 +123,27 @@ function resetState() {
       ];
     }
   };
+  global.SparkCurriculumV2LegacyAdapter = {
+    toLegacyLessons: function(instrumentType) {
+      if (instrumentType === "ukulele") {
+        return [
+          { id: "uke-d01", title: "First strum", skill: "open_strum" },
+          { id: "uke-d02", title: "Tuning the uke", skill: "tuning" }
+        ];
+      }
+      return [];
+    }
+  };
+
+  global.eval(loadJS("js/practice/selectors.js"));
+  global.eval(loadJS("js/recommend/candidates.js"));
+  global.eval(loadJS("js/recommend/rules.js"));
+  global.eval(loadJS("js/recommend/scoring.js"));
+  global.eval(loadJS("js/recommend/engine.js"));
+  global.eval(loadJS("js/recommend/ui.js"));
 }
 
 resetState();
-eval(loadJS("js/practice/selectors.js"));
-eval(loadJS("js/recommend/candidates.js"));
-eval(loadJS("js/recommend/rules.js"));
-eval(loadJS("js/recommend/scoring.js"));
-eval(loadJS("js/recommend/engine.js"));
-eval(loadJS("js/recommend/ui.js"));
 
 console.log("\n--- Recommendations ---");
 
@@ -216,6 +235,52 @@ test("generateRecommendations falls back to APP_NAME for non-guitar app shells",
   assert.strictEqual(requestedType, "bass");
 });
 
+test("collectRecommendationCandidates uses instrument curriculum maps when registry lessons are unavailable", function() {
+  global.getNextLessonFromCurriculum = function() { return null; };
+  global.getCurriculumItem = function() { return null; };
+  S.completedLessons = [];
+  S.curriculumV2CompletedSessions.bass = ["bass_level_1", "bass_level_2"];
+
+  var candidates = collectRecommendationCandidates("bass");
+  var curriculumCandidate = null;
+  for (var i = 0; i < candidates.length; i++) {
+    if (candidates[i].source === "curriculum") {
+      curriculumCandidate = candidates[i];
+      break;
+    }
+  }
+
+  assert.ok(curriculumCandidate);
+  assert.strictEqual(curriculumCandidate.id, "bass_level_3");
+  assert.strictEqual(curriculumCandidate.meta.lessonId, "bass_level_3");
+});
+
+test("collectRecommendationCandidates falls back to curriculum v2 by instrument type when the registry is thin", function() {
+  SparkInstruments.getActive = function() {
+    return { appId: "ukespark" };
+  };
+  SparkInstruments.getAll = function() {
+    return [{ id: "ukespark", appId: "ukespark", instrument: "ukulele" }];
+  };
+  global.getCurriculumItem = function() { return null; };
+  global.getNextLessonFromCurriculum = function() { return null; };
+  S.completedLessons = [];
+  S.curriculumV2CompletedSessions.ukulele = ["uke-d01"];
+
+  var candidates = collectRecommendationCandidates("ukulele");
+  var curriculumCandidate = null;
+  for (var i = 0; i < candidates.length; i++) {
+    if (candidates[i].source === "curriculum") {
+      curriculumCandidate = candidates[i];
+      break;
+    }
+  }
+
+  assert.ok(curriculumCandidate);
+  assert.strictEqual(curriculumCandidate.id, "uke-d02");
+  assert.strictEqual(curriculumCandidate.meta.lessonId, "uke-d02");
+});
+
 test("module-progress scoring increases when the weakest metric is lower", function() {
   var stronger = {
     id: "module_stronger",
@@ -267,6 +332,59 @@ test("recommendationsPage renders module-progress focus and weakest metric detai
 
   assert.ok(html.indexOf("Focus: walking") >= 0);
   assert.ok(html.indexOf("Weakest: timing 48%") >= 0);
+});
+
+test("recommendation UI can resolve sparkCore from the global binding", function() {
+  var launched = null;
+  global.window = {};
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          dashboardRecommendations: [{
+            id: "rec_core",
+            type: "bassline",
+            title: "Core Recommendation",
+            source: "module_progress",
+            reasons: ["Keep the groove steady."],
+            meta: {
+              recommendationFocus: "walking",
+              progressSummary: {
+                weakestMetric: "timing",
+                timing: 0.48
+              }
+            }
+          }]
+        }
+      };
+    },
+    launchDashboardRecommendation: function(id) {
+      return {
+        recommendation: {
+          id: id,
+          type: "bassline",
+          title: "Core Recommendation",
+          source: "module_progress",
+          meta: {}
+        }
+      };
+    }
+  };
+  global.launchPracticeItem = function(item) {
+    launched = item;
+    return true;
+  };
+
+  var html = recommendationsPage();
+  launchRecommendationById("rec_core");
+
+  assert.ok(html.indexOf("Core Recommendation") >= 0);
+  assert.ok(html.indexOf("Focus: walking") >= 0);
+  assert.ok(launched);
+  assert.strictEqual(launched.id, "rec_core");
+  assert.strictEqual(S.recommendationHistory.length, 1);
+  assert.strictEqual(S.recommendationHistory[0].id, "rec_core");
+  assert.strictEqual(S.recommendationHistory[0].type, "bassline");
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);

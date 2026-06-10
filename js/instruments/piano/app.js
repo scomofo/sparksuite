@@ -14,7 +14,7 @@ window.addHistory = function(t, d) { return addHistory(t, d); };
 window.recordTransition = function(a, b) { return recordTransition(a, b); };
 window.genQuiz = function() { return genQuiz(); };
 window.shuffleArray = function(arr) { return shuffleArray(arr); };
-window.startGuidedSession = function() { return startGuidedSession(); };
+window.startGuidedSession = function(requestedSession) { return startGuidedSession(requestedSession); };
 window.advanceSessionStep = function() { return advanceSessionStep(); };
 window.adaptBpm = function() { return adaptBpm(); };
 window.checkLevelUp = function() { return checkLevelUp(); };
@@ -172,7 +172,7 @@ var ifThenCard = window.ifThenCard;
 // getChordMatch aliased from PianoAudio above
 var fireMicro = window.fireMicro;
 var escHTML = window.escHTML;
-var saveState = window.saveState;
+var saveState = function(immediate) { return window.saveState(immediate); };
 var showToast = window.showToast || function() {};
 var checkPracticeDate = window.checkPracticeDate || function() {};
 var getRewardPhase = window.getRewardPhase || function() { return null; };
@@ -187,7 +187,7 @@ var chordNoteNames = window.chordNoteNames || function() { return []; };
 var getAvailableExercises = window.getAvailableExercises || function() { return []; };
 var getSessionExercise = window.getSessionExercise || function() { return null; };
 var getWarmUpExercise = window.getWarmUpExercise || function() { return null; };
-var render = window.render;
+var render = function() { return window.render(); };
 
 // ── Utility ──
 function shuffleArray(arr) {
@@ -479,10 +479,12 @@ function buildTick() {
 }
 
 // ── Guided session flow ──
-function startGuidedSession() {
+function startGuidedSession(requestedSession) {
+  var guidedSession = parseInt(requestedSession, 10);
+  if (isNaN(guidedSession) || guidedSession < 1) guidedSession = parseInt(S.currentSession, 10);
+  if (isNaN(guidedSession) || guidedSession < 1) guidedSession = 1;
+
   if (typeof window.openGuidedSessionRequest === "function") {
-    var guidedSession = parseInt(S.currentSession, 10);
-    if (isNaN(guidedSession) || guidedSession < 1) guidedSession = 1;
     var corePlan = window.openGuidedSessionRequest({
       sessionNum: guidedSession
     });
@@ -495,8 +497,6 @@ function startGuidedSession() {
       return;
     }
   } else if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
-    var guidedSession = parseInt(S.currentSession, 10);
-    if (isNaN(guidedSession) || guidedSession < 1) guidedSession = 1;
     var corePlan = window.sparkCore.startSession({
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
       sessionNum: guidedSession
@@ -511,18 +511,55 @@ function startGuidedSession() {
     }
   }
 
+  S.currentSession = guidedSession;
   var plan = getCurrentSessionPlan();
   if (!plan) { showToast("No more sessions!"); render(); return; }
 
   S.sessionPlan = plan;
   S.screen = SCR.SESSION;
   S.sessionStep = "spark";
+  S.guidedStopConfirm = false;
   S.newMovePhase = null;
   S.feedbackMessage = "";
   S.adaptiveBpm = plan.bpm;
   S.paused = false;
   S.fingerWarmUpDone = false;
 
+  checkPracticeDate();
+  playSound("start");
+  saveState();
+  render();
+}
+
+function getActivePianoGuidedView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  var view = core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+  return view &&
+    view.plan &&
+    view.plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION &&
+    view.runtimeState &&
+    view.runtimeState.activeScreen === "guided_session"
+    ? view
+    : null;
+}
+
+function resumeGuidedSession() {
+  var view = getActivePianoGuidedView();
+  var runtimeState = view && view.runtimeState ? view.runtimeState : {};
+  if (!view || !view.plan || !view.plan.context || !view.plan.context.guidedPlan) {
+    startGuidedSession();
+    return;
+  }
+  syncPianoGuidedPlanFromCore(view.plan);
+  if (runtimeState.guidedStep != null) {
+    S.sessionStep = runtimeState.guidedStep;
+    S.guidedStep = runtimeState.guidedStep;
+  }
+  if (runtimeState.guidedNewMovePhase !== undefined) S.newMovePhase = runtimeState.guidedNewMovePhase || null;
+  if (runtimeState.guidedPaused !== undefined) S.paused = !!runtimeState.guidedPaused;
+  if (runtimeState.transport && runtimeState.transport.status === "paused") S.paused = true;
   checkPracticeDate();
   playSound("start");
   saveState();
@@ -538,6 +575,10 @@ function syncPianoGuidedPlanFromCore(plan) {
   S.guidedSession = guidedSession;
   S.currentSession = guidedSession;
   S.sessionPlan = guidedPlan;
+  S._showroomOverride = null;
+  S._showroomLessonId = null;
+  S.launcherView = null;
+  S.guidedStopConfirm = false;
   S.screen = SCR.SESSION;
   S.sessionStep = "spark";
   S.guidedStep = "spark";
@@ -555,11 +596,22 @@ function syncPianoPerformanceSongFromCore(plan) {
   if (!performanceSong) return null;
 
   S.performSongData = performanceSong.songData || null;
-  S.performSongId = performanceSong.songId || normalizeSongId(performanceSong.songData);
+  S.performSongId = performanceSong.songId || pianoNormalizePerformanceSongId(performanceSong.songData);
   S.performArrangementType = performanceSong.arrangementType || S.performArrangementType || "block_chords";
   if (performanceSong.difficultyId) S.performDifficulty = performanceSong.difficultyId;
   S.screen = SCR.PERFORM_SONG;
   return performanceSong;
+}
+
+function pianoNormalizePerformanceSongId(song) {
+  var title = song && (song.title || song.name || song.id) ? String(song.title || song.name || song.id) : "";
+  if (typeof resolvePerformanceSongId === "function") {
+    return resolvePerformanceSongId(song, title);
+  }
+  if (typeof normalizeSongId === "function") {
+    return normalizeSongId(song);
+  }
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "piano_song";
 }
 
 function advanceSessionStep() {
@@ -670,28 +722,7 @@ function completeGuidedSession() {
   }
 
   if (plan) {
-    // Mark session complete
-    if (S.completedSessions.indexOf(plan.num) < 0) {
-      S.completedSessions.push(plan.num);
-    }
-    S.sessions++;
-    S.currentSession = Math.min(50, plan.num + 1);
-
-    // Progress chord
-    if (plan.newMove && plan.newMove.chord) {
-      var prog = (S.chordProg[plan.newMove.chord] || 0) + 15;
-      S.chordProg[plan.newMove.chord] = Math.min(100, prog);
-    }
-
-    addXP(50);
-    addHistory("guided_session", { session: plan.num, chord: plan.newMove ? plan.newMove.chord : null });
-
-    // Update LH level
-    var newLvl = CURRICULUM[Math.min(S.level, 8) - 1];
-    if (newLvl && newLvl.lhPattern) {
-      var patIdx = LH_PATTERNS.findIndex(function(p) { return p.id === newLvl.lhPattern; });
-      if (patIdx >= 0 && patIdx + 1 > S.lhLevel) S.lhLevel = patIdx + 1;
-    }
+    applyPianoLegacyGuidedCompletion(buildPianoLegacyGuidedCompletion(plan));
   }
 
   checkPracticeDate();
@@ -716,6 +747,49 @@ function completeGuidedSession() {
   S.newMovePhase = null;
   saveState();
   render();
+}
+
+function buildPianoLegacyGuidedCompletion(plan) {
+  var core = typeof window !== "undefined" && window.sparkCore ? window.sparkCore : null;
+  var engine = core && core.progressEngine ? core.progressEngine : null;
+  if (engine && typeof engine.buildLegacyGuidedSessionCompletion === "function") {
+    return engine.buildLegacyGuidedSessionCompletion(plan, {
+      curriculum: CURRICULUM,
+      lhPatterns: LH_PATTERNS,
+      level: S.level,
+      lhLevel: S.lhLevel
+    });
+  }
+  return {
+    completedSessionNums: [],
+    sessionsDelta: 0,
+    currentSession: null,
+    chordProgress: {},
+    xpAwarded: 0,
+    historyEntry: null,
+    lhLevel: null
+  };
+}
+
+function applyPianoLegacyGuidedCompletion(outcome) {
+  outcome = outcome || {};
+  if (!Array.isArray(S.completedSessions)) S.completedSessions = [];
+  if (!S.chordProg || typeof S.chordProg !== "object") S.chordProg = {};
+
+  var completed = Array.isArray(outcome.completedSessionNums) ? outcome.completedSessionNums : [];
+  for (var i = 0; i < completed.length; i++) {
+    if (S.completedSessions.indexOf(completed[i]) < 0) S.completedSessions.push(completed[i]);
+  }
+  S.sessions = (S.sessions || 0) + (outcome.sessionsDelta || 0);
+  if (outcome.currentSession != null) S.currentSession = outcome.currentSession;
+  if (outcome.chordProgress) {
+    for (var chordName in outcome.chordProgress) {
+      S.chordProg[chordName] = Math.min(100, (S.chordProg[chordName] || 0) + outcome.chordProgress[chordName]);
+    }
+  }
+  if (outcome.xpAwarded) addXP(outcome.xpAwarded);
+  if (outcome.historyEntry) addHistory(outcome.historyEntry.type, outcome.historyEntry.detail || {});
+  if (outcome.lhLevel != null) S.lhLevel = outcome.lhLevel;
 }
 
 function syncPianoGuidedCompletionFromCore(result, plan) {
@@ -749,12 +823,8 @@ function syncPianoGuidedCompletionFromCore(result, plan) {
     S.guidedSession = S.currentSession;
   }
 
-  if (plan) {
-    var newLvl = CURRICULUM[Math.min(S.level, 8) - 1];
-    if (newLvl && newLvl.lhPattern) {
-      var patIdx = LH_PATTERNS.findIndex(function(p) { return p.id === newLvl.lhPattern; });
-      if (patIdx >= 0 && patIdx + 1 > S.lhLevel) S.lhLevel = patIdx + 1;
-    }
+  if (guidedPatch && guidedPatch.lhLevel != null) {
+    S.lhLevel = guidedPatch.lhLevel;
   }
 }
 
@@ -876,11 +946,22 @@ function checkFingerBadges() {
 }
 
 // ── Action dispatcher ──
+function scrollPianoTopSoon() {
+  if (typeof window === "undefined" || typeof window.scrollTo !== "function") return;
+  if (typeof window.requestAnimationFrame === "function") {
+    window.requestAnimationFrame(function() { window.scrollTo(0, 0); });
+    return;
+  }
+  setTimeout(function() { window.scrollTo(0, 0); }, 0);
+}
+
 function act(action, param) {
   var _handled = true;
+  var _scrollTopAfterRender = false;
   switch (action) {
     case "tab":
       S.tab = param;
+      _scrollTopAfterRender = true;
       if (S.songPlaying) {
         S.songPlaying = false;
         if (T.song) { clearInterval(T.song); T.song = null; }
@@ -890,6 +971,18 @@ function act(action, param) {
         if (T.build) { clearInterval(T.build); T.build = null; }
         buildIdx = 0;
       }
+      break;
+
+    case "pianoGameTab":
+      S._gameTab = param;
+      break;
+
+    case "pianoSongTab":
+      S._songTab = param;
+      break;
+
+    case "pianoToolTab":
+      S._toolTab = param;
       break;
 
     case "toggle_dark":
@@ -983,8 +1076,20 @@ function act(action, param) {
       return; // startGuidedSession calls render
 
     // ── Guided sessions ──
+    case "practiceStartItem":
+      if(window.runSparkActionFamilies && window.runSparkActionFamilies(action, param)) return true;
+      if(typeof startPracticeItem==="function"){startPracticeItem(param);}
+      else if(typeof window.startPracticeItem==="function"){window.startPracticeItem(param);}
+      return;
+
     case "start_guided_session":
-      startGuidedSession();
+      if(window.runSparkActionFamilies && window.runSparkActionFamilies(action, param)) return true;
+      startGuidedSession(param);
+      return;
+
+    case "resume_guided_session":
+      if(window.runSparkActionFamilies && window.runSparkActionFamilies(action, param)) return true;
+      resumeGuidedSession();
       return;
 
     case "next_step":
@@ -1036,6 +1141,9 @@ function act(action, param) {
       S.timer = S.practiceLen;
       S.active = true;
       S.paused = false;
+      S.screen = SCR.SESSION;
+      S.sessionStep = null;
+      S.sessionPlan = null;
       checkPracticeDate();
       playSound("start");
       if (T.session) clearInterval(T.session);
@@ -1058,6 +1166,12 @@ function act(action, param) {
         S.active = false;
         if (S.detecting) stopDetection();
         stopMetronome();
+      }
+      break;
+
+    case "pianoConfirmStopSession":
+      if (typeof confirm !== "function" || confirm("End session early?")) {
+        act("stop_session");
       }
       break;
 
@@ -1419,6 +1533,7 @@ function act(action, param) {
       S.stemVolume = parseFloat(param); setStemVolume(S.stemVolume); break;
 
     // ── Practice Plan ──
+    case "quickStart":
     case "openPlan":
       if (typeof openPracticePlanScreenRequest === "function") {
         openPracticePlanScreenRequest();
@@ -1439,7 +1554,7 @@ function act(action, param) {
         if (typeof window.openPerformanceSongSelectionRequest === "function") {
           window.openPerformanceSongSelectionRequest({
             songIndex: idx,
-            songId: normalizeSongId(song),
+            songId: pianoNormalizePerformanceSongId(song),
             songTitle: song.title || null,
             arrangementType: "block_chords",
             difficultyId: S.performDifficulty || "normal"
@@ -1455,7 +1570,7 @@ function act(action, param) {
           var corePlan = window.sparkCore.startSession({
             flow: SparkSessionTypes.FLOW_PERFORMANCE_SONG,
             songIndex: idx,
-            songId: normalizeSongId(song),
+            songId: pianoNormalizePerformanceSongId(song),
             arrangementType: "block_chords",
             difficultyId: S.performDifficulty || "normal"
           });
@@ -1465,7 +1580,7 @@ function act(action, param) {
           }
         }
         S.performSongData = song;
-        S.performSongId = normalizeSongId(song);
+        S.performSongId = pianoNormalizePerformanceSongId(song);
         S.performArrangementType = "block_chords";
         S.screen = SCR.PERFORM_SONG;
       }
@@ -1542,6 +1657,7 @@ function act(action, param) {
       saveState();render();
       break;
     case "performStart": {
+      if(window.runSparkActionFamilies && window.runSparkActionFamilies("performStartFromSong", param)) return true;
       var chart = buildPerformanceChartFromSong(S.performSongData, S.performArrangementType);
       var startRequest = typeof window.startSelectedPerformanceSongRequest === "function"
         ? window.startSelectedPerformanceSongRequest({
@@ -1565,12 +1681,15 @@ function act(action, param) {
       return;
     }
     case "pausePerform":
+      if(window.runSparkActionFamilies && window.runSparkActionFamilies(action, param)) return true;
       pausePerformance();
       return;
     case "resumePerform":
+      if(window.runSparkActionFamilies && window.runSparkActionFamilies(action, param)) return true;
       resumePerformance();
       return;
     case "performRetry":
+      if(window.runSparkActionFamilies && window.runSparkActionFamilies(action, param)) return true;
       if(S.performSongData){
         var chart = buildPerformanceChartFromSong(S.performSongData, S.performArrangementType);
         var retryRequest = typeof window.getPerformanceRetryRequest === "function"
@@ -1593,6 +1712,7 @@ function act(action, param) {
       }
       return;
     case "stopPerform":
+      if(window.runSparkActionFamilies && window.runSparkActionFamilies(action, param)) return true;
       stopPerformance();
       if (typeof window.applyPerformanceNavigationRequest === "function") {
         window.applyPerformanceNavigationRequest("songs_home");
@@ -1764,6 +1884,12 @@ function act(action, param) {
       resetProgress();
       break;
 
+    case "pianoConfirmResetProgress":
+      if (typeof confirm !== "function" || confirm("Reset all progress?")) {
+        act("reset");
+      }
+      break;
+
     case "undo_reset":
       undoReset();
       break;
@@ -1878,9 +2004,21 @@ function act(action, param) {
       if(typeof pullSparkCloud === "function") pullSparkCloud();
       return;
 
+    case "cloudResolveConflict":
+      if(typeof resolveCloudConflict === "function") resolveCloudConflict(param);
+      return;
+
     case "cloudLogout":
       if(typeof logoutSpark === "function") logoutSpark();
       break;
+
+    case "refreshMidiDevices":
+      if (typeof refreshMidiDevices === "function") refreshMidiDevices();
+      return;
+
+    case "importMidiDesktop":
+      if (typeof importMidiDesktopAware === "function") importMidiDesktopAware();
+      return;
 
     case "cloudLoginPrompt": {
       var clEmail = prompt("Email:");
@@ -2042,6 +2180,7 @@ function act(action, param) {
 
   // Call SparkSuite's global render, not piano's local render
   if (typeof window.render === "function") window.render();
+  if (_scrollTopAfterRender) scrollPianoTopSoon();
   return _handled;
 }
 

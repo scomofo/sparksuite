@@ -1,0 +1,4 @@
+[
+  { "id": "strum_basics", "name": "Strum Basics", "category": "rhythm", "prerequisites": [] },
+  { "id": "open_chords", "name": "Open Chords", "category": "harmony", "prerequisites": ["strum_basics"] }
+]
