@@ -45,7 +45,8 @@
     "publish": {
       "provider": "github",
       "owner": "scomofo",
-      "repo": "sparksuite"
+      "repo": "sparksuite",
+      "releaseType": "release"
     },
     "mac": {
       "target": [
