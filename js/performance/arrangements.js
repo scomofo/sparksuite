@@ -1,5 +1,21 @@
 (function(){
 
+  function resolveArrangementChordNotes(chord) {
+    var chordEntry;
+    var rootPosition;
+    var notes;
+    if (typeof CHORD_NOTES !== "undefined" && CHORD_NOTES && CHORD_NOTES[chord]) {
+      return CHORD_NOTES[chord].slice();
+    }
+    if (typeof CHORDS === "undefined" || !CHORDS || !CHORDS[chord]) return [];
+    chordEntry = CHORDS[chord] || {};
+    rootPosition = chordEntry.rootPosition || null;
+    notes = rootPosition && Array.isArray(rootPosition.notes)
+      ? rootPosition.notes
+      : (Array.isArray(chordEntry.notes) ? chordEntry.notes : []);
+    return Array.isArray(notes) ? notes.slice() : [];
+  }
+
   function buildChordArrangement(perfSong) {
     if (!perfSong || !perfSong.progression || !perfSong.progression.length) return null;
 
@@ -10,10 +26,7 @@
     // Each progression entry = one bar, strum on beat 1
     for (var i = 0; i < perfSong.progression.length; i++) {
       var chord = perfSong.progression[i];
-      var notes = [];
-      if (typeof CHORD_NOTES !== "undefined" && CHORD_NOTES[chord]) {
-        notes = CHORD_NOTES[chord].slice();
-      }
+      var notes = resolveArrangementChordNotes(chord);
       events.push({
         id: i + 1,
         t: i * barDur,
@@ -93,10 +106,7 @@
 
     for (var i = 0; i < perfSong.progression.length; i++) {
       var chord = perfSong.progression[i];
-      var notes = [];
-      if (typeof CHORD_NOTES !== "undefined" && CHORD_NOTES[chord]) {
-        notes = CHORD_NOTES[chord].slice();
-      }
+      var notes = resolveArrangementChordNotes(chord);
       var barStart = i * barDur;
       var strums = expandStrumPattern(pattern, barDur, chord, notes, barStart, 0);
       for (var j = 0; j < strums.length; j++) {

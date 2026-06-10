@@ -1,17 +1,17 @@
 {
   "$schema": "https://raw.githubusercontent.com/nicedoc/tauri-docs/main/tooling/bundler/schema.json",
-  "productName": "ChordSpark",
-  "version": "3.1.0",
-  "identifier": "com.chordspark.app",
+  "productName": "SparkSuite",
+  "version": "1.0.0",
+  "identifier": "com.sparksuite.app",
   "build": {
     "frontendDist": "../",
     "devUrl": "http://localhost:1420"
   },
   "app": {
-    "title": "ChordSpark",
+    "title": "SparkSuite",
     "windows": [
       {
-        "title": "ChordSpark",
+        "title": "SparkSuite",
         "width": 500,
         "height": 850,
         "minWidth": 400,

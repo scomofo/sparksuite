@@ -1,0 +1,4 @@
+[
+  { "id": "uke_campfire_loop", "title": "Campfire Loop", "artist": "SparkSuite", "bpm": 80, "skillId": "songs", "chordIds": ["C", "G", "Am", "F"], "arrangementType": "strum", "difficulty": "normal" },
+  { "id": "uke_island_flow", "title": "Island Flow", "artist": "SparkSuite", "bpm": 86, "skillId": "performance", "chordIds": ["C", "Am", "F", "G"], "arrangementType": "performance", "difficulty": "hard" }
+]

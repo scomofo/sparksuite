@@ -56,7 +56,6 @@ function test(name, fn) {
 console.log("\n--- App Activity Emit Resolution ---");
 
 test("activity identity helper rehydrates a thin active instrument shell", function() {
-  // Helper relocated to js/orchestrator-requests.js during the app.js split.
   var source = loadJS("js/orchestrator-requests.js");
   global.eval(extractFunction(source, "getActiveInstrumentIdentityForActivity"));
   var result = getActiveInstrumentIdentityForActivity();
@@ -67,15 +66,12 @@ test("activity identity helper rehydrates a thin active instrument shell", funct
 });
 
 test("app drill and song completion emits use the resolved activity instrument app id", function() {
-  // After the app.js split: drill completion emits live in js/timers.js,
-  // song completion emits live in js/actions.js.
-  var drillSource = loadJS("js/timers.js");
-  assert.ok(drillSource.indexOf('emit:{type:"practice_session_completed",payload:{ appId: activityInstrument.appId, type: "drill", xp: 20, detail: detail }}') >= 0);
-  assert.ok(drillSource.indexOf('_sparkEmit("practice_session_completed", { appId: activityInstrument.appId, type: "drill", xp: 20, detail: detail });') >= 0);
-
-  var songSource = loadJS("js/actions.js");
-  assert.ok(songSource.indexOf('emit:{type:"lesson_completed",payload:{ appId: songActivityInstrument.appId, lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 }}') >= 0);
-  assert.ok(songSource.indexOf('_sparkEmit("lesson_completed", { appId: songActivityInstrument.appId, lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 });') >= 0);
+  var timersSource = loadJS("js/timers.js");
+  var songFamilySource = loadJS("js/actions/song_family.js");
+  assert.ok(timersSource.indexOf('emit:{type:"practice_session_completed",payload:{ appId: activityInstrument.appId, type: "drill", xp: 20, detail: detail }}') >= 0);
+  assert.ok(timersSource.indexOf('_sparkEmit("practice_session_completed", { appId: activityInstrument.appId, type: "drill", xp: 20, detail: detail });') >= 0);
+  assert.ok(songFamilySource.indexOf('emit: { type: "lesson_completed", payload: { appId: songActivityInstrument.appId, lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 } },') >= 0);
+  assert.ok(songFamilySource.indexOf('_sparkEmit("lesson_completed", { appId: songActivityInstrument.appId, lessonId: "song_" + (S.selectedSong ? S.selectedSong.title : ""), xp: 40 });') >= 0);
 });
 
 if (process.exitCode) process.exit(process.exitCode);

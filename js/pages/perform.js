@@ -12,6 +12,7 @@ function startCalibration() {
   var totalBeats = (typeof PERFORMANCE_CONFIG !== "undefined") ? PERFORMANCE_CONFIG.latency.calibrationTaps : 8;
 
   S._calibrating = true;
+  S.calibrationRunning = true;
   S._calibBeatMs = beatMs;
   S._calibTotalBeats = totalBeats;
   S._calibCurrentBeat = 0;
@@ -80,6 +81,7 @@ function recordCalibrationTap() {
 
 function finishCalibration() {
   S._calibrating = false;
+  S.calibrationRunning = false;
   if (_calibTaps.length < 3) {
     render();
     return;
@@ -98,7 +100,7 @@ function finishCalibration() {
   if (S.performMode === "midi") {
     S.performMidiOffsetMs = avg;
   } else {
-    S.performAudioOffsetMs = avg;
+    S.performMicOffsetMs = avg;
   }
   S.performCalibrated = true;
   saveState();
@@ -107,11 +109,21 @@ function finishCalibration() {
 
 function cancelCalibration() {
   S._calibrating = false;
+  S.calibrationRunning = false;
   if (_calibInterval) { clearInterval(_calibInterval); _calibInterval = null; }
   render();
 }
 
 // Wrapper — see js/utils/normalize.js for the canonical implementation.
+(function(root){
+  if(!root)return;
+  root.SparkPerformanceRunCalibration = {
+    start: startCalibration,
+    tap: recordCalibrationTap,
+    cancel: cancelCalibration
+  };
+})(typeof window !== "undefined" ? window : (typeof global !== "undefined" ? global : null));
+
 function normalizePerformPageTextToken(value) { return SparkNormalize.textToken(value); }
 
 function firstPerformPageTextToken() {
@@ -139,12 +151,30 @@ function getPerformancePracticePresetOptions() {
   ];
 }
 
+function getPerformPageMicOffsetMs() {
+  if (typeof S.performMicOffsetMs === "number" && isFinite(S.performMicOffsetMs)) return S.performMicOffsetMs;
+  return 0;
+}
+
+function renderPerformControlSection(label, body, accentColor) {
+  var borderColor = accentColor || "rgba(255,255,255,.08)";
+  return '<div style="display:flex;flex-direction:column;gap:8px;min-width:0;padding:12px;border-radius:16px;border:1px solid ' + borderColor + ';background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.14));box-shadow:inset 0 1px 0 rgba(255,255,255,.03)">' +
+    '<div class="card-section-heading">' + escHTML(label) + '</div>' +
+    '<div class="perform-toggle-group" style="justify-content:flex-start;gap:6px;margin:0">' + body + '</div>' +
+    '</div>';
+}
+
+function getPerformPageCoreView() {
+  var core = window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
+  return core && typeof core.getActiveSessionView === "function"
+    ? core.getActiveSessionView()
+    : null;
+}
+
 function performPage() {
   var chart = S.performChart;
   if (!chart) return '<div class="perform-page text-center"><p>No chart loaded.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var coreView = getPerformPageCoreView();
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
   var targetTechnique = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
     ? runtimeState.performanceTargetTechnique
@@ -226,7 +256,7 @@ function performPage() {
   }
 
   // Input source badge + detected notes
-  h += '<div class="perform-input-badge">' + (S.performInputSource === "midi" ? "MIDI" : "MIC");
+  h += '<div class="perform-input-badge" style="display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;padding:6px 12px;margin:6px 12px 0;border-radius:999px;background:rgba(9,12,20,.7);border:1px solid rgba(255,255,255,.08);box-shadow:0 12px 28px rgba(0,0,0,.18)">' + (S.performInputSource === "midi" ? "MIDI" : "MIC");
   if (S.performInputNotes && S.performInputNotes.length) {
     h += ' &mdash; ';
     for (var ni = 0; ni < S.performInputNotes.length; ni++) {
@@ -265,82 +295,89 @@ function performPage() {
   }
 
   // Controls
-  h += '<div class="perform-controls">';
+  h += '<div class="card" style="margin:10px 12px 0;padding:14px;border-radius:18px;border:1px solid rgba(120,206,255,.12);background:linear-gradient(180deg,rgba(15,19,31,.94),rgba(7,10,18,.94));box-shadow:0 18px 36px rgba(0,0,0,.24)">';
+  h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">';
 
   // Pause/Resume
   var performPaused = runtimeState && runtimeState.transport ? runtimeState.transport.status === "paused" : S.performPaused;
   if (performPaused) {
-    h += '<button class="btn perform-ctrl-btn" onclick="act(\'resumePerform\')" style="background:#4ECDC4;color:#fff">&#9654; Resume</button>';
+    h += '<button class="btn perform-ctrl-btn" onclick="act(\'resumePerform\')" style="background:linear-gradient(135deg,#37d6c8,#6ef1df);color:#06262a;box-shadow:0 10px 24px rgba(78,205,196,.24)">&#9654; Resume</button>';
   } else {
-    h += '<button class="btn perform-ctrl-btn" onclick="act(\'pausePerform\')" style="background:#FFE66D;color:#333">&#9208; Pause</button>';
+    h += '<button class="btn perform-ctrl-btn" onclick="act(\'pausePerform\')" style="background:linear-gradient(135deg,#FFE66D,#FFD36E);color:#3b3000;box-shadow:0 10px 24px rgba(255,230,109,.22)">&#9208; Pause</button>';
   }
+  h += '<div style="font-size:11px;color:var(--text-muted);font-weight:700">Tighten timing, change feel, or loop a weak phrase without leaving the run.</div>';
+  h += '</div>';
+  h += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">';
 
   // Mode toggle
-  h += '<div class="perform-toggle-group"><span class="perform-toggle-label">Input</span>';
+  var inputControls = '';
   var performMode = runtimeState && runtimeState.performanceInputMode ? runtimeState.performanceInputMode : S.performMode;
-  h += '<button class="btn btn-sm' + (performMode === "midi" ? " active" : "") + '" onclick="act(\'performMode\',\'midi\')">MIDI</button>';
-  h += '<button class="btn btn-sm' + (performMode === "mic" ? " active" : "") + '" onclick="act(\'performMode\',\'mic\')">Mic</button>';
-  h += '</div>';
+  inputControls += '<button class="btn btn-sm' + (performMode === "midi" ? " active" : "") + '" onclick="act(\'performMode\',\'midi\')">MIDI</button>';
+  inputControls += '<button class="btn btn-sm' + (performMode === "mic" ? " active" : "") + '" onclick="act(\'performMode\',\'mic\')">Mic</button>';
+  h += renderPerformControlSection("Input", inputControls, "rgba(69,183,209,.28)");
 
   // Difficulty toggle
-  h += '<div class="perform-toggle-group"><span class="perform-toggle-label">Difficulty</span>';
+  var difficultyControls = '';
   var diffs = ["easy", "normal", "pro"];
   var performDifficulty = runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : S.performDifficulty;
   for (var d = 0; d < diffs.length; d++) {
-    h += '<button class="btn btn-sm' + (performDifficulty === diffs[d] ? " active" : "") + '" onclick="act(\'performDifficulty\',\'' + diffs[d] + '\')">' + diffs[d].charAt(0).toUpperCase() + diffs[d].slice(1) + '</button>';
+    difficultyControls += '<button class="btn btn-sm' + (performDifficulty === diffs[d] ? " active" : "") + '" onclick="act(\'performDifficulty\',\'' + diffs[d] + '\')">' + diffs[d].charAt(0).toUpperCase() + diffs[d].slice(1) + '</button>';
   }
-  h += '</div>';
+  h += renderPerformControlSection("Difficulty", difficultyControls, "rgba(255,138,92,.24)");
 
   // Speed toggle
-  h += '<div class="perform-toggle-group"><span class="perform-toggle-label">Speed</span>';
+  var speedControls = '';
   var speeds = [0.5, 0.75, 1.0];
   var performSpeed = runtimeState && runtimeState.performanceSpeed ? runtimeState.performanceSpeed : S.performSpeed;
   for (var sp = 0; sp < speeds.length; sp++) {
-    h += '<button class="btn btn-sm' + (performSpeed === speeds[sp] ? " active" : "") + '" onclick="act(\'performSpeed\',' + speeds[sp] + ')">' + Math.round(speeds[sp] * 100) + '%</button>';
+    speedControls += '<button class="btn btn-sm' + (performSpeed === speeds[sp] ? " active" : "") + '" onclick="act(\'performSpeed\',' + speeds[sp] + ')">' + Math.round(speeds[sp] * 100) + '%</button>';
   }
-  h += '</div>';
+  h += renderPerformControlSection("Speed", speedControls, "rgba(255,230,109,.22)");
 
   // Practice presets
-  h += '<div class="perform-toggle-group"><span class="perform-toggle-label">Mix</span>';
+  var mixControls = '';
   var presets = getPerformancePracticePresetOptions();
   var performPracticePreset = runtimeState && runtimeState.performancePracticePreset ? runtimeState.performancePracticePreset : S.performPracticePreset;
   for (var pr = 0; pr < presets.length; pr++) {
-    h += '<button class="btn btn-sm' + (performPracticePreset === presets[pr].id ? " active" : "") + '" onclick="act(\'performPracticePreset\',\'' + presets[pr].id + '\')">' + presets[pr].label + '</button>';
+    mixControls += '<button class="btn btn-sm' + (performPracticePreset === presets[pr].id ? " active" : "") + '" onclick="act(\'performPracticePreset\',\'' + presets[pr].id + '\')">' + presets[pr].label + '</button>';
   }
-  h += '</div>';
+  h += renderPerformControlSection("Mix", mixControls, "rgba(78,205,196,.24)");
 
   // Loop phrase
+  var utilityControls = '';
   var performLoop = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceLoop")
     ? runtimeState.performanceLoop
     : S.performLoop;
   if (performLoop) {
-    h += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performClearLoop\')" style="background:#FF6B6B;color:#fff">&#128260; Clear Loop</button>';
+    utilityControls += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performClearLoop\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128260; Clear Loop</button>';
   } else {
-    h += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performLoopPhrase\')" style="background:#4ECDC4;color:#fff">&#128257; Loop Phrase</button>';
+    utilityControls += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performLoopPhrase\')" style="background:linear-gradient(135deg,#37d6c8,#4ECDC4);color:#083232">&#128257; Loop Phrase</button>';
   }
 
   // Calibration
-  h += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performCalibrate\')" style="background:var(--input-bg);color:var(--text-secondary)">&#9201; Calibrate</button>';
+  utilityControls += '<button class="btn btn-sm perform-ctrl-btn" onclick="act(\'performCalibrate\')" style="background:var(--input-bg);color:var(--text-secondary)">&#9201; Calibrate</button>';
   var curOffset = normalizePerformPageNumber(
-    S.performMode === "midi" ? S.performMidiOffsetMs : S.performAudioOffsetMs,
+      S.performMode === "midi" ? S.performMidiOffsetMs : getPerformPageMicOffsetMs(),
     0
   );
   if (curOffset !== 0) {
-    h += '<span style="font-size:10px;color:var(--text-muted);margin-left:4px">offset: ' + curOffset + 'ms</span>';
+    utilityControls += '<span style="font-size:10px;color:var(--text-muted);margin-left:4px">offset: ' + curOffset + 'ms</span>';
   }
+  h += renderPerformControlSection("Utilities", utilityControls, "rgba(255,255,255,.08)");
 
-  h += '</div>'; // .perform-controls
+  h += '</div>';
+  h += '</div>';
 
   // Calibration section
   if (S._calibrating) {
     var calibCurrentBeat = normalizePerformPageNumber(S._calibCurrentBeat, 0);
     var calibTotalBeats = normalizePerformPageNumber(S._calibTotalBeats, 8);
     h += '<div class="card" style="margin:8px 12px;text-align:center">';
-    h += '<div style="font-size:14px;font-weight:800;color:var(--text-primary);margin-bottom:8px">Calibrating...</div>';
+    h += '<div class="card-micro-heading" style="margin-bottom:8px">Calibrating...</div>';
     h += '<div style="font-size:48px;font-weight:900;color:#FFE66D;animation:bn .3s ease">' + calibCurrentBeat + '/' + calibTotalBeats + '</div>';
     h += '<p style="font-size:12px;color:var(--text-muted)">Tap spacebar or click when you hear the beat</p>';
-    h += '<button class="btn" onclick="recordCalibrationTap()" style="background:#4ECDC4;color:#fff;padding:16px 32px;font-size:16px">TAP</button>';
-    h += ' <button class="btn btn-sm" onclick="cancelCalibration()" style="margin-left:8px">Cancel</button>';
+    h += '<div class="action-row" style="justify-content:center"><button class="btn" onclick="act(\'performCalibrationTap\')" style="background:#4ECDC4;color:#fff;padding:16px 32px;font-size:16px">TAP</button>';
+    h += '<button class="btn btn-sm" onclick="act(\'performCalibrationCancel\')">Cancel</button></div>';
     h += '</div>';
   }
 
@@ -349,17 +386,21 @@ function performPage() {
 }
 
 function performDonePage() {
-  var coreView = window.sparkCore && typeof window.sparkCore.getActiveSessionView === "function"
-    ? window.sparkCore.getActiveSessionView()
-    : null;
+  var coreView = getPerformPageCoreView();
   var runtimeState = coreView && coreView.runtimeState ? coreView.runtimeState : null;
-  var r = runtimeState && runtimeState.performanceResults ? runtimeState.performanceResults : S.performResults;
-  var targetTechnique = runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
+  var doneState = coreView && coreView.performanceDoneState ? coreView.performanceDoneState : null;
+  var r = doneState && doneState.hasResults ? doneState.rawResults : (runtimeState && runtimeState.performanceResults ? runtimeState.performanceResults : S.performResults);
+  var targetTechnique = doneState && doneState.hasResults
+    ? doneState.targetTechnique
+    : (runtimeState && Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
     ? runtimeState.performanceTargetTechnique
-    : S.performTargetTechnique;
-  if (!r) return '<div class="perform-page text-center"><p>No results.</p><button class="btn" onclick="act(\'back\')">Back</button></div>';
-  var resultTitle = firstPerformPageTextToken(r.title, r.songTitle, runtimeState && runtimeState.performanceChartId, S.performChartId, "Performance");
-  var resultArtist = firstPerformPageTextToken(r.artist, "Unknown Artist");
+    : S.performTargetTechnique);
+  if (doneState && !doneState.hasResults) {
+    return '<div class="perform-page text-center"><p>No results.</p><button class="btn" onclick="act(\'' + doneState.action + '\')">' + escHTML(doneState.label) + '</button></div>';
+  }
+  if (!r) return '<div class="perform-page text-center"><p>No results.</p><button class="btn" onclick="act(\'performDoneSongs\')">Songs</button></div>';
+  var resultTitle = doneState && doneState.hasResults ? doneState.title : firstPerformPageTextToken(r.title, r.songTitle, runtimeState && runtimeState.performanceChartId, S.performChartId, "Performance");
+  var resultArtist = doneState && doneState.hasResults ? doneState.artist : firstPerformPageTextToken(r.artist, "Unknown Artist");
 
   var h = '<div class="perform-page text-center" style="padding-top:20px">';
   h += '<div style="font-size:56px;animation:bn .6s ease">&#127928;</div>';
@@ -391,7 +432,7 @@ function performDonePage() {
     var difficultyId = runtimeState && runtimeState.performanceDifficultyId ? runtimeState.performanceDifficultyId : S.performDifficulty;
     var pStats = getPerformanceStats(songKey, arrType, difficultyId);
     if (pStats.mastery !== "none") {
-      h += '<div style="margin-bottom:12px"><span style="background:' + getMasteryColor(pStats.mastery) + '22;color:' + getMasteryColor(pStats.mastery) + ';padding:6px 16px;border-radius:12px;font-size:13px;font-weight:800">' + getMasteryIcon(pStats.mastery) + ' ' + pStats.mastery.charAt(0).toUpperCase() + pStats.mastery.slice(1) + '</span></div>';
+      h += '<div style="margin-bottom:12px"><span class="guided-pill" style="background:' + getMasteryColor(pStats.mastery) + '22;color:' + getMasteryColor(pStats.mastery) + '">' + getMasteryIcon(pStats.mastery) + ' ' + pStats.mastery.charAt(0).toUpperCase() + pStats.mastery.slice(1) + '</span></div>';
     }
   }
 
@@ -404,77 +445,76 @@ function performDonePage() {
   }
 
   // Stats cards
-  h += '<div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center;flex-wrap:wrap">';
-  h += '<div><div style="font-size:28px;font-weight:900;color:#FFE66D">' + r.score + '</div><div style="font-size:11px;color:var(--text-muted)">Score</div></div>';
-  h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + r.accuracy + '%</div><div style="font-size:11px;color:var(--text-muted)">Accuracy</div></div>';
-  h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">' + r.maxCombo + 'x</div><div style="font-size:11px;color:var(--text-muted)">Max Combo</div></div>';
+  h += '<div class="card mb20"><div style="display:flex;justify-content:space-around;text-align:center;flex-wrap:wrap;gap:12px">';
+  h += '<div><div class="metric-value" style="color:#FFE66D">' + r.score + '</div><div class="metric-label">Score</div></div>';
+  h += '<div><div class="metric-value" style="color:#4ECDC4">' + r.accuracy + '%</div><div class="metric-label">Accuracy</div></div>';
+  h += '<div><div class="metric-value" style="color:#FF6B6B">' + r.maxCombo + 'x</div><div class="metric-label">Max Combo</div></div>';
   h += '</div></div>';
 
   // Phrase breakdown
   if (r.phraseStats && r.phraseStats.length > 0) {
-    h += '<div class="card mb20" style="text-align:left"><h3 style="font-size:14px;font-weight:800;margin:0 0 10px;color:var(--text-primary)">Phrase Breakdown</h3>';
+    h += '<div class="card mb20" style="text-align:left"><div class="card-section-heading" style="margin-bottom:10px">Phrase Breakdown</div>';
     for (var pi = 0; pi < r.phraseStats.length; pi++) {
       var ps = r.phraseStats[pi];
       var pct = ps.total > 0 ? Math.round(ps.scoreSum / ps.total * 100) : 0;
       var phraseLabel = firstPerformPageTextToken(ps.name, "Phrase " + (pi + 1));
-      h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">';
-      h += '<span style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(phraseLabel) + '</span>';
-      h += '<span style="font-size:12px;color:var(--text-muted)">' + ps.perfects + 'P / ' + ps.goods + 'G / ' + ps.oks + 'O / ' + ps.misses + 'M &mdash; ' + pct + '%</span>';
+      h += '<div class="split-row" style="align-items:center;padding:4px 0;border-bottom:1px solid var(--border);gap:12px">';
+      h += '<span class="card-micro-heading">' + escHTML(phraseLabel) + '</span>';
+      h += '<span class="metric-label">' + ps.perfects + 'P / ' + ps.goods + 'G / ' + ps.oks + 'O / ' + ps.misses + 'M &mdash; ' + pct + '%</span>';
       h += '</div>';
     }
     h += '</div>';
   }
 
   if (r.importedTechniqueSummary && hasImportedTechniqueResultData(r.importedTechniqueSummary)) {
-    h += '<div class="card mb20" style="text-align:left"><h3 style="font-size:14px;font-weight:800;margin:0 0 10px;color:var(--text-primary)">Technique Summary</h3>';
+    h += '<div class="card mb20" style="text-align:left"><div class="card-section-heading" style="margin-bottom:10px">Technique Summary</div>';
     h += renderImportedTechniqueSummaryRows(r.importedTechniqueSummary);
     h += '</div>';
   }
 
   if (targetTechnique) {
     h += '<div class="card mb20" style="text-align:left;border:1px solid #FF8A5C44;background:linear-gradient(135deg,#FF8A5C12,#FFE66D12)">';
-    h += '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Technique Focus</div>';
-    h += '<div style="font-size:14px;color:var(--text-primary);font-weight:800">' + escHTML(formatTechniqueFocusLabel(targetTechnique)) + '</div>';
+    h += '<div class="card-section-heading" style="margin-bottom:6px">Technique Focus</div>';
+    h += '<div class="card-micro-heading">' + escHTML(formatTechniqueFocusLabel(targetTechnique)) + '</div>';
     h += '<div style="font-size:11px;color:var(--text-dim);margin-top:4px">Keep this same focus on retry so the next run stays aimed at the weak spot.</div>';
     h += '</div>';
   }
 
   // Best and weakest phrases
-  if (r.phraseStats && r.phraseStats.length > 1) {
-    var bestIdx = 0, worstIdx = 0;
-    for (var bi = 1; bi < r.phraseStats.length; bi++) {
-      var bAvg = r.phraseStats[bi].total > 0 ? r.phraseStats[bi].scoreSum / r.phraseStats[bi].total : 0;
-      var bestAvg = r.phraseStats[bestIdx].total > 0 ? r.phraseStats[bestIdx].scoreSum / r.phraseStats[bestIdx].total : 0;
-      var worstAvg = r.phraseStats[worstIdx].total > 0 ? r.phraseStats[worstIdx].scoreSum / r.phraseStats[worstIdx].total : 0;
-      if (bAvg > bestAvg) bestIdx = bi;
-      if (bAvg < worstAvg) worstIdx = bi;
-    }
+  if (doneState && doneState.bestPhrase && doneState.weakestPhrase) {
     h += '<div style="display:flex;gap:10px;margin-bottom:16px">';
-    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #4ECDC4;padding:10px"><div style="font-size:11px;color:var(--text-muted)">Best Phrase</div><div style="font-size:14px;font-weight:800;color:#4ECDC4">' + escHTML(firstPerformPageTextToken(r.phraseStats[bestIdx].name, "Phrase " + (bestIdx + 1))) + '</div></div>';
-    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #FF6B6B;padding:10px"><div style="font-size:11px;color:var(--text-muted)">Weakest Phrase</div><div style="font-size:14px;font-weight:800;color:#FF6B6B">' + escHTML(firstPerformPageTextToken(r.phraseStats[worstIdx].name, "Phrase " + (worstIdx + 1))) + '</div></div>';
+    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #4ECDC4;padding:10px"><div class="metric-label">Best Phrase</div><div class="card-micro-heading" style="color:#4ECDC4">' + escHTML(doneState.bestPhrase.name) + '</div></div>';
+    h += '<div class="card" style="flex:1;text-align:center;border:2px solid #FF6B6B;padding:10px"><div class="metric-label">Weakest Phrase</div><div class="card-micro-heading" style="color:#FF6B6B">' + escHTML(doneState.weakestPhrase.name) + '</div></div>';
     h += '</div>';
   }
 
   // Buttons
-  h += '<div class="flex-col">';
+  h += '<div class="flex-col action-row">';
   h += '<button class="btn" onclick="act(\'performRetry\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#128257; ' + escHTML(targetTechnique ? ("Retry " + formatTechniqueFocusLabel(targetTechnique)) : "Retry") + '</button>';
-  h += '<button class="btn" onclick="act(\'performRetryPhrase\')" style="background:linear-gradient(135deg,#FF6B6B,#FFE66D);color:#333">&#128170; ' + escHTML(targetTechnique ? ("Retry Weakest " + formatTechniqueFocusLabel(targetTechnique)) : "Retry Weakest") + '</button>';
+  var doneChart = runtimeState && runtimeState.performanceChart ? runtimeState.performanceChart : S.performChart;
+  if (doneState ? doneState.showWeakestPhraseAction : hasPerformDoneWeakestPhraseTarget(r, doneChart)) {
+    h += '<button class="btn" onclick="act(\'performRetryPhrase\')" style="background:linear-gradient(135deg,#FF6B6B,#FFE66D);color:#333">&#128170; ' + escHTML(targetTechnique ? ("Retry Weakest " + formatTechniqueFocusLabel(targetTechnique)) : "Retry Weakest") + '</button>';
+  } else {
+    h += '<div style="font-size:12px;color:var(--text-muted);padding:8px 10px;text-align:center">Finish a phrase-tracked run to unlock weakest-phrase retry.</div>';
+  }
   h += '<button class="btn" onclick="act(\'performDoneSongs\')" style="background:#4ECDC4;color:#fff">&#127968; Songs</button>';
   h += '</div>';
 
   // Next step recommendation
   var focusedTechniqueRow = targetTechnique ? getTechniqueSummaryRow(r.importedTechniqueSummary, targetTechnique) : null;
   if (focusedTechniqueRow) {
-    h += '<div class="card" style="margin-top:12px;text-align:left"><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Next Step</div>';
+    h += '<div class="card" style="margin-top:12px;text-align:left"><div class="card-section-heading" style="margin-bottom:6px">Next Step</div>';
     h += '<div style="font-size:13px;color:var(--text-primary)">' + escHTML("Stay on " + formatTechniqueFocusLabel(targetTechnique)) + '</div>';
     h += '<div style="font-size:11px;color:var(--text-dim)">' + escHTML("You hit " + focusedTechniqueRow.hits + " of " + focusedTechniqueRow.total + " focused notes. Retry this same target to lock it in.") + '</div></div>';
   } else if(typeof buildPerformanceRecommendationsForSong==="function"&&r.title){
-    var songId=(r.title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_");
+    var songId = typeof resolvePerformanceSongId === "function"
+      ? resolvePerformanceSongId(r, r.title)
+      : (r.title||"").toLowerCase().replace(/[^a-z0-9]+/g,"_");
     var nextRecs=buildPerformanceRecommendationsForSong(songId);
     if(nextRecs&&nextRecs.length){
       var nextStepLabel = firstPerformPageTextToken(nextRecs[0].label, "Recommendation");
       var nextStepReason = firstPerformPageTextToken(nextRecs[0].reason);
-      h+='<div class="card" style="margin-top:12px;text-align:left"><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:6px">Next Step</div>';
+      h+='<div class="card" style="margin-top:12px;text-align:left"><div class="card-section-heading" style="margin-bottom:6px">Next Step</div>';
       h+='<div style="font-size:13px;color:var(--text-primary)">'+escHTML(nextStepLabel)+'</div>';
       h+='<div style="font-size:11px;color:var(--text-dim)">'+escHTML(nextStepReason)+'</div></div>';
     }
@@ -482,6 +522,17 @@ function performDonePage() {
 
   h += '</div>';
   return h;
+}
+
+function getPerformPageProgressEngine() {
+  var core = typeof sparkCore !== "undefined" ? sparkCore : (typeof window !== "undefined" ? window.sparkCore : null);
+  if (core && core.progressEngine && typeof core.progressEngine.hasPerformedAnyPhrase === "function") return core.progressEngine;
+  return null;
+}
+
+function hasPerformDoneWeakestPhraseTarget(results, chart) {
+  var engine = getPerformPageProgressEngine();
+  return !!(engine && engine.hasPerformedAnyPhrase(results, chart));
 }
 
 function getNextPerformEvent(chart, nowSec) {
@@ -511,9 +562,9 @@ function renderImportedTechniqueSummaryRows(summary) {
     var row = summary[order[i]];
     if (!row || !row.total) continue;
     var rowLabel = firstPerformPageTextToken(row.label, formatTechniqueFocusLabel(order[i]), "Technique");
-    h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)">';
-    h += '<span style="font-size:13px;font-weight:700;color:var(--text-primary)">' + escHTML(rowLabel) + '</span>';
-    h += '<span style="font-size:12px;color:var(--text-muted)">' + row.hits + '/' + row.total + ' hit &mdash; ' + row.accuracy + '%</span>';
+    h += '<div class="split-row" style="align-items:center;padding:4px 0;border-bottom:1px solid var(--border);gap:12px">';
+    h += '<span class="card-micro-heading">' + escHTML(rowLabel) + '</span>';
+    h += '<span class="metric-label">' + row.hits + '/' + row.total + ' hit &mdash; ' + row.accuracy + '%</span>';
     h += '</div>';
   }
   return h;

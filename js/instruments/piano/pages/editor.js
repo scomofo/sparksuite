@@ -56,13 +56,13 @@ function pianoEditorPage(){
   var errors = validateEditorObject ? validateEditorObject(obj) : [];
 
   h += '<div class="card mb16">';
-  h += '<div><b>Mode:</b> '+escHTML(pianoFirstEditorTextToken(S.editorMode, "chart"))+'</div>';
-  h += '<div><b>ID:</b> '+escHTML(pianoFirstEditorTextToken(obj.id))+'</div>';
-  h += '<div><b>Dirty:</b> '+(S.editorDirty ? 'Yes' : 'No')+'</div>';
+  h += '<div><span class="metric-label">Mode:</span> <span class="metric-value" style="font-size:13px">'+escHTML(pianoFirstEditorTextToken(S.editorMode, "chart"))+'</span></div>';
+  h += '<div><span class="metric-label">ID:</span> <span class="metric-value" style="font-size:13px">'+escHTML(pianoFirstEditorTextToken(obj.id))+'</span></div>';
+  h += '<div><span class="metric-label">Dirty:</span> <span class="metric-value" style="font-size:13px">'+(S.editorDirty ? 'Yes' : 'No')+'</span></div>';
   h += '</div>';
 
   h += '<div class="card mb16">';
-  h += '<div class="mb8"><b>Metadata</b></div>';
+  h += '<div class="card-section-heading mb8">Metadata</div>';
   h += '<input class="set-input mb8" value="'+escHTML(pianoFirstEditorTextToken(obj.title, obj.id))+'" oninput="act(\'editorField\',\'title|\' + this.value)"/>';
   if(obj.artist !== undefined){
     h += '<input class="set-input mb8" value="'+escHTML(pianoFirstEditorTextToken(obj.artist))+'" oninput="act(\'editorField\',\'artist|\' + this.value)"/>';
@@ -88,7 +88,7 @@ function pianoEditorPage(){
 
   if(errors.length){
     h += '<div class="card mb16">';
-    h += '<div class="mb8"><b>Validation</b></div>';
+    h += '<div class="card-section-heading mb8">Validation</div>';
     for(var i=0;i<errors.length;i++){
       h += '<div style="font-size:12px;color:#ef4444;margin-bottom:4px">'+escHTML(errors[i])+'</div>';
     }
@@ -100,13 +100,13 @@ function pianoEditorPage(){
 
 function renderEditorObjectSummary(obj){
   var h = '<div class="card mb16">';
-  h += '<div class="mb8"><b>Contents</b></div>';
+  h += '<div class="card-section-heading mb8">Contents</div>';
   if(Array.isArray(obj.events)){
-    h += '<div style="font-size:13px;margin-bottom:6px">Events: '+obj.events.length+'</div>';
-    h += '<div style="font-size:13px;margin-bottom:6px">Phrases: '+((obj.phrases||[]).length)+'</div>';
+    h += '<div style="font-size:13px;margin-bottom:6px"><span class="metric-label">Events:</span> <span class="metric-value" style="font-size:13px">'+obj.events.length+'</span></div>';
+    h += '<div style="font-size:13px;margin-bottom:6px"><span class="metric-label">Phrases:</span> <span class="metric-value" style="font-size:13px">'+((obj.phrases||[]).length)+'</span></div>';
   }
   if(Array.isArray(obj.steps)){
-    h += '<div style="font-size:13px;margin-bottom:6px">Steps: '+obj.steps.length+'</div>';
+    h += '<div style="font-size:13px;margin-bottom:6px"><span class="metric-label">Steps:</span> <span class="metric-value" style="font-size:13px">'+obj.steps.length+'</span></div>';
   }
   return h + '</div>';
 }
@@ -115,9 +115,9 @@ function renderEditorObjectSummary(obj){
 function renderEditorTimelineToolbar(obj){
   var h = '<div class="card mb16">';
   var playheadSec = pianoNormalizeEditorNumber(S.editorPlayheadSec, 0);
-  h += '<div class="mb8"><b>Timeline</b></div>';
+  h += '<div class="card-section-heading mb8">Timeline</div>';
   h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Playhead: '+playheadSec.toFixed(2)+'s \u00b7 Grid: '+escHTML(pianoFirstEditorTextToken(S.editorGridDivision, "1/4"))+'</div>';
-  h += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
+  h += '<div class="action-row">';
   h += '<button class="btn" onclick="act(\'editorPlayheadLeft\')">\u25C0</button>';
   h += '<button class="btn" onclick="act(\'editorPlayheadRight\')">\u25B6</button>';
   h += '<button class="btn" onclick="act(\'editorToggleSnap\')">'+(S.editorSnapEnabled ? 'Snap On' : 'Snap Off')+'</button>';
@@ -134,7 +134,7 @@ function renderEditorTimelineToolbar(obj){
 /* Items list (handoff 7) */
 function renderEditorItemsList(obj){
   var h = '<div class="card mb16">';
-  h += '<div class="mb8"><b>Items</b></div>';
+  h += '<div class="card-section-heading mb8">Items</div>';
   var entries = [];
   if(Array.isArray(obj.events)){
     for(var i=0;i<obj.events.length;i++) entries.push({ kind:"event", item:obj.events[i] });
@@ -153,8 +153,8 @@ function renderEditorItemsList(obj){
       var item = entry.item;
       var itemId = pianoNormalizeEditorItemId(item.id);
       var selected = itemId && String(S.editorSelectedId)===String(itemId);
-      h += '<div style="padding:8px;border-radius:10px;margin-bottom:6px;background:'+(selected?'var(--chip-bg)':'var(--input-bg)')+'"'+(itemId?' onclick="act(\'editorSelect\',\''+itemId+'\')"':'')+'>';
-      h += '<div style="font-size:12px;font-weight:800">'+escHTML(entry.kind)+' \u00b7 '+escHTML(pianoFirstEditorTextToken(item.id, entry.kind))+'</div>';
+      h += '<div style="padding:8px;border-radius:10px;margin-bottom:6px;background:'+(selected?'var(--chip-bg)':'var(--input-bg)')+'"'+(itemId?' role="button" tabindex="0" onclick="act(\'editorSelect\',\''+itemId+'\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'editorSelect\',\''+itemId+'\')}"':'')+'>';
+      h += '<div class="card-micro-heading">'+escHTML(entry.kind)+' \u00b7 '+escHTML(pianoFirstEditorTextToken(item.id, entry.kind))+'</div>';
       h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(getEditorItemSummary(entry.kind, item))+'</div>';
       h += '</div>';
     }
@@ -178,7 +178,7 @@ function getEditorItemSummary(kind, item){
 
 /* Controls (handoffs 7-8) */
 function renderEditorControls(){
-  var h = '<div class="card mb16">';
+  var h = '<div class="card mb16 action-row">';
   h += '<button class="btn" onclick="act(\'editorAddAtPlayhead\')">Add Event @ Playhead</button> ';
   h += '<button class="btn" onclick="act(\'editorAddPhraseAtPlayhead\')">Add Phrase @ Playhead</button> ';
   h += '<button class="btn" onclick="act(\'editorAddEvent\')">Add Event</button> ';

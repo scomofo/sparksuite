@@ -1,0 +1,25 @@
+{
+  "id": "sunshine_of_your_love_bass_chords",
+  "title": "Sunshine of Your Love",
+  "artist": "Cream",
+  "bpm": 124,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "bass",
+  "audio": { "type": "silent" },
+  "phrases": [
+    { "id": 0, "name": "Riff", "startSec": 0, "endSec": 7.742 },
+    { "id": 1, "name": "Verse", "startSec": 7.742, "endSec": 15.484 },
+    { "id": 2, "name": "Turnaround", "startSec": 15.484, "endSec": 23.226 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 0.484, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 2, "t": 0.484, "dur": 0.484, "type": "tap", "chord": "F", "notes": ["F2"], "laneLabel": "F", "strum": "tap" },
+    { "id": 3, "t": 0.968, "dur": 0.484, "type": "tap", "chord": "G", "notes": ["G2"], "laneLabel": "G", "strum": "tap" },
+    { "id": 4, "t": 1.452, "dur": 0.484, "type": "tap", "chord": "D", "notes": ["D2"], "laneLabel": "D", "strum": "tap" },
+    { "id": 5, "t": 1.936, "dur": 0.484, "type": "tap", "chord": "F", "notes": ["F2"], "laneLabel": "F", "strum": "tap" },
+    { "id": 6, "t": 2.419, "dur": 0.484, "type": "tap", "chord": "G", "notes": ["G2"], "laneLabel": "G", "strum": "tap" },
+    { "id": 7, "t": 2.903, "dur": 0.484, "type": "tap", "chord": "C", "notes": ["C2"], "laneLabel": "C", "strum": "tap" },
+    { "id": 8, "t": 3.387, "dur": 0.484, "type": "tap", "chord": "Bb", "notes": ["Bb1"], "laneLabel": "Bb", "strum": "tap" }
+  ]
+}

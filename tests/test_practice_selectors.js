@@ -26,6 +26,7 @@ function resetState() {
   global.window = global;
   global.S = {
     completedLessons: [],
+    curriculumV2CompletedSessions: {},
     mastery: { lessons: {}, rhythm: {} },
     performanceStats: {},
     transitionStats: {},
@@ -217,6 +218,16 @@ test("selectInstrumentModuleCandidate rehydrates an app-id-only active instrumen
   assert.ok(candidate);
   assert.strictEqual(candidate.meta.lessonId, "uke_01");
   assert.strictEqual(candidate.meta.instrument, "ukulele");
+});
+
+test("selectInstrumentModuleCandidate respects curriculum v2 completion state", function() {
+  S.curriculumV2CompletedSessions.ukulele = ["uke_01"];
+
+  var candidate = selectInstrumentModuleCandidate();
+
+  assert.ok(candidate);
+  assert.strictEqual(candidate.meta.lessonId, "uke_02");
+  assert.strictEqual(candidate.meta.skill, "basic_chords");
 });
 
 test("buildPracticeCandidates includes the module-driven ukulele candidate", function() {

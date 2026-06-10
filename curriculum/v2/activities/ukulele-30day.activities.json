@@ -1,0 +1,1867 @@
+{
+  "version": "2026-04-24",
+  "instrument": "ukulele",
+  "activity_count": 120,
+  "activities": [
+    {
+      "id": "uke-d01-warm_engine",
+      "session_id": "uke-d01",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "freeplay over reggae loop",
+      "copy": {
+        "setup": "First strum. warm engine block.",
+        "success": "Nice. First strum.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d01-drill",
+      "session_id": "uke-d01",
+      "instrument": "ukulele",
+      "kind": "strum_drill",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "freeplay over reggae loop",
+      "copy": {
+        "setup": "First strum. drill block.",
+        "success": "Nice. First strum.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d01-song",
+      "session_id": "uke-d01",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "freeplay over reggae loop",
+      "copy": {
+        "setup": "First strum. song block.",
+        "success": "Nice. First strum.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/freeplay-over-reggae-loop-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d01-cooldown",
+      "session_id": "uke-d01",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "freeplay over reggae loop",
+      "copy": {
+        "setup": "First strum. cooldown block.",
+        "success": "Nice. First strum.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d02-warm_engine",
+      "session_id": "uke-d02",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "tuner",
+      "copy": {
+        "setup": "Tuning the uke. warm engine block.",
+        "success": "Nice. Tuning the uke.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d02-drill",
+      "session_id": "uke-d02",
+      "instrument": "ukulele",
+      "kind": "tuning",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "tuner",
+      "copy": {
+        "setup": "Tuning the uke. drill block.",
+        "success": "Nice. Tuning the uke.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d02-song",
+      "session_id": "uke-d02",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "tuner",
+      "copy": {
+        "setup": "Tuning the uke. song block.",
+        "success": "Nice. Tuning the uke.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/tuner-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d02-cooldown",
+      "session_id": "uke-d02",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "tuner",
+      "copy": {
+        "setup": "Tuning the uke. cooldown block.",
+        "success": "Nice. Tuning the uke.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d03-warm_engine",
+      "session_id": "uke-d03",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "\"Three Little Birds\" chorus",
+      "copy": {
+        "setup": "The C chord. warm engine block.",
+        "success": "Nice. The C chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d03-drill",
+      "session_id": "uke-d03",
+      "instrument": "ukulele",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "\"Three Little Birds\" chorus",
+      "copy": {
+        "setup": "The C chord. drill block.",
+        "success": "Nice. The C chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d03-song",
+      "session_id": "uke-d03",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "\"Three Little Birds\" chorus",
+      "copy": {
+        "setup": "The C chord. song block.",
+        "success": "Nice. The C chord.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/three-little-birds-chorus-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d03-cooldown",
+      "session_id": "uke-d03",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "\"Three Little Birds\" chorus",
+      "copy": {
+        "setup": "The C chord. cooldown block.",
+        "success": "Nice. The C chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d04-warm_engine",
+      "session_id": "uke-d04",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "reggae at 90",
+      "copy": {
+        "setup": "C with a reggae loop. warm engine block.",
+        "success": "Nice. C with a reggae loop.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d04-drill",
+      "session_id": "uke-d04",
+      "instrument": "ukulele",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "reggae at 90",
+      "copy": {
+        "setup": "C with a reggae loop. drill block.",
+        "success": "Nice. C with a reggae loop.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d04-song",
+      "session_id": "uke-d04",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "reggae at 90",
+      "copy": {
+        "setup": "C with a reggae loop. song block.",
+        "success": "Nice. C with a reggae loop.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/reggae-at-90-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d04-cooldown",
+      "session_id": "uke-d04",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "reggae at 90",
+      "copy": {
+        "setup": "C with a reggae loop. cooldown block.",
+        "success": "Nice. C with a reggae loop.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d05-warm_engine",
+      "session_id": "uke-d05",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "C to Am drill",
+      "copy": {
+        "setup": "The Am chord. warm engine block.",
+        "success": "Nice. The Am chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d05-drill",
+      "session_id": "uke-d05",
+      "instrument": "ukulele",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "C to Am drill",
+      "copy": {
+        "setup": "The Am chord. drill block.",
+        "success": "Nice. The Am chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d05-song",
+      "session_id": "uke-d05",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "C to Am drill",
+      "copy": {
+        "setup": "The Am chord. song block.",
+        "success": "Nice. The Am chord.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/c-to-am-drill-loop.mp3",
+        "tempo_bpm": 90,
+        "key": "C",
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d05-cooldown",
+      "session_id": "uke-d05",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "C to Am drill",
+      "copy": {
+        "setup": "The Am chord. cooldown block.",
+        "success": "Nice. The Am chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d06-warm_engine",
+      "session_id": "uke-d06",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "C-Am-F loop",
+      "copy": {
+        "setup": "The F chord. warm engine block.",
+        "success": "Nice. The F chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d06-drill",
+      "session_id": "uke-d06",
+      "instrument": "ukulele",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "C-Am-F loop",
+      "copy": {
+        "setup": "The F chord. drill block.",
+        "success": "Nice. The F chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d06-song",
+      "session_id": "uke-d06",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "C-Am-F loop",
+      "copy": {
+        "setup": "The F chord. song block.",
+        "success": "Nice. The F chord.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/c-am-f-loop-loop.mp3",
+        "tempo_bpm": 90,
+        "key": "C",
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d06-cooldown",
+      "session_id": "uke-d06",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "C-Am-F loop",
+      "copy": {
+        "setup": "The F chord. cooldown block.",
+        "success": "Nice. The F chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d07-warm_engine",
+      "session_id": "uke-d07",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"I'm Yours\" simplified. warm engine block.",
+        "success": "Nice. \"I'm Yours\" simplified.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d07-drill",
+      "session_id": "uke-d07",
+      "instrument": "ukulele",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"I'm Yours\" simplified. drill block.",
+        "success": "Nice. \"I'm Yours\" simplified.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d07-song",
+      "session_id": "uke-d07",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"I'm Yours\" simplified. song block.",
+        "success": "Nice. \"I'm Yours\" simplified.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/the-song-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d07-cooldown",
+      "session_id": "uke-d07",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"I'm Yours\" simplified. cooldown block.",
+        "success": "Nice. \"I'm Yours\" simplified.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d08-warm_engine",
+      "session_id": "uke-d08",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "C-Am-F-G7",
+      "copy": {
+        "setup": "The G7 chord. warm engine block.",
+        "success": "Nice. The G7 chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d08-drill",
+      "session_id": "uke-d08",
+      "instrument": "ukulele",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "C-Am-F-G7",
+      "copy": {
+        "setup": "The G7 chord. drill block.",
+        "success": "Nice. The G7 chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d08-song",
+      "session_id": "uke-d08",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "C-Am-F-G7",
+      "copy": {
+        "setup": "The G7 chord. song block.",
+        "success": "Nice. The G7 chord.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/c-am-f-g7-loop.mp3",
+        "tempo_bpm": 90,
+        "key": "C",
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d08-cooldown",
+      "session_id": "uke-d08",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "C-Am-F-G7",
+      "copy": {
+        "setup": "The G7 chord. cooldown block.",
+        "success": "Nice. The G7 chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d09-warm_engine",
+      "session_id": "uke-d09",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Stand By Me\" on uke. warm engine block.",
+        "success": "Nice. \"Stand By Me\" on uke.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d09-drill",
+      "session_id": "uke-d09",
+      "instrument": "ukulele",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Stand By Me\" on uke. drill block.",
+        "success": "Nice. \"Stand By Me\" on uke.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d09-song",
+      "session_id": "uke-d09",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Stand By Me\" on uke. song block.",
+        "success": "Nice. \"Stand By Me\" on uke.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/the-song-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d09-cooldown",
+      "session_id": "uke-d09",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Stand By Me\" on uke. cooldown block.",
+        "success": "Nice. \"Stand By Me\" on uke.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d10-warm_engine",
+      "session_id": "uke-d10",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. warm engine block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d10-drill",
+      "session_id": "uke-d10",
+      "instrument": "ukulele",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. drill block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d10-song",
+      "session_id": "uke-d10",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. song block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/user-picks-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d10-cooldown",
+      "session_id": "uke-d10",
+      "instrument": "ukulele",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. cooldown block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d11-warm_engine",
+      "session_id": "uke-d11",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "\"Stand By Me\"",
+      "copy": {
+        "setup": "Island strum (D-DU-UDU). warm engine block.",
+        "success": "Nice. Island strum (D-DU-UDU).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d11-drill",
+      "session_id": "uke-d11",
+      "instrument": "ukulele",
+      "kind": "strum_drill",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "\"Stand By Me\"",
+      "copy": {
+        "setup": "Island strum (D-DU-UDU). drill block.",
+        "success": "Nice. Island strum (D-DU-UDU).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d11-song",
+      "session_id": "uke-d11",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "\"Stand By Me\"",
+      "copy": {
+        "setup": "Island strum (D-DU-UDU). song block.",
+        "success": "Nice. Island strum (D-DU-UDU).",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/stand-by-me-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d11-cooldown",
+      "session_id": "uke-d11",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "\"Stand By Me\"",
+      "copy": {
+        "setup": "Island strum (D-DU-UDU). cooldown block.",
+        "success": "Nice. Island strum (D-DU-UDU).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d12-warm_engine",
+      "session_id": "uke-d12",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "\"You Are My Sunshine\"",
+      "copy": {
+        "setup": "The G chord. warm engine block.",
+        "success": "Nice. The G chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d12-drill",
+      "session_id": "uke-d12",
+      "instrument": "ukulele",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "\"You Are My Sunshine\"",
+      "copy": {
+        "setup": "The G chord. drill block.",
+        "success": "Nice. The G chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d12-song",
+      "session_id": "uke-d12",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "\"You Are My Sunshine\"",
+      "copy": {
+        "setup": "The G chord. song block.",
+        "success": "Nice. The G chord.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/you-are-my-sunshine-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d12-cooldown",
+      "session_id": "uke-d12",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "\"You Are My Sunshine\"",
+      "copy": {
+        "setup": "The G chord. cooldown block.",
+        "success": "Nice. The G chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d13-warm_engine",
+      "session_id": "uke-d13",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Sunshine\" on uke. warm engine block.",
+        "success": "Nice. \"Sunshine\" on uke.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d13-drill",
+      "session_id": "uke-d13",
+      "instrument": "ukulele",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Sunshine\" on uke. drill block.",
+        "success": "Nice. \"Sunshine\" on uke.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d13-song",
+      "session_id": "uke-d13",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Sunshine\" on uke. song block.",
+        "success": "Nice. \"Sunshine\" on uke.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/the-song-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d13-cooldown",
+      "session_id": "uke-d13",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Sunshine\" on uke. cooldown block.",
+        "success": "Nice. \"Sunshine\" on uke.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d14-warm_engine",
+      "session_id": "uke-d14",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "\"Riptide\" intro",
+      "copy": {
+        "setup": "The Em chord. warm engine block.",
+        "success": "Nice. The Em chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d14-drill",
+      "session_id": "uke-d14",
+      "instrument": "ukulele",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "\"Riptide\" intro",
+      "copy": {
+        "setup": "The Em chord. drill block.",
+        "success": "Nice. The Em chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d14-song",
+      "session_id": "uke-d14",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "\"Riptide\" intro",
+      "copy": {
+        "setup": "The Em chord. song block.",
+        "success": "Nice. The Em chord.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/riptide-intro-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d14-cooldown",
+      "session_id": "uke-d14",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "\"Riptide\" intro",
+      "copy": {
+        "setup": "The Em chord. cooldown block.",
+        "success": "Nice. The Em chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d15-warm_engine",
+      "session_id": "uke-d15",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Riptide\" simplified. warm engine block.",
+        "success": "Nice. \"Riptide\" simplified.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d15-drill",
+      "session_id": "uke-d15",
+      "instrument": "ukulele",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Riptide\" simplified. drill block.",
+        "success": "Nice. \"Riptide\" simplified.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d15-song",
+      "session_id": "uke-d15",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Riptide\" simplified. song block.",
+        "success": "Nice. \"Riptide\" simplified.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/the-song-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d15-cooldown",
+      "session_id": "uke-d15",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Riptide\" simplified. cooldown block.",
+        "success": "Nice. \"Riptide\" simplified.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d16-warm_engine",
+      "session_id": "uke-d16",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "D-Em-G switching",
+      "copy": {
+        "setup": "The D chord. warm engine block.",
+        "success": "Nice. The D chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d16-drill",
+      "session_id": "uke-d16",
+      "instrument": "ukulele",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "D-Em-G switching",
+      "copy": {
+        "setup": "The D chord. drill block.",
+        "success": "Nice. The D chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d16-song",
+      "session_id": "uke-d16",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "D-Em-G switching",
+      "copy": {
+        "setup": "The D chord. song block.",
+        "success": "Nice. The D chord.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/d-em-g-switching-loop.mp3",
+        "tempo_bpm": 90,
+        "key": "D",
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d16-cooldown",
+      "session_id": "uke-d16",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "D-Em-G switching",
+      "copy": {
+        "setup": "The D chord. cooldown block.",
+        "success": "Nice. The D chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d17-warm_engine",
+      "session_id": "uke-d17",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "Key-of-G song",
+      "copy": {
+        "setup": "D7 chord. warm engine block.",
+        "success": "Nice. D7 chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d17-drill",
+      "session_id": "uke-d17",
+      "instrument": "ukulele",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "Key-of-G song",
+      "copy": {
+        "setup": "D7 chord. drill block.",
+        "success": "Nice. D7 chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d17-song",
+      "session_id": "uke-d17",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "Key-of-G song",
+      "copy": {
+        "setup": "D7 chord. song block.",
+        "success": "Nice. D7 chord.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/key-of-g-song-loop.mp3",
+        "tempo_bpm": 90,
+        "key": "G",
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d17-cooldown",
+      "session_id": "uke-d17",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "Key-of-G song",
+      "copy": {
+        "setup": "D7 chord. cooldown block.",
+        "success": "Nice. D7 chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d18-warm_engine",
+      "session_id": "uke-d18",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. warm engine block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d18-drill",
+      "session_id": "uke-d18",
+      "instrument": "ukulele",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. drill block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d18-song",
+      "session_id": "uke-d18",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. song block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/user-picks-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d18-cooldown",
+      "session_id": "uke-d18",
+      "instrument": "ukulele",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. cooldown block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d19-warm_engine",
+      "session_id": "uke-d19",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "metronome",
+      "copy": {
+        "setup": "1-minute changes. warm engine block.",
+        "success": "Nice. 1-minute changes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d19-drill",
+      "session_id": "uke-d19",
+      "instrument": "ukulele",
+      "kind": "chord_change_drill",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "metronome",
+      "copy": {
+        "setup": "1-minute changes. drill block.",
+        "success": "Nice. 1-minute changes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d19-song",
+      "session_id": "uke-d19",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "metronome",
+      "copy": {
+        "setup": "1-minute changes. song block.",
+        "success": "Nice. 1-minute changes.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/metronome-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d19-cooldown",
+      "session_id": "uke-d19",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "metronome",
+      "copy": {
+        "setup": "1-minute changes. cooldown block.",
+        "success": "Nice. 1-minute changes.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d20-warm_engine",
+      "session_id": "uke-d20",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "\"Three Little Birds\" full",
+      "copy": {
+        "setup": "Reggae chuck. warm engine block.",
+        "success": "Nice. Reggae chuck.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d20-drill",
+      "session_id": "uke-d20",
+      "instrument": "ukulele",
+      "kind": "strum_drill",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "\"Three Little Birds\" full",
+      "copy": {
+        "setup": "Reggae chuck. drill block.",
+        "success": "Nice. Reggae chuck.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d20-song",
+      "session_id": "uke-d20",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "\"Three Little Birds\" full",
+      "copy": {
+        "setup": "Reggae chuck. song block.",
+        "success": "Nice. Reggae chuck.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/three-little-birds-full-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d20-cooldown",
+      "session_id": "uke-d20",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "\"Three Little Birds\" full",
+      "copy": {
+        "setup": "Reggae chuck. cooldown block.",
+        "success": "Nice. Reggae chuck.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d21-warm_engine",
+      "session_id": "uke-d21",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Three Little Birds\" full. warm engine block.",
+        "success": "Nice. \"Three Little Birds\" full.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d21-drill",
+      "session_id": "uke-d21",
+      "instrument": "ukulele",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Three Little Birds\" full. drill block.",
+        "success": "Nice. \"Three Little Birds\" full.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d21-song",
+      "session_id": "uke-d21",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Three Little Birds\" full. song block.",
+        "success": "Nice. \"Three Little Birds\" full.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/the-song-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d21-cooldown",
+      "session_id": "uke-d21",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "the song",
+      "copy": {
+        "setup": "\"Three Little Birds\" full. cooldown block.",
+        "success": "Nice. \"Three Little Birds\" full.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d22-warm_engine",
+      "session_id": "uke-d22",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "in context",
+      "copy": {
+        "setup": "The A7 chord. warm engine block.",
+        "success": "Nice. The A7 chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d22-drill",
+      "session_id": "uke-d22",
+      "instrument": "ukulele",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "in context",
+      "copy": {
+        "setup": "The A7 chord. drill block.",
+        "success": "Nice. The A7 chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d22-song",
+      "session_id": "uke-d22",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "in context",
+      "copy": {
+        "setup": "The A7 chord. song block.",
+        "success": "Nice. The A7 chord.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/in-context-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d22-cooldown",
+      "session_id": "uke-d22",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "in context",
+      "copy": {
+        "setup": "The A7 chord. cooldown block.",
+        "success": "Nice. The A7 chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d23-warm_engine",
+      "session_id": "uke-d23",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. warm engine block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d23-drill",
+      "session_id": "uke-d23",
+      "instrument": "ukulele",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. drill block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d23-song",
+      "session_id": "uke-d23",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. song block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/user-picks-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d23-cooldown",
+      "session_id": "uke-d23",
+      "instrument": "ukulele",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. cooldown block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d24-warm_engine",
+      "session_id": "uke-d24",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "blues-ish vamp",
+      "copy": {
+        "setup": "The C7 chord. warm engine block.",
+        "success": "Nice. The C7 chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d24-drill",
+      "session_id": "uke-d24",
+      "instrument": "ukulele",
+      "kind": "chord_intro",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "blues-ish vamp",
+      "copy": {
+        "setup": "The C7 chord. drill block.",
+        "success": "Nice. The C7 chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d24-song",
+      "session_id": "uke-d24",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "blues-ish vamp",
+      "copy": {
+        "setup": "The C7 chord. song block.",
+        "success": "Nice. The C7 chord.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/blues-ish-vamp-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d24-cooldown",
+      "session_id": "uke-d24",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "blues-ish vamp",
+      "copy": {
+        "setup": "The C7 chord. cooldown block.",
+        "success": "Nice. The C7 chord.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d25-warm_engine",
+      "session_id": "uke-d25",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "blues loop",
+      "copy": {
+        "setup": "Basic 12-bar blues (C7-F7-G7). warm engine block.",
+        "success": "Nice. Basic 12-bar blues (C7-F7-G7).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d25-drill",
+      "session_id": "uke-d25",
+      "instrument": "ukulele",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "blues loop",
+      "copy": {
+        "setup": "Basic 12-bar blues (C7-F7-G7). drill block.",
+        "success": "Nice. Basic 12-bar blues (C7-F7-G7).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d25-song",
+      "session_id": "uke-d25",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "blues loop",
+      "copy": {
+        "setup": "Basic 12-bar blues (C7-F7-G7). song block.",
+        "success": "Nice. Basic 12-bar blues (C7-F7-G7).",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/blues-loop-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d25-cooldown",
+      "session_id": "uke-d25",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "blues loop",
+      "copy": {
+        "setup": "Basic 12-bar blues (C7-F7-G7). cooldown block.",
+        "success": "Nice. Basic 12-bar blues (C7-F7-G7).",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d26-warm_engine",
+      "session_id": "uke-d26",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "C arpeggio",
+      "copy": {
+        "setup": "Fingerpicking: thumb and index. warm engine block.",
+        "success": "Nice. Fingerpicking: thumb and index.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d26-drill",
+      "session_id": "uke-d26",
+      "instrument": "ukulele",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "C arpeggio",
+      "copy": {
+        "setup": "Fingerpicking: thumb and index. drill block.",
+        "success": "Nice. Fingerpicking: thumb and index.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d26-song",
+      "session_id": "uke-d26",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "C arpeggio",
+      "copy": {
+        "setup": "Fingerpicking: thumb and index. song block.",
+        "success": "Nice. Fingerpicking: thumb and index.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/c-arpeggio-loop.mp3",
+        "tempo_bpm": 90,
+        "key": "C",
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d26-cooldown",
+      "session_id": "uke-d26",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "C arpeggio",
+      "copy": {
+        "setup": "Fingerpicking: thumb and index. cooldown block.",
+        "success": "Nice. Fingerpicking: thumb and index.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d27-warm_engine",
+      "session_id": "uke-d27",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "\"Over the Rainbow\" intro",
+      "copy": {
+        "setup": "Fingerpicking 4-pattern. warm engine block.",
+        "success": "Nice. Fingerpicking 4-pattern.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d27-drill",
+      "session_id": "uke-d27",
+      "instrument": "ukulele",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "\"Over the Rainbow\" intro",
+      "copy": {
+        "setup": "Fingerpicking 4-pattern. drill block.",
+        "success": "Nice. Fingerpicking 4-pattern.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d27-song",
+      "session_id": "uke-d27",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "\"Over the Rainbow\" intro",
+      "copy": {
+        "setup": "Fingerpicking 4-pattern. song block.",
+        "success": "Nice. Fingerpicking 4-pattern.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/over-the-rainbow-intro-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d27-cooldown",
+      "session_id": "uke-d27",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "\"Over the Rainbow\" intro",
+      "copy": {
+        "setup": "Fingerpicking 4-pattern. cooldown block.",
+        "success": "Nice. Fingerpicking 4-pattern.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d28-warm_engine",
+      "session_id": "uke-d28",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. warm engine block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d28-drill",
+      "session_id": "uke-d28",
+      "instrument": "ukulele",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. drill block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d28-song",
+      "session_id": "uke-d28",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. song block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/user-picks-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d28-cooldown",
+      "session_id": "uke-d28",
+      "instrument": "ukulele",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user picks",
+      "copy": {
+        "setup": "Review and free play. cooldown block.",
+        "success": "Nice. Review and free play.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d29-warm_engine",
+      "session_id": "uke-d29",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user's song",
+      "copy": {
+        "setup": "Showcase prep. warm engine block.",
+        "success": "Nice. Showcase prep.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d29-drill",
+      "session_id": "uke-d29",
+      "instrument": "ukulele",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user's song",
+      "copy": {
+        "setup": "Showcase prep. drill block.",
+        "success": "Nice. Showcase prep.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d29-song",
+      "session_id": "uke-d29",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user's song",
+      "copy": {
+        "setup": "Showcase prep. song block.",
+        "success": "Nice. Showcase prep.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/user-s-song-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d29-cooldown",
+      "session_id": "uke-d29",
+      "instrument": "ukulele",
+      "kind": "review",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user's song",
+      "copy": {
+        "setup": "Showcase prep. cooldown block.",
+        "success": "Nice. Showcase prep.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d30-warm_engine",
+      "session_id": "uke-d30",
+      "instrument": "ukulele",
+      "kind": "warm_engine_play",
+      "block_type": "warm_engine",
+      "duration_sec": 90,
+      "focus_song": "user's song",
+      "copy": {
+        "setup": "Showcase day. warm engine block.",
+        "success": "Nice. Showcase day.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d30-drill",
+      "session_id": "uke-d30",
+      "instrument": "ukulele",
+      "kind": "review",
+      "block_type": "drill",
+      "duration_sec": 180,
+      "focus_song": "user's song",
+      "copy": {
+        "setup": "Showcase day. drill block.",
+        "success": "Nice. Showcase day.",
+        "retry": "Let's loop that."
+      }
+    },
+    {
+      "id": "uke-d30-song",
+      "session_id": "uke-d30",
+      "instrument": "ukulele",
+      "kind": "song_chunk",
+      "block_type": "song",
+      "duration_sec": 240,
+      "focus_song": "user's song",
+      "copy": {
+        "setup": "Showcase day. song block.",
+        "success": "Nice. Showcase day.",
+        "retry": "Let's loop that."
+      },
+      "audio": {
+        "backing_track": "assets/audio/ukulele/backing/user-s-song-loop.mp3",
+        "tempo_bpm": 90,
+        "key": null,
+        "loop": true
+      }
+    },
+    {
+      "id": "uke-d30-cooldown",
+      "session_id": "uke-d30",
+      "instrument": "ukulele",
+      "kind": "freeplay",
+      "block_type": "cooldown",
+      "duration_sec": 90,
+      "focus_song": "user's song",
+      "copy": {
+        "setup": "Showcase day. cooldown block.",
+        "success": "Nice. Showcase day.",
+        "retry": "Let's loop that."
+      }
+    }
+  ]
+}

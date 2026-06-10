@@ -12,7 +12,7 @@ function loadJS(file) {
 global.window = global.window || global;
 var _testEval = eval;
 _testEval(loadJS("js/utils/normalize.js"));
-_testEval(loadJS("js/utils/chord_progress.js")); // defines SparkChordProgress global used by page modules
+_testEval(loadJS("js/sparksuite/ui/session_shell.js"));
 
 
 function resetEnvironment() {
@@ -179,8 +179,8 @@ test("practice surfaces ignore malformed legacy progress counters", function() {
   var quizHtml = quizTab();
   var earHtml = earTrainTab();
 
-  assert.ok(practiceHtml.indexOf(">0</div><div style=\"font-size:10px;color:var(--text-muted)\">Sessions</div>") >= 0);
-  assert.ok(practiceHtml.indexOf(">1</div><div style=\"font-size:10px;color:var(--text-muted)\">Mastered</div>") >= 0);
+  assert.ok(practiceHtml.indexOf(">0</div><div class=\"metric-label\" style=\"font-size:10px\">Sessions</div>") >= 0);
+  assert.ok(practiceHtml.indexOf(">1</div><div class=\"metric-label\" style=\"font-size:10px\">Mastered</div>") >= 0);
   assert.ok(practiceHtml.indexOf("Lvl 1") >= 0);
   assert.ok(drillHtml.indexOf("Completed: <strong>0</strong>") >= 0);
   assert.ok(quizHtml.indexOf("Correct: <strong>0</strong>") >= 0);
@@ -191,9 +191,180 @@ test("practice surfaces ignore malformed legacy progress counters", function() {
   assert.ok(earHtml.indexOf("NaN") === -1);
 });
 
+test("practice mini-game cards prefer canonical runtime counters over stale legacy state", function() {
+  global.S.quizCorrect = 1;
+  global.S.earTrainQ = "Legacy Question";
+  global.S.earTrainOpts = ["Legacy Question"];
+  global.S.earTrainAns = null;
+  global.S.earTrainScore = 1;
+  global.S.earTrainTotal = 2;
+  global.S.earTrainStreak = 1;
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        runtimeState: {
+          legacyQuizScore: 7,
+          legacyEarTrainQuestion: "Core Question",
+          legacyEarTrainOptions: ["Core Question", "Runtime Option"],
+          legacyEarTrainAnswer: null,
+          legacyEarTrainScore: 5,
+          legacyEarTrainTotal: 8,
+          legacyEarTrainStreak: 3
+        }
+      };
+    }
+  };
+  global.window.sparkCore = global.sparkCore;
+
+  var quizHtml = quizTab();
+  var earHtml = earTrainTab();
+
+  assert.ok(quizHtml.indexOf("Correct: <strong>7</strong>") >= 0);
+  assert.strictEqual(quizHtml.indexOf("Correct: <strong>1</strong>"), -1);
+  assert.ok(earHtml.indexOf("Core Question") >= 0);
+  assert.ok(earHtml.indexOf("Runtime Option") >= 0);
+  assert.strictEqual(earHtml.indexOf("Legacy Question"), -1);
+  assert.ok(earHtml.indexOf("5/8") >= 0);
+});
+
 test("homePage uses rehydrated tab renderers from the active instrument module", function() {
   var html = homePage();
   assert.ok(html.indexOf("Piano Practice") >= 0);
+});
+
+test("homePage games and tools tabs render real loaded sections instead of stub cards", function() {
+  var module = SparkInstruments.getAll()[0];
+  module.tabs = [
+    { id: "games", label: "Games", icon: "G" },
+    { id: "tools", label: "Tools", icon: "T" }
+  ];
+  module.tabRenderers = {};
+  global.rhythmTab = function() { return "<div>Real Rhythm Runtime</div>"; };
+  global.runnerTab = function() { return "<div>Real Runner Runtime</div>"; };
+  global.buildTab = function() { return "<div>Real Builder Runtime</div>"; };
+  global.tunerTab = function() { return "<div>Real Tuner Runtime</div>"; };
+  global.statsTab = function() { return "<div>Real Stats Runtime</div>"; };
+  global.guideTab = function() { return "<div>Real Guide Runtime</div>"; };
+
+  S.tab = "games";
+  var gamesHtml = homePage();
+  S.tab = "tools";
+  var toolsHtml = homePage();
+
+  assert.ok(gamesHtml.indexOf("Real Rhythm Runtime") >= 0);
+  assert.ok(gamesHtml.indexOf("Real Runner Runtime") >= 0);
+  assert.ok(gamesHtml.indexOf("Real Builder Runtime") >= 0);
+  assert.strictEqual(gamesHtml.indexOf("Mini-games and challenges."), -1);
+  assert.ok(toolsHtml.indexOf("Real Tuner Runtime") >= 0);
+  assert.ok(toolsHtml.indexOf("Real Stats Runtime") >= 0);
+  assert.ok(toolsHtml.indexOf("Real Guide Runtime") >= 0);
+  assert.strictEqual(toolsHtml.indexOf("Tuner, metronome, and utilities."), -1);
+});
+
+test("shared practice tab renderers survive piano page globals for guitar tabs", function() {
+  global.sparkCore = null;
+  global.window.sparkCore = null;
+  global.S.quizQ = null;
+  global.S.earTrainQ = null;
+  global.S.dailyChallenge = { id: "switch", icon: "D", title: "Daily Switch", desc: "Move cleanly", xp: 10 };
+  global.eval(loadJS("js/instruments/piano/pages/games.js"));
+
+  var renderers = getSharedHomeTabRenderers();
+
+  assert.ok(typeof SparkSharedPracticeRenderers.drillTab === "function");
+  assert.ok(drillTab().indexOf("Chord Drill") >= 0);
+  assert.ok(renderers.drill().indexOf("Chord Switching") >= 0);
+  assert.strictEqual(renderers.drill().indexOf("Chord Drill"), -1);
+  assert.ok(dailyTab().indexOf("Daily Challenges") >= 0);
+  assert.ok(renderers.daily().indexOf("Daily Challenge") >= 0);
+  assert.strictEqual(renderers.daily().indexOf("Daily Challenges"), -1);
+  assert.ok(quizTab().indexOf("start_quiz") >= 0);
+  assert.ok(renderers.quiz().indexOf("startQuiz") >= 0);
+  assert.strictEqual(renderers.quiz().indexOf("start_quiz"), -1);
+  assert.ok(earTrainTab().indexOf("start_ear") >= 0);
+  assert.ok(renderers.ear().indexOf("startEarTrain") >= 0);
+  assert.strictEqual(renderers.ear().indexOf("start_ear"), -1);
+});
+
+test("shared tool tab renderers survive piano page globals for guitar tabs", function() {
+  global.eval(loadJS("js/pages/tools.js"));
+  global.eval(loadJS("js/instruments/piano/pages/tools.js"));
+
+  var renderers = getSharedHomeTabRenderers();
+
+  assert.ok(typeof SparkSharedToolRenderers.statsTab === "function");
+  assert.strictEqual(renderers.stats, SparkSharedToolRenderers.statsTab);
+  assert.strictEqual(renderers.guide, SparkSharedToolRenderers.guideTab);
+});
+
+test("shared tool renderers use shared card and metric typography classes", function() {
+  global.eval(loadJS("js/pages/tools.js"));
+  global.getChordTier = function(name) {
+    return name === "C" ? { tier: "gold" } : { tier: "none" };
+  };
+  global.tierBadgeHTML = function() { return ""; };
+  global.SparkTransitionStats = {
+    all: function() {
+      return { "C->G": { attempts: 3, avgTime: 1.8, best: 1.2 } };
+    }
+  };
+  global.localStorage = {
+    getItem: function() {
+      return JSON.stringify({ xp: 8, level: 2, sessions: 1, streak: 2 });
+    }
+  };
+  global.S.history = [
+    { date: new Date().toISOString().split("T")[0], type: "session", detail: "C", xp: 5 },
+    { date: new Date().toISOString().split("T")[0], type: "quiz", detail: "C", xp: 3 }
+  ];
+  global.S.quizCorrect = 1;
+  global.S.quizTotal = 1;
+  global.S.midiEnabled = true;
+  global.S.midiDevices = [{ id: "midi_1", name: "Virtual Synth" }];
+  global.S.midiOutput = true;
+  global.S.midiOutputId = "midi_1";
+
+  var tunerHtml = SparkSharedToolRenderers.tunerTab();
+  var statsHtml = SparkSharedToolRenderers.statsTab();
+  var guideHtml = SparkSharedToolRenderers.guideTab();
+
+  assert.ok(tunerHtml.indexOf("card-section-heading") >= 0);
+  assert.ok(tunerHtml.indexOf("action-row") >= 0);
+  assert.ok(statsHtml.indexOf("card-section-heading") >= 0);
+  assert.ok(statsHtml.indexOf("metric-value") >= 0);
+  assert.ok(statsHtml.indexOf("metric-label") >= 0);
+  assert.ok(statsHtml.indexOf("action-row") >= 0);
+  assert.ok(guideHtml.indexOf("card-section-heading") >= 0);
+  assert.ok(guideHtml.indexOf("card-micro-heading") >= 0);
+  assert.ok(guideHtml.indexOf("split-row") >= 0);
+});
+
+test("shared tool renderers avoid representative raw heavy heading strings", function() {
+  global.eval(loadJS("js/pages/tools.js"));
+  global.S.midiEnabled = false;
+
+  var tunerHtml = SparkSharedToolRenderers.tunerTab();
+  var statsHtml = SparkSharedToolRenderers.statsTab();
+  var guideHtml = SparkSharedToolRenderers.guideTab();
+
+  assert.strictEqual(tunerHtml.indexOf('font-size:20px;font-weight:800;color:var(--text-primary);margin:0 0 8px'), -1);
+  assert.strictEqual(statsHtml.indexOf('font-size:22px;font-weight:900;color:var(--text-primary)">&#128202; Practice Stats'), -1);
+  assert.strictEqual(statsHtml.indexOf('font-size:15px;font-weight:800;color:var(--text-primary)">&#128197; Last 30 Days'), -1);
+  assert.strictEqual(guideHtml.indexOf('font-size:16px;font-weight:800;color:var(--text-primary)">&#127912; Chart Legend'), -1);
+  assert.strictEqual(guideHtml.indexOf('font-size:22px;font-weight:900;color:var(--text-primary)">&#128214; How to Read Chord Charts'), -1);
+});
+
+test("practice instrument switcher rows expose keyboard handlers", function() {
+  var source = loadJS("js/pages/practice.js");
+  var uiSource = loadJS("js/ui.js");
+  assert.ok(source.indexOf('sv2-inst-row__item" role="button" tabindex="0"') >= 0);
+  assert.ok(source.indexOf('onclick="act(\\\'reset\\\')"') >= 0);
+  assert.ok(source.indexOf('onclick="act(\\\'previewChord\\\',\\\'') >= 0);
+  assert.strictEqual(source.indexOf("event.stopPropagation();act('previewChord'"), -1);
+  assert.ok(uiSource.indexOf('if(event.target&&event.target.closest&&event.target.closest(&quot;button,input,select,textarea,a&quot;)){return;}') >= 0);
+  assert.strictEqual(uiSource.indexOf('onclick="'+
+    'if(event.target&&event.target.closest&&event.target.closest("button,input,select,textarea,a")){return;}'), -1);
+  assert.ok(loadJS("js/pages/plan.js").indexOf('onclick="act(\\\'practiceStartItem\\\', this.getAttribute(\\\'data-item-id\\\'))"') >= 0);
 });
 
 test("practicePage renders human plan labels from a core-backed daily practice plan", function() {
@@ -251,7 +422,7 @@ test("practicePage does not generate a plan during render and shows an empty sta
   assert.strictEqual(html.indexOf("Generated Plan Row"), -1);
 });
 
-test("practicePage falls back to cached plan state when the practice bridge is unavailable", function() {
+test("practicePage prefers the active core plan when the practice bridge is unavailable", function() {
   global.getPracticeStats = function() {
     return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
   };
@@ -275,8 +446,8 @@ test("practicePage falls back to cached plan state when the practice bridge is u
   };
 
   var html = practicePage();
-  assert.ok(html.indexOf("Cached Warmup") >= 0);
-  assert.strictEqual(html.indexOf("Core Warmup"), -1);
+  assert.ok(html.indexOf("Core Warmup") >= 0);
+  assert.strictEqual(html.indexOf("Cached Warmup"), -1);
 });
 
 test("practicePage does not render completed items as clickable start buttons", function() {
@@ -332,6 +503,173 @@ test("practicePage and planPage ignore string false completion flags in cached i
   assert.strictEqual(practiceHtml.indexOf(">Done<"), -1);
   assert.strictEqual(planHtml.indexOf(">Done<"), -1);
   assert.strictEqual(planHtml.indexOf("Plan completed!"), -1);
+});
+
+test("planPage and launchPracticePlanItem can resolve sparkCore from the global binding", function() {
+  var launchedItem = null;
+  global.SparkPracticeBridge = {
+    toLegacyPlan: function(plan) { return plan._legacyPlan; }
+  };
+  global.window = {
+    SparkPracticeBridge: global.SparkPracticeBridge
+  };
+  global.launchPracticeItem = function(item) {
+    launchedItem = item;
+  };
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: null
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          _legacyPlan: {
+            focus: "Core focus",
+            items: [
+              { id: "practice_1", type: "practice", label: "Core Warmup", completed: false, meta: { exerciseId: "warmup_1", instrument: "piano" } }
+            ]
+          }
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var planHtml = planPage();
+  launchPracticePlanItem("practice_1");
+
+  assert.ok(planHtml.indexOf("Core Warmup") >= 0);
+  assert.deepStrictEqual(launchedItem, {
+    id: "practice_1",
+    type: "practice",
+    label: "Core Warmup",
+    completed: false,
+    meta: { exerciseId: "warmup_1", instrument: "piano" }
+  });
+});
+
+test("practicePage and planPage surface the live daily-practice shell from sparkCore", function() {
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.SparkPracticeBridge = {
+    toLegacyPlan: function(plan) { return plan._legacyPlan; }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          focus: "Timing focus",
+          segments: [
+            { id: "practice_1", type: "practice", label: "Quick warmup", durationSec: 120, completed: false, exerciseIds: ["ex_1"] },
+            { id: "song_1", type: "song", label: "Song push", durationSec: 240, completed: false, exerciseIds: ["ex_2"] }
+          ],
+          _legacyPlan: {
+            focus: "Timing focus",
+            items: [
+              { id: "practice_1", type: "practice", label: "Quick warmup", completed: false, meta: { exerciseId: "warmup_1", instrument: "piano" } },
+              { id: "song_1", type: "song", label: "Song push", completed: false, meta: { songId: "moonlight", instrument: "piano" } }
+            ]
+          }
+        },
+        activeSegment: {
+          id: "practice_1",
+          type: "practice",
+          label: "Quick warmup",
+          durationSec: 120,
+          exerciseIds: ["ex_1"]
+        },
+        runtimeState: {
+          activeSegmentId: "practice_1",
+          transport: {
+            status: "paused",
+            positionMs: 45
+          }
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var practiceHtml = practicePage();
+  var summaryHtml = practiceTab();
+  var planHtml = planPage();
+
+  assert.ok(practiceHtml.indexOf("Practice Session Live") >= 0);
+  assert.ok(practiceHtml.indexOf("Paused - Quick warmup") >= 0);
+  assert.ok(practiceHtml.indexOf("Resume Block") >= 0);
+  assert.ok(practiceHtml.indexOf("Skip Block") >= 0);
+  assert.ok(summaryHtml.indexOf("Practice Session Live") >= 0);
+  assert.ok(planHtml.indexOf("Practice Session Live") >= 0);
+  assert.ok(planHtml.indexOf("Block 1 of 2") >= 0);
+  assert.ok(planHtml.indexOf("Resume Block") >= 0);
+});
+
+test("planPage keeps daily shell metadata honest when duration is missing from the active shell", function() {
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: null,
+    guidedSession: 1,
+    completedGuidedSessions: [],
+    practicePlanComplete: false,
+    practicePlan: null
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "daily_practice",
+          focus: "Timing focus",
+          segments: [
+            { id: "practice_1", type: "practice", label: "Quick warmup", completed: false, exerciseIds: ["ex_1"] },
+            { id: "song_1", type: "song", label: "Song push", completed: false, exerciseIds: ["ex_2"] }
+          ],
+          _legacyPlan: null
+        },
+        activeSegment: {
+          id: "practice_1",
+          type: "practice",
+          label: "Quick warmup",
+          exerciseIds: ["ex_1"]
+        },
+        runtimeState: {
+          activeSegmentId: "practice_1",
+          transport: {
+            status: "paused",
+            positionMs: 45
+          }
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var html = planPage();
+  assert.ok(html.indexOf("Practice Session Live") >= 0);
+  assert.ok(html.indexOf("2 blocks") >= 0);
+  assert.ok(html.indexOf('data-action="sessionResumeBlock"') >= 0);
+  assert.strictEqual(html.indexOf("onclick=\"act('sessionResumeBlock')\""), -1);
+  assert.strictEqual(html.indexOf("10 min shell"), -1);
+  assert.strictEqual(html.indexOf("0 min shell"), -1);
 });
 
 test("practicePage and practiceTab safely render cached item ids containing apostrophes", function() {
@@ -1022,7 +1360,50 @@ test("planPage stays read-only when no plan exists and shows an empty state", fu
   assert.strictEqual(html.indexOf("Generated Plan Row"), -1);
 });
 
-test("planPage falls back to cached plan state when the practice bridge is unavailable", function() {
+test("planPage pivots into guided resume mode when a guided session is active and no daily plan exists", function() {
+  global.S = {
+    practicePlanComplete: false,
+    practicePlan: null
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned",
+              target_duration_min: 10,
+              blocks: [
+                { type: "warm_engine", duration_sec: 90 },
+                { type: "drill", duration_sec: 180 },
+                { type: "song", duration_sec: 240 },
+                { type: "cooldown", duration_sec: 90 }
+              ]
+            }
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice"
+        }
+      };
+    }
+  };
+
+  var html = planPage();
+  assert.ok(html.indexOf("Guided Session Flow") >= 0);
+  assert.ok(html.indexOf("Guided Session Live") >= 0);
+  assert.ok(html.indexOf("How guitars get tuned") >= 0);
+  assert.ok(html.indexOf("In progress - Song block") >= 0);
+  assert.ok(html.indexOf("Your live guided shell is the plan right now.") >= 0);
+  assert.ok(html.indexOf("Resume Guided Session") >= 0);
+  assert.ok(html.indexOf("act('resume_guided_session')") >= 0);
+  assert.strictEqual(html.indexOf("No practice plan yet."), -1);
+});
+
+test("planPage prefers the active core plan when the practice bridge is unavailable", function() {
   global.S = {
     practicePlanComplete: false,
     practicePlan: {
@@ -1048,8 +1429,8 @@ test("planPage falls back to cached plan state when the practice bridge is unava
   global.eval(loadJS("js/pages/plan.js"));
 
   var html = planPage();
-  assert.ok(html.indexOf("Cached Warmup") >= 0);
-  assert.strictEqual(html.indexOf("Core Warmup"), -1);
+  assert.ok(html.indexOf("Core Warmup") >= 0);
+  assert.strictEqual(html.indexOf("Cached Warmup"), -1);
 });
 
 test("planPage does not render completed items as clickable go buttons", function() {
@@ -1569,6 +1950,55 @@ test("startPracticeItem skips null cached plan rows when launching by id", funct
   assert.deepStrictEqual(launched, ["practice_1"]);
 });
 
+test("startPracticeItem opens shared shell blocks before legacy item launch", function() {
+  var launched = [];
+  var renderCalls = 0;
+  var runtimeCalls = [];
+  global.SCR = { SESSION: "session" };
+  global.S = {
+    screen: "plan",
+    practicePlan: {
+      flow: "daily_practice",
+      items: [
+        { id: "uke_favorites_set_a_warmup", type: "warmup", completed: false }
+      ],
+      segments: [
+        { id: "uke_favorites_set_a_warmup", type: "warmup", meta: { ukuleleMiniSessionId: "uke_favorites_set_a" } }
+      ]
+    }
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return { plan: global.S.practicePlan };
+    },
+    syncSessionRuntime: function(options) {
+      runtimeCalls.push(options);
+      return true;
+    }
+  };
+  global.SparkSessionRuntime = {
+    runSegmentById: function(id) {
+      runtimeCalls.push({ id: id });
+      return true;
+    }
+  };
+  global.launchPracticeItem = function(item) {
+    launched.push(item && item.id);
+  };
+  global.render = function() {
+    renderCalls++;
+  };
+
+  startPracticeItem("uke_favorites_set_a_warmup");
+
+  assert.deepStrictEqual(launched, []);
+  assert.strictEqual(global.S.screen, "session");
+  assert.strictEqual(renderCalls, 1);
+  assert.strictEqual(runtimeCalls[0].segmentId, "uke_favorites_set_a_warmup");
+  assert.strictEqual(runtimeCalls[0].status, "running");
+  assert.strictEqual(runtimeCalls.length, 1);
+});
+
 test("startPracticeItem fails safely when a cached plan shell omits items", function() {
   var launched = [];
   global.getPracticeStats = function() {
@@ -1931,7 +2361,67 @@ test("practiceTab shows an empty-state practice plan card when no plan exists", 
   assert.ok(html.indexOf("No practice plan yet.") >= 0);
 });
 
-test("practiceTab falls back to cached plan state when the practice bridge is unavailable", function() {
+test("practiceTab pivots the plan area into guided resume mode when a guided session is active", function() {
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: "Em",
+    guidedSession: 2,
+    completedGuidedSessions: ["gtr-d01"],
+    practicePlan: null
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned",
+              target_duration_min: 10,
+              blocks: [
+                { type: "warm_engine", duration_sec: 90 },
+                { type: "drill", duration_sec: 180 },
+                { type: "song", duration_sec: 240 },
+                { type: "cooldown", duration_sec: 90 }
+              ]
+            },
+            totalGuidedSessions: 30,
+            completedGuidedSessions: 1,
+            guidedShellDurationSec: 600
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice"
+        }
+      };
+    }
+  };
+
+  var html = practiceTab();
+  assert.ok(html.indexOf("Resume Guided Session") >= 0);
+  assert.ok(html.indexOf("Guided Session Flow") >= 0);
+  assert.ok(html.indexOf("Your live guided shell is the plan right now.") >= 0);
+  assert.ok(html.indexOf("How guitars get tuned") >= 0);
+  assert.ok(html.indexOf("In progress - Song block") >= 0);
+  assert.strictEqual(html.indexOf("No practice plan yet."), -1);
+});
+
+test("practiceTab prefers the active core plan when the practice bridge is unavailable", function() {
   global.S = {
     level: 1,
     selectedLevel: 1,
@@ -1973,8 +2463,74 @@ test("practiceTab falls back to cached plan state when the practice bridge is un
   };
 
   var html = practiceTab();
-  assert.ok(html.indexOf("Cached Warmup") >= 0);
-  assert.strictEqual(html.indexOf("Core Warmup"), -1);
+  assert.ok(html.indexOf("Core Warmup") >= 0);
+  assert.strictEqual(html.indexOf("Cached Warmup"), -1);
+});
+
+test("practiceTab embedded plan rows keep action buttons from crowding item copy", function() {
+  global.S.practicePlan = {
+    focus: "Long labels",
+    completedItems: 0,
+    totalItems: 1,
+    items: [{
+      id: "long_1",
+      label: "Replay the performance phrase with an unusually long title",
+      desc: "Low recent performance accuracy",
+      completed: false
+    }]
+  };
+
+  var html = practiceTab();
+  var styles = loadJS("styles.css");
+
+  assert.ok(html.indexOf("practice-summary-item") >= 0);
+  assert.ok(html.indexOf("practice-summary-copy") >= 0);
+  assert.ok(styles.indexOf(".practice-summary-item") >= 0);
+  assert.ok(styles.indexOf(".practice-summary-copy") >= 0);
+  assert.ok(styles.indexOf(".practice-summary-item .btn") >= 0);
+  assert.ok(styles.indexOf("flex-wrap:wrap") >= 0);
+});
+
+test("practiceTab card micro-headings use lighter dashboard typography", function() {
+  global.S.lastChordName = "Em";
+  global.S.practicePlan = {
+    focus: "Song mastery",
+    completedItems: 0,
+    totalItems: 1,
+    items: [{ id: "plan_1", label: "Warmup", desc: "Start light", completed: false }]
+  };
+
+  var html = practiceTab();
+  var styles = loadJS("styles.css");
+
+  assert.ok(html.indexOf("practice-card-heading") >= 0);
+  assert.ok(html.indexOf("practice-quick-title") >= 0);
+  assert.ok(styles.indexOf(".practice-card-heading") >= 0);
+  assert.ok(styles.indexOf(".practice-quick-title") >= 0);
+  assert.ok(styles.indexOf("font-weight:700") >= 0);
+  assert.strictEqual(html.indexOf("font-size:16px;font-weight:900;color:#fff\">Pick Up Where You Left Off"), -1);
+  assert.strictEqual(html.indexOf("font-size:15px;font-weight:800;color:var(--text-primary)\">&#128221; Today"), -1);
+});
+
+test("legacy practice helper cards use shared visual contract classes", function() {
+  var statsHtml = renderPracticeStatsCard({
+    streak: 3,
+    todayMinutes: 12,
+    totalMinutes: 90
+  });
+  var rowsHtml = renderPracticePlanRows({
+    items: [
+      { id: "plan_1", label: "Warmup", desc: "Start light", completed: false }
+    ]
+  });
+
+  assert.ok(statsHtml.indexOf("card-section-heading") >= 0);
+  assert.ok(statsHtml.indexOf("metric-label") >= 0);
+  assert.ok(statsHtml.indexOf("metric-value") >= 0);
+  assert.ok(rowsHtml.indexOf("card-section-heading") >= 0);
+  assert.ok(rowsHtml.indexOf("split-row") >= 0);
+  assert.strictEqual(statsHtml.indexOf("<b>Practice Stats</b>"), -1);
+  assert.strictEqual(rowsHtml.indexOf("<b>Today's Practice Plan</b>"), -1);
 });
 
 test("practiceTab treats malformed cached plan shells without array items as empty state", function() {
@@ -2316,6 +2872,70 @@ test("practiceTab, practicePage, and planPage treat whitespace-only label shells
   assert.ok(summaryHtml.indexOf("No practice plan yet.") >= 0);
   assert.ok(practiceHtml.indexOf("No practice plan yet.") >= 0);
   assert.ok(planHtml.indexOf("No practice plan yet.") >= 0);
+});
+
+test("shared guided plan surfaces stay honest when the active shell has no duration or block metadata", function() {
+  global.getPracticeStats = function() {
+    return { streak: 3, todayMinutes: 5, totalMinutes: 42 };
+  };
+  global.S = {
+    level: 1,
+    selectedLevel: 1,
+    xp: 12,
+    streak: 3,
+    sessions: 2,
+    chordProgress: { C: 100 },
+    todayPracticeSeconds: 300,
+    dailyGoalMinutes: 10,
+    goalReachedToday: false,
+    goalStreak: 1,
+    tab: "practice",
+    customSets: [],
+    earnedBadges: [],
+    importMsg: null,
+    lastChordName: null,
+    guidedSession: 2,
+    completedGuidedSessions: [],
+    practicePlanComplete: false,
+    practicePlan: null
+  };
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: {
+            guidedSession: 2,
+            guidedPlan: {
+              num: 2,
+              title: "How guitars get tuned"
+            }
+          }
+        },
+        runtimeState: {
+          activeScreen: "guided_session",
+          guidedStep: "songSlice",
+          guidedNewMovePhase: null
+        }
+      };
+    }
+  };
+  global.eval(loadJS("js/pages/plan.js"));
+
+  var summaryHtml = practiceTab();
+  var planHtml = planPage();
+
+  assert.ok(summaryHtml.indexOf("Guided Session Flow") >= 0);
+  assert.ok(summaryHtml.indexOf("How guitars get tuned") >= 0);
+  assert.ok(summaryHtml.indexOf("In progress - Song block") >= 0);
+  assert.ok(summaryHtml.indexOf("Guided shell") >= 0);
+  assert.strictEqual(summaryHtml.indexOf("4 blocks"), -1);
+  assert.strictEqual(summaryHtml.indexOf("10 min shell"), -1);
+  assert.ok(planHtml.indexOf("Guided Session Flow") >= 0);
+  assert.ok(planHtml.indexOf("Resume Guided Session") >= 0);
+  assert.ok(planHtml.indexOf("Guided shell") >= 0 || planHtml.indexOf("Shell details loading") >= 0);
+  assert.strictEqual(planHtml.indexOf("4 blocks"), -1);
+  assert.strictEqual(planHtml.indexOf("10 min shell"), -1);
 });
 
 test("sv2HomeDashboard uses instrumentType when the rehydrated module does not expose instrument", function() {

@@ -2,7 +2,7 @@ function prettyHomeCardToken(value){
   var text;
   var lower;
   if(value == null) return "";
-  if(typeof value === "number" || typeof value === "boolean" || typeof value === "object" || typeof value === "function" || typeof value === "symbol") return "";
+  if(typeof value !== "string" && typeof value !== "number") return "";
   text = String(value || "").replace(/_/g, " ").trim();
   if(!text) return "";
   lower = text.toLowerCase();
@@ -23,7 +23,7 @@ function buildHomeWeakSkillLabel(entry) {
 
 function renderHomeProfileCard(data){
   var h = '<div class="card">';
-  h += '<div><b>Profile</b></div>';
+  h += '<div class="card-section-heading">Profile</div>';
   h += '<div>Level: '+data.level+'</div>';
   h += '<div>XP: '+data.xp+'</div>';
   h += '<div>Streak: '+data.streak+' days</div>';
@@ -33,7 +33,7 @@ function renderHomeProfileCard(data){
 
 function renderHomePracticeCard(data){
   var h = '<div class="card">';
-  h += '<div><b>Today\'s Practice</b></div>';
+  h += '<div class="card-section-heading">Today\'s Practice</div>';
   var plan = data.todayPlan || [];
   if(!plan.length){
     h += '<div>No plan yet.</div>';
@@ -44,13 +44,25 @@ function renderHomePracticeCard(data){
     h += '<div>'+escHTML(itemLabel)+'</div>';
   }
   h += '<button onclick="act(\'openPracticePlan\')">Open Plan</button>';
+  h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">';
+  h += '<button onclick="act(\'openPracticeTemplate\',\'quick_win\')">Quick Win 10</button>';
+  h += '<button onclick="act(\'openPracticeTemplate\',\'low_energy\')">Low Energy 10</button>';
+  h += '<button onclick="act(\'openPracticeTemplate\',\'reset_focus\')">Reset Focus 10</button>';
+  h += '</div>';
+  if(String(data.activeInstrumentType || "").toLowerCase() === "ukulele" || String(data.activeInstrumentType || "").toLowerCase() === "ukespark"){
+    h += '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">';
+    h += '<button onclick="act(\'openUkuleleMiniSession\',\'uke_favorites_set_a\')">Uke Set A</button>';
+    h += '<button onclick="act(\'openUkuleleMiniSession\',\'uke_favorites_set_b\')">Uke Set B</button>';
+    h += '<button onclick="act(\'openUkuleleMiniSession\',\'uke_favorites_set_c\')">Uke Set C</button>';
+    h += '</div>';
+  }
   h += '</div>';
   return h;
 }
 
 function renderHomeRecommendationCard(arr){
   var h = '<div class="card">';
-  h += '<div><b>Recommended Next</b></div>';
+  h += '<div class="card-section-heading">Recommended Next</div>';
   for(var i=0;i<arr.length;i++){
     if(!arr[i]) continue;
     var title = buildHomeCardEntryLabel(arr[i].title, arr[i].id);
@@ -93,7 +105,7 @@ function renderHomeRecommendationDetail(item){
 
 function renderHomeChallengeCard(arr){
   var h = '<div class="card">';
-  h += '<div><b>Challenges</b></div>';
+  h += '<div class="card-section-heading">Challenges</div>';
   for(var i=0;i<arr.length;i++){
     h += '<div>'+escHTML(arr[i].title)+' '+(arr[i].progress||0)+'/'+(arr[i].target||0)+'</div>';
   }
@@ -104,7 +116,7 @@ function renderHomeChallengeCard(arr){
 
 function renderHomeCareerCard(data){
   var h = '<div class="card">';
-  h += '<div><b>Career</b></div>';
+  h += '<div class="card-section-heading">Career</div>';
   if(data.nextSong){
     h += '<div>Next: '+escHTML(data.nextSong)+'</div>';
     h += '<button onclick="act(\'openCareer\')">Open Career</button>';
@@ -117,7 +129,7 @@ function renderHomeCareerCard(data){
 
 function renderHomePackCard(data){
   var h = '<div class="card">';
-  h += '<div><b>Packs</b></div>';
+  h += '<div class="card-section-heading">Packs</div>';
   var packs = (data && data.packs) || {};
   var any = false;
   for(var id in packs){
@@ -131,7 +143,7 @@ function renderHomePackCard(data){
 
 function renderHomeInsightCard(data){
   var h = '<div class="card">';
-  h += '<div><b>Insights</b></div>';
+  h += '<div class="card-section-heading">Insights</div>';
   var focused = data && data.recommendationQuality ? data.recommendationQuality.focusedTechnique : null;
   var focusedLabel = buildHomeFocusedTechniqueLabel(focused);
   if(focusedLabel){
@@ -159,7 +171,7 @@ function buildHomeFocusedTechniqueLabel(focused){
 
 function renderHomeEventCard(data){
   var h = '<div class="card">';
-  h += '<div><b>Event</b></div>';
+  h += '<div class="card-section-heading">Event</div>';
   if(data && data.title){
     h += '<div>'+escHTML(data.title)+'</div>';
   }else{
@@ -171,7 +183,7 @@ function renderHomeEventCard(data){
 
 function renderHomeSystemCard(data){
   var h = '<div class="card">';
-  h += '<div><b>System</b></div>';
+  h += '<div class="card-section-heading">System</div>';
   h += '<div>Version: '+escHTML(data.version)+'</div>';
   h += '<div>Cloud: '+escHTML(data.cloudStatus)+'</div>';
   h += '</div>';

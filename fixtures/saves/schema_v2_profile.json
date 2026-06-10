@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 2,
+  "userId": "fixture_v2",
+  "xp": 28,
+  "level": 2,
+  "selectedInstrument": "piano",
+  "mastery": {
+    "pno-d01": {
+      "mastery": 0.61
+    }
+  },
+  "streaks": {},
+  "achievements": []
+}

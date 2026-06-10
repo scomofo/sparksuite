@@ -253,7 +253,9 @@
       for (var si = 0; si < SONGS.length; si++) {
         if (!SONGS[si].progression || !SONGS[si].progression.length) continue;
         totalSongs++;
-        var sid = (SONGS[si].title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
+        var sid = typeof resolvePerformanceSongId === "function"
+          ? resolvePerformanceSongId(SONGS[si], SONGS[si] && SONGS[si].title)
+          : (SONGS[si].title || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
         for (var pk in S.performanceStats) {
           if (pk.indexOf(sid) === 0 && S.performanceStats[pk].runs > 0) {
             playedSongs++;

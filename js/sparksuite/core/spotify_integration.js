@@ -6,12 +6,12 @@
    *
    * Load this file AFTER spark_core.js.
    */
-  if (typeof SparkSuiteCore === "undefined") return;
+  if (typeof SparkCore === "undefined") return;
 
   /**
    * Initialize Spotify integration. Call once after obtaining an OAuth token.
    */
-  SparkSuiteCore.prototype.initSpotify = function(token) {
+  SparkCore.prototype.initSpotify = function(token) {
     this.spotifyClient = new SparkSpotifyClient(token);
     this.trackAnalyzer = new SparkTrackAnalyzer(this.spotifyClient);
     this.playbackEngine = new SparkPlaybackEngine(this.spotifyClient);
@@ -30,7 +30,7 @@
    * @param {Object} input - { trackId, difficulty, instrument }
    * @returns {Promise<SessionPlan>}
    */
-  SparkSuiteCore.prototype.startSpotifySession = function(input) {
+  SparkCore.prototype.startSpotifySession = function(input) {
     input = input || {};
     var self = this;
     var instrumentContext = this.instrumentManager.getActiveContext();
@@ -59,7 +59,7 @@
   /**
    * Start Spotify playback for the current play-along session.
    */
-  SparkSuiteCore.prototype.startSpotifyPlayback = function(options) {
+  SparkCore.prototype.startSpotifyPlayback = function(options) {
     if (!this.playbackEngine || !this.currentPlan) return Promise.resolve(false);
     var ctx = this.currentPlan.context && this.currentPlan.context.spotifyPlayAlong;
     if (!ctx || !ctx.playAlongChart) return Promise.resolve(false);
@@ -73,7 +73,7 @@
   /**
    * Stop Spotify playback.
    */
-  SparkSuiteCore.prototype.stopSpotifyPlayback = function() {
+  SparkCore.prototype.stopSpotifyPlayback = function() {
     if (!this.playbackEngine) return Promise.resolve(false);
     var self = this;
     return this.playbackEngine.stop().then(function() {
@@ -85,7 +85,7 @@
   /**
    * Seek to a specific position (for looping/restart).
    */
-  SparkSuiteCore.prototype.seekSpotify = function(positionMs) {
+  SparkCore.prototype.seekSpotify = function(positionMs) {
     if (!this.playbackEngine) return Promise.resolve(false);
     return this.playbackEngine.seekTo(positionMs);
   };
@@ -94,7 +94,7 @@
    * Complete a Spotify play-along session with results.
    * Runs practice intelligence to recommend next session adaptations.
    */
-  SparkSuiteCore.prototype.completeSpotifySession = function(results) {
+  SparkCore.prototype.completeSpotifySession = function(results) {
     results = results || {};
     this.stopSpotifyPlayback();
 
@@ -130,7 +130,7 @@
   /**
    * Handle a voice command during a Spotify session.
    */
-  SparkSuiteCore.prototype.handleSpotifyVoiceCommand = function(command) {
+  SparkCore.prototype.handleSpotifyVoiceCommand = function(command) {
     if (!command || command.action === "none") return;
     switch (command.action) {
       case "slow":

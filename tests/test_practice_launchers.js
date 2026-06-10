@@ -42,6 +42,7 @@ function resetState() {
     getActive: function() { return null; },
     getAll: function() { return []; }
   };
+  global.sparkCore = null;
 }
 
 resetState();
@@ -145,7 +146,57 @@ test("launchPracticeItem infers guided launches from generic core practice segme
 
   assert.strictEqual(launched, true);
   assert.deepStrictEqual(global._acts, [
-    { name: "guidedStart", value: 2 }
+    { name: "start_guided_session", value: 2 }
+  ]);
+});
+
+test("launchGuidedSessionItem resumes the active guided shell when the item matches the live session", function() {
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: { guidedSession: 2 }
+        },
+        runtimeState: {
+          activeScreen: "guided_session"
+        }
+      };
+    }
+  };
+
+  var launched = launchGuidedSessionItem({
+    meta: { guidedSession: 2 }
+  });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(global._acts, [
+    { name: "resume_guided_session", value: undefined }
+  ]);
+});
+
+test("launchGuidedSessionItem starts a different guided day when the requested session differs from the live shell", function() {
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: { guidedSession: 2 }
+        },
+        runtimeState: {
+          activeScreen: "guided_session"
+        }
+      };
+    }
+  };
+
+  var launched = launchGuidedSessionItem({
+    meta: { guidedSession: 3 }
+  });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(global._acts, [
+    { name: "start_guided_session", value: 3 }
   ]);
 });
 

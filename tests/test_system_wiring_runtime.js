@@ -25,7 +25,7 @@ function test(name, fn) {
 
 function resetCoreEnv() {
   global.window = global;
-  global.SparkSuiteCore = function SparkSuiteCore() {};
+  global.SparkCore = function SparkCore() {};
   global.SparkInstruments = {
     getAll: function () {
       return [
@@ -87,7 +87,7 @@ console.log("=== System Wiring Runtime Tests ===");
       }
     };
 
-    var core = new SparkSuiteCore();
+    var core = new SparkCore();
     core.audioEngine = {
       load: function (audioData) {
         loadedAudio = audioData;
@@ -117,7 +117,7 @@ console.log("=== System Wiring Runtime Tests ===");
     resetCoreEnv();
 
     var captured = null;
-    var core = new SparkSuiteCore();
+    var core = new SparkCore();
     core.learnerModel = {
       load: function () { return { learner: true }; }
     };
@@ -158,7 +158,7 @@ console.log("=== System Wiring Runtime Tests ===");
       }
     };
 
-    var core = new SparkSuiteCore();
+    var core = new SparkCore();
     core.audioEngine = {
       isPlaying: function () { return true; },
       getTimeMs: function () { return 100; }
@@ -200,7 +200,7 @@ console.log("=== System Wiring Runtime Tests ===");
     var saved = null;
     var updatedModel = { next: "model" };
 
-    var core = new SparkSuiteCore();
+    var core = new SparkCore();
     core._activeUserId = "user_42";
     core.audioEngine = { stop: function () {} };
     core.stemMixer = { stop: function () {} };

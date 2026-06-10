@@ -1,15 +1,16 @@
 (function() {
-  function SparkSuiteCore(options) {
+  function SparkCore(options) {
     options = options || {};
-    this.sessionState = options.sessionState || new SparkSuiteSessionState();
+    this.storage = options.storage || new SparkSuiteStorage();
     this.aiEngine = options.aiEngine || new SparkAIEngine();
     this.instrumentManager = options.instrumentManager || new SparkInstrumentManager();
     this.psychologyEngine = options.psychologyEngine || new SparkSuitePsychologyEngine();
     this.curriculumEngine = options.curriculumEngine || new SparkSuiteCurriculumEngine();
     this.practiceEngine = options.practiceEngine || new SparkSuitePracticeEngine(this.psychologyEngine);
-    this.progressEngine = options.progressEngine || new SparkSuiteProgressEngine();
+    this.progressEngine = options.progressEngine || new SparkSuiteProgressEngine(null, this.psychologyEngine);
     this.sessionEngine = options.sessionEngine || new SparkSuiteSessionEngine(this.practiceEngine, this.curriculumEngine);
     this.currentPlan = null;
+    this.currentStateMachine = null;
     this.lastSessionOutcome = null;
     this.performanceEditorDocument = null;
     this.performanceEditorLibrary = [];
@@ -19,14 +20,390 @@
     this.playbackEngine = null;
     this.practiceIntelligence = options.practiceIntelligence || (typeof SparkPracticeIntelligence !== "undefined" ? new SparkPracticeIntelligence() : null);
     this.runtimeState = this.createInitialRuntimeState();
+    this.eventBus = options.eventBus || (typeof SparkEventBus !== "undefined" ? new SparkEventBus({ maxEvents: 1000 }) : null);
+    this.performanceMonitor = options.performanceMonitor || (
+      typeof SparkPerformanceMonitor !== "undefined"
+        ? new SparkPerformanceMonitor({
+            eventBus: this.eventBus,
+            budgets: typeof SparkPerformanceBudgets !== "undefined" ? SparkPerformanceBudgets : {}
+          })
+        : null
+    );
+    this.lastRecoveryRequest = null;
+    this.errorBoundary = options.errorBoundary || this.createErrorBoundary();
+    if (this.progressEngine && typeof this.progressEngine.setEventBus === "function") {
+      this.progressEngine.setEventBus(this.eventBus);
+    }
+    if (this.progressEngine && typeof this.progressEngine.setPsychologyEngine === "function") {
+      this.progressEngine.setPsychologyEngine(this.psychologyEngine);
+    }
+    if (this.storage && typeof this.storage.setPerformanceMonitor === "function") {
+      this.storage.setPerformanceMonitor(this.performanceMonitor);
+    }
+    if (this.sessionEngine && typeof this.sessionEngine.setPerformanceMonitor === "function") {
+      this.sessionEngine.setPerformanceMonitor(this.performanceMonitor);
+    }
   }
 
-  SparkSuiteCore.prototype.cloneValue = function(value) {
+  function getSparkErrorApi() {
+    function SparkFallbackError(code, message, context) {
+      this.name = "SparkError";
+      this.code = code;
+      this.message = message || code;
+      this.context = context || {};
+    }
+    SparkFallbackError.prototype = Object.create(Error.prototype);
+    SparkFallbackError.prototype.constructor = SparkFallbackError;
+    SparkFallbackError.prototype.toString = function() {
+      return this.name + ": " + this.message;
+    };
+    if (typeof SparkError !== "undefined" && typeof SparkErrorCodes !== "undefined") {
+      return {
+        SparkError: SparkError,
+        SparkErrorCodes: SparkErrorCodes,
+        normalizeSparkError: typeof normalizeSparkError === "function" ? normalizeSparkError : null
+      };
+    }
+    if (typeof window !== "undefined" && window.SparkError && window.SparkErrorCodes) {
+      return {
+        SparkError: window.SparkError,
+        SparkErrorCodes: window.SparkErrorCodes,
+        normalizeSparkError: typeof window.normalizeSparkError === "function" ? window.normalizeSparkError : null
+      };
+    }
+    if (typeof require === "function") {
+      try {
+        return {
+          SparkError: require("./spark_error.js").SparkError,
+          SparkErrorCodes: require("./error_codes.js").SparkErrorCodes,
+          normalizeSparkError: require("./spark_error.js").normalizeSparkError
+        };
+      } catch (error) {}
+    }
+    return {
+      SparkError: SparkFallbackError,
+      SparkErrorCodes: {
+        UNEXPECTED_ERROR: "UNEXPECTED_ERROR",
+        SESSION_STATE_INVALID_TRANSITION: "SESSION_STATE_INVALID_TRANSITION"
+      },
+      normalizeSparkError: null
+    };
+  }
+
+  function createCoreError(code, message, context) {
+    var api = getSparkErrorApi();
+    return new api.SparkError(code, message, context || {});
+  }
+
+  SparkCore.prototype.cloneValue = function(value) {
     if (value == null) return value;
     return JSON.parse(JSON.stringify(value));
   };
 
-  SparkSuiteCore.prototype.createInitialRuntimeState = function() {
+  SparkCore.prototype.createErrorBoundary = function() {
+    var self = this;
+    if (typeof SparkErrorBoundary === "undefined") return null;
+    return new SparkErrorBoundary({
+      eventBus: this.eventBus || {
+        emit: function(eventName, payload) {
+          if (typeof SparkEventLogger !== "undefined" && SparkEventLogger && typeof SparkEventLogger.log === "function") {
+            SparkEventLogger.log(eventName, payload);
+          }
+        }
+      },
+      onError: function(payload) {
+        self.captureStructuredError(payload.error, payload.context);
+      }
+    });
+  };
+
+  SparkCore.prototype.getEventBus = function() {
+    return this.eventBus;
+  };
+
+  SparkCore.prototype.emitEvent = function(type, payload) {
+    if (this.eventBus && typeof this.eventBus.emit === "function") {
+      return this.eventBus.emit(type, payload || {});
+    }
+    if (typeof SparkEventLogger !== "undefined" && SparkEventLogger && typeof SparkEventLogger.log === "function") {
+      SparkEventLogger.log(type, payload || {});
+    }
+    return null;
+  };
+
+  SparkCore.prototype.normalizeStructuredError = function(error, fallbackCode, context) {
+    var api = getSparkErrorApi();
+    if (typeof api.normalizeSparkError === "function") {
+      return api.normalizeSparkError(error, fallbackCode || api.SparkErrorCodes.UNEXPECTED_ERROR, context || {});
+    }
+    if (error && typeof error.code === "string" && typeof error.message === "string") return error;
+    return createCoreError(
+      fallbackCode || api.SparkErrorCodes.UNEXPECTED_ERROR,
+      error && error.message ? error.message : String(error || "SparkSuite error"),
+      context || {}
+    );
+  };
+
+  SparkCore.prototype.buildRecoveryActions = function() {
+    return [
+      { id: "retry_current_action", label: "Retry current action" },
+      { id: "return_to_lesson_select", label: "Return to lesson select" },
+      { id: "return_to_instrument_select", label: "Return to instrument select" },
+      { id: "restart_session", label: "Restart session" },
+      { id: "export_debug_bundle", label: "Export debug bundle" }
+    ];
+  };
+
+  SparkCore.prototype.captureStructuredError = function(error, context) {
+    var normalized = this.normalizeStructuredError(error, getSparkErrorApi().SparkErrorCodes.UNEXPECTED_ERROR, context || {});
+    var serialized = typeof normalized.toJSON === "function"
+      ? normalized.toJSON()
+      : {
+          name: normalized.name || "Error",
+          code: normalized.code || getSparkErrorApi().SparkErrorCodes.UNEXPECTED_ERROR,
+          message: normalized.message || String(normalized),
+          context: normalized.context || {},
+          createdAt: normalized.createdAt || new Date().toISOString(),
+          stack: normalized.stack || null
+        };
+    this.updateRuntimeState({
+      activeScreen: "spark_error",
+      lastError: serialized,
+      recoveryActions: this.buildRecoveryActions(serialized),
+      recoveryContext: this.cloneValue(context || {}),
+      transport: { status: "error", positionMs: this.runtimeState.transport && this.runtimeState.transport.positionMs || 0 }
+    });
+    return serialized;
+  };
+
+  SparkCore.prototype.clearStructuredError = function() {
+    this.lastRecoveryRequest = null;
+    return this.updateRuntimeState({
+      lastError: null,
+      recoveryActions: [],
+      recoveryContext: null
+    });
+  };
+
+  SparkCore.prototype.runWithErrorRecovery = function(label, recoveryContext, fn) {
+    var normalized;
+    this.lastRecoveryRequest = {
+      label: label,
+      context: this.cloneValue(recoveryContext || {}),
+      retry: function() {
+        return fn();
+      }
+    };
+    try {
+      var result = fn();
+      this.clearStructuredError();
+      return result;
+    } catch (error) {
+      normalized = this.normalizeStructuredError(
+        error,
+        getSparkErrorApi().SparkErrorCodes.UNEXPECTED_ERROR,
+        Object.assign({ label: label }, recoveryContext || {})
+      );
+      if (this.errorBoundary && typeof this.errorBoundary.handle === "function") {
+        this.errorBoundary.handle(normalized, Object.assign({ label: label }, recoveryContext || {}));
+      } else {
+        this.captureStructuredError(normalized, Object.assign({ label: label }, recoveryContext || {}));
+      }
+      throw normalized;
+    }
+  };
+
+  SparkCore.prototype.getRecoveryState = function() {
+    return {
+      error: this.cloneValue(this.runtimeState.lastError),
+      actions: this.cloneValue(this.runtimeState.recoveryActions || []),
+      context: this.cloneValue(this.runtimeState.recoveryContext || null)
+    };
+  };
+
+  SparkCore.prototype.buildRecoveryDebugBundle = function() {
+    var self = this;
+    if (this.performanceMonitor && typeof this.performanceMonitor.measure === "function") {
+      return this.performanceMonitor.measure("debug.export_bundle", "debugBundleExportMs", function() {
+        return self._buildRecoveryDebugBundleInternal();
+      });
+    }
+    return this._buildRecoveryDebugBundleInternal();
+  };
+
+  SparkCore.prototype._buildRecoveryDebugBundleInternal = function() {
+    if (typeof buildSparkDebugBundle === "function") {
+      return buildSparkDebugBundle({
+        sparkCore: this,
+        gateway: typeof SparkExecutionGateway !== "undefined" ? SparkExecutionGateway : null,
+        eventBus: this.eventBus,
+        storage: this.storage,
+        performanceMonitor: this.performanceMonitor
+      });
+    }
+    return {
+      exportedAt: new Date().toISOString(),
+      error: this.cloneValue(this.runtimeState.lastError),
+      recoveryContext: this.cloneValue(this.runtimeState.recoveryContext),
+      currentPlan: this.cloneValue(this.currentPlan),
+      runtimeState: this.cloneValue(this.runtimeState),
+      lastSessionOutcome: this.cloneValue(this.lastSessionOutcome),
+      missingHandlers: typeof SparkExecutionGateway !== "undefined" && SparkExecutionGateway && typeof SparkExecutionGateway.getMissingHandlerReport === "function"
+        ? SparkExecutionGateway.getMissingHandlerReport()
+        : {}
+    };
+  };
+
+  SparkCore.prototype.applyRecoveryAction = function(actionId) {
+    var request;
+    if (actionId === "retry_current_action") {
+      request = this.lastRecoveryRequest;
+      if (!request || typeof request.retry !== "function") return false;
+      return request.retry();
+    }
+    if (actionId === "return_to_lesson_select") {
+      this.clearStructuredError();
+      return this.updateRuntimeState({
+        activeScreen: "lesson_select",
+        transport: { status: "idle", positionMs: 0 }
+      });
+    }
+    if (actionId === "return_to_instrument_select") {
+      this.clearStructuredError();
+      return this.updateRuntimeState({
+        activeScreen: "instrument_select",
+        activePlanId: null,
+        activeSegmentId: null,
+        transport: { status: "idle", positionMs: 0 }
+      });
+    }
+    if (actionId === "restart_session") {
+      if (!this.currentPlan) return false;
+      this.clearStructuredError();
+      return this.startSession({
+        flow: this.currentPlan.flow,
+        forceRebuild: true,
+        sessionNum: this.currentPlan.context && this.currentPlan.context.guidedSession
+          ? this.currentPlan.context.guidedSession
+          : null
+      });
+    }
+    if (actionId === "export_debug_bundle") {
+      return this.buildRecoveryDebugBundle();
+    }
+    return false;
+  };
+
+  SparkCore.prototype.getSessionRuntimeHandle = function() {
+    if (typeof window !== "undefined" && window.SparkSessionRuntime) return window.SparkSessionRuntime;
+    if (typeof SparkSessionRuntime !== "undefined") return SparkSessionRuntime;
+    return null;
+  };
+
+  SparkCore.prototype.getSessionStates = function() {
+    if (typeof SparkSessionStates !== "undefined") return SparkSessionStates;
+    return {
+      CREATED: "created",
+      READY: "ready",
+      RUNNING: "running",
+      SEGMENT_COMPLETE: "segment_complete",
+      COMPLETED: "completed",
+      FAILED: "failed",
+      CANCELLED: "cancelled"
+    };
+  };
+
+  SparkCore.prototype.createSessionStateMachine = function(plan) {
+    var sessionStates = this.getSessionStates();
+    if (typeof SparkSessionStateMachine === "undefined" || !plan || !plan.id) return null;
+    this.currentStateMachine = new SparkSessionStateMachine({
+      sessionId: plan.id
+    });
+    this.currentStateMachine.transition(sessionStates.READY, {
+      reason: "session_built",
+      flow: plan.flow || null
+    });
+    return this.currentStateMachine;
+  };
+
+  SparkCore.prototype.getSessionStateMachineSnapshot = function() {
+    if (!this.currentStateMachine || typeof this.currentStateMachine.snapshot !== "function") return null;
+    return this.currentStateMachine.snapshot();
+  };
+
+  SparkCore.prototype.transitionSessionState = function(nextState, meta) {
+    if (!this.currentStateMachine || typeof this.currentStateMachine.transition !== "function") return null;
+    return this.currentStateMachine.transition(nextState, meta || {});
+  };
+
+  SparkCore.prototype.ensureCompletionFlowState = function(meta) {
+    var sessionStates = this.getSessionStates();
+    var snapshot = this.getSessionStateMachineSnapshot();
+    if (!snapshot || !snapshot.state) return null;
+    if (snapshot.state === sessionStates.READY || snapshot.state === sessionStates.SEGMENT_COMPLETE) {
+      return this.transitionSessionState(sessionStates.RUNNING, Object.assign({
+        reason: "completion_flow_started"
+      }, meta || {}));
+    }
+    return snapshot.state;
+  };
+
+  SparkCore.prototype.assertCanCompleteSession = function() {
+    var sessionStates = this.getSessionStates();
+    var snapshot = this.getSessionStateMachineSnapshot();
+    if (!snapshot || !snapshot.state) return true;
+    if (snapshot.state !== sessionStates.READY
+      && snapshot.state !== sessionStates.RUNNING
+      && snapshot.state !== sessionStates.SEGMENT_COMPLETE) {
+      throw createCoreError(
+        getSparkErrorApi().SparkErrorCodes.SESSION_STATE_INVALID_TRANSITION,
+        "Cannot complete session from state " + snapshot.state,
+        {
+          state: snapshot.state,
+          sessionId: snapshot.sessionId || (this.currentPlan && this.currentPlan.id) || null
+        }
+      );
+    }
+    return true;
+  };
+
+  SparkCore.prototype.createInitialRuntimeState = function() {
+    var gameplayTimingConfig = typeof SparkNormalizeTimingConfig === "function"
+      ? SparkNormalizeTimingConfig()
+      : {
+          hitWindowMs: 140,
+          perfectWindowMs: 50,
+          goodWindowMs: 90,
+          noteSpeed: 0.32,
+          inputLatencyOffsetMs: 0
+        };
+    var practiceAssistConfig = typeof SparkNormalizePracticeAssist === "function"
+      ? SparkNormalizePracticeAssist()
+      : {
+          speedMultiplier: 1,
+          loopRange: null,
+          showGhostNotes: false,
+          metronome: false,
+          noFailMode: true,
+          leftHanded: false,
+          noStrumMode: false
+        };
+    var accessibilitySettings = typeof SparkNormalizeAccessibilitySettings === "function"
+      ? SparkNormalizeAccessibilitySettings({})
+      : {
+          reducedMotion: false,
+          highContrast: false,
+          noteSize: "normal",
+          laneLabels: true,
+          colorblindSafeLanes: false,
+          metronomeVisualOnly: false,
+          disableFailureAnimations: false,
+          keyboardRemapping: {},
+          leftHandedLayout: false,
+          slowerDefaultSpeed: false,
+          audioCueVolume: 0.8,
+          metronomeVolume: 0.6
+        };
     return {
       activeFlow: null,
       activeInstrumentId: null,
@@ -87,6 +464,13 @@
       spotifyTrackId: null,
       spotifyPlaying: false,
       spotifyDifficulty: "easy",
+      spotifyPlaylistConnected: false,
+      spotifyPlaylistPlaylists: [],
+      spotifyPlaylistLastSyncAt: null,
+      spotifyPlaylistLastResult: null,
+      spotifyPlaylistUnresolvedTracks: [],
+      spotifyPlaylistSyncStatus: "idle",
+      spotifyPlaylistError: null,
       legacyRunnerLives: 0,
       legacyRunnerDistance: 0,
       legacyRunnerObstacles: [],
@@ -146,6 +530,9 @@
       contentLastLoadStatus: "idle",
       guidedStep: null,
       guidedNewMovePhase: null,
+      guidedActivityId: null,
+      guidedActivityKind: null,
+      guidedBlockType: null,
       performanceChartId: null,
       performanceSongData: null,
       performanceSongIndex: null,
@@ -182,22 +569,28 @@
       performanceTimingOffsetMs: 0,
       performanceMidiOffsetMs: 0,
       performanceMicOffsetMs: 0,
+      gameplayTimingConfig: gameplayTimingConfig,
+      practiceAssistConfig: practiceAssistConfig,
+      accessibilitySettings: accessibilitySettings,
       performanceResults: null,
       transport: {
         status: "idle",
         positionMs: 0
       },
+      lastError: null,
+      recoveryActions: [],
+      recoveryContext: null,
       lastCompletedSessionId: null,
       lastCompletedFlow: null,
       lastOutcomeSummary: null
     };
   };
 
-  SparkSuiteCore.prototype.getRuntimeState = function() {
+  SparkCore.prototype.getRuntimeState = function() {
     return this.runtimeState;
   };
 
-  SparkSuiteCore.prototype.updateRuntimeState = function(patch) {
+  SparkCore.prototype.updateRuntimeState = function(patch) {
     var key;
     var next = {};
     patch = patch || {};
@@ -232,6 +625,89 @@
     return this.runtimeState;
   };
 
+  SparkCore.prototype.buildShellTabChangeRequest = function(tabId, options) {
+    var shellEffects = [{ type: "scrollToTop" }];
+    options = options || {};
+    if (tabId === "songs" && options.songsSubTab === "community") {
+      shellEffects.push({ type: "fetchCommunity" });
+    }
+    return {
+      runtimeState: {
+        activeScreen: "home",
+        activeTab: tabId || null,
+        transport: { status: "idle", positionMs: 0 },
+        shellEffects: shellEffects
+      }
+    };
+  };
+
+  SparkCore.prototype.clearShowroomRoutingState = function(state) {
+    if (typeof SparkShowroomRoutingState !== "undefined" && SparkShowroomRoutingState && typeof SparkShowroomRoutingState.clear === "function") {
+      return SparkShowroomRoutingState.clear(state || this.runtimeState || {});
+    }
+    return false;
+  };
+
+  SparkCore.prototype.getGameplayTimingConfig = function() {
+    var config = this.runtimeState && this.runtimeState.gameplayTimingConfig
+      ? this.runtimeState.gameplayTimingConfig
+      : null;
+    if (typeof SparkNormalizeTimingConfig === "function") {
+      return SparkNormalizeTimingConfig(config || {});
+    }
+    return this.cloneValue(config);
+  };
+
+  SparkCore.prototype.syncGameplayTimingConfig = function(patch) {
+    var next = typeof SparkNormalizeTimingConfig === "function"
+      ? SparkNormalizeTimingConfig(Object.assign({}, this.getGameplayTimingConfig() || {}, patch || {}))
+      : Object.assign({}, this.getGameplayTimingConfig() || {}, patch || {});
+    this.updateRuntimeState({ gameplayTimingConfig: next });
+    return next;
+  };
+
+  SparkCore.prototype.applyInputCalibrationOffset = function(offsetMs) {
+    return this.syncGameplayTimingConfig({
+      inputLatencyOffsetMs: Math.round(typeof offsetMs === "number" && isFinite(offsetMs) ? offsetMs : 0)
+    });
+  };
+
+  SparkCore.prototype.getPracticeAssistConfig = function() {
+    var config = this.runtimeState && this.runtimeState.practiceAssistConfig
+      ? this.runtimeState.practiceAssistConfig
+      : null;
+    if (typeof SparkNormalizePracticeAssist === "function") {
+      return SparkNormalizePracticeAssist(config || {});
+    }
+    return this.cloneValue(config);
+  };
+
+  SparkCore.prototype.syncPracticeAssistConfig = function(patch) {
+    var next = typeof SparkNormalizePracticeAssist === "function"
+      ? SparkNormalizePracticeAssist(Object.assign({}, this.getPracticeAssistConfig() || {}, patch || {}))
+      : Object.assign({}, this.getPracticeAssistConfig() || {}, patch || {});
+    this.updateRuntimeState({ practiceAssistConfig: next });
+    return next;
+  };
+
+  SparkCore.prototype.getAccessibilitySettings = function() {
+    var settings = this.runtimeState && this.runtimeState.accessibilitySettings
+      ? this.runtimeState.accessibilitySettings
+      : null;
+    if (typeof SparkNormalizeAccessibilitySettings === "function") {
+      return SparkNormalizeAccessibilitySettings(settings || {});
+    }
+    return this.cloneValue(settings);
+  };
+
+  SparkCore.prototype.syncAccessibilitySettings = function(patch) {
+    var next = typeof SparkNormalizeAccessibilitySettings === "function"
+      ? SparkNormalizeAccessibilitySettings(Object.assign({}, this.getAccessibilitySettings() || {}, patch || {}))
+      : Object.assign({}, this.getAccessibilitySettings() || {}, patch || {});
+    this.updateRuntimeState({ accessibilitySettings: next });
+    return next;
+  };
+
 
   function _normalizeSegType(type) {
     if (!type) return "practice";
@@ -240,7 +716,16 @@
     if (type === "challenge") return "challenge";
     return "practice";
   }
-  SparkSuiteCore.prototype.deriveRuntimeScreen = function(flow) {
+
+  function getGuidedBlockTypeForStep(step) {
+    if (step === "spark") return "warm_engine";
+    if (step === "review" || step === "newMove") return "drill";
+    if (step === "songSlice") return "song";
+    if (step === "victoryLap") return "cooldown";
+    return null;
+  }
+
+  SparkCore.prototype.deriveRuntimeScreen = function(flow) {
     if (flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return "guided_session";
     if (flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return "performance_song";
     if (flow === SparkSessionTypes.FLOW_DAILY_PRACTICE) return "daily_practice";
@@ -249,7 +734,98 @@
     return flow || null;
   };
 
-  SparkSuiteCore.prototype.startSession = function(input) {
+  SparkCore.prototype.resolveGuidedRuntimeActivity = function(step, plan) {
+    var guidedPlan = plan && plan.context ? plan.context.guidedPlan : null;
+    var blockActivities = guidedPlan && guidedPlan.blockActivities ? guidedPlan.blockActivities : null;
+    var activity = null;
+    if (!blockActivities) {
+      return {
+        guidedActivityId: null,
+        guidedActivityKind: null,
+        guidedBlockType: null
+      };
+    }
+    if (step === "spark") activity = blockActivities.warm_engine || null;
+    else if (step === "review" || step === "newMove") activity = blockActivities.drill || null;
+    else if (step === "songSlice") activity = blockActivities.song || null;
+    else if (step === "victoryLap") activity = blockActivities.cooldown || null;
+    return {
+      guidedActivityId: activity && activity.id ? activity.id : null,
+      guidedActivityKind: activity && activity.kind ? activity.kind : null,
+      guidedBlockType: activity && activity.block_type ? activity.block_type : null
+    };
+  };
+
+  SparkCore.prototype.resolveGuidedRuntimeSegmentId = function(step, plan) {
+    var guidedActivity = this.resolveGuidedRuntimeActivity(step, plan);
+    var blockType = guidedActivity.guidedBlockType;
+    var segments;
+    var i;
+    if (!plan || !Array.isArray(plan.segments) || !blockType) return null;
+    segments = plan.segments;
+    for (i = 0; i < segments.length; i++) {
+      if (segments[i] && segments[i].meta && segments[i].meta.guidedBlockType === blockType) {
+        return segments[i].id;
+      }
+    }
+    return null;
+  };
+
+  SparkCore.prototype.resolveGuidedSessionViewState = function(plan, runtimeState) {
+    runtimeState = runtimeState || this.runtimeState || {};
+    var guidedStep = runtimeState.guidedStep || "spark";
+    var guidedActivity = this.resolveGuidedRuntimeActivity(guidedStep, plan);
+    var blockType = runtimeState.guidedBlockType || guidedActivity.guidedBlockType || getGuidedBlockTypeForStep(guidedStep);
+    var segments = plan && Array.isArray(plan.segments) ? plan.segments : [];
+    var activeSegmentId = runtimeState.activeSegmentId || null;
+    var activeSegment = null;
+    var i;
+
+    if (activeSegmentId && blockType) {
+      for (i = 0; i < segments.length; i++) {
+        if (segments[i] && segments[i].id === activeSegmentId) {
+          if (segments[i].meta && segments[i].meta.guidedBlockType && segments[i].meta.guidedBlockType !== blockType) {
+            activeSegmentId = null;
+          }
+          break;
+        }
+      }
+    }
+    if (!activeSegmentId && blockType) {
+      for (i = 0; i < segments.length; i++) {
+        if (segments[i] && segments[i].meta && segments[i].meta.guidedBlockType === blockType) {
+          activeSegmentId = segments[i].id;
+          break;
+        }
+      }
+    }
+    for (i = 0; i < segments.length; i++) {
+      if (segments[i] && segments[i].id === activeSegmentId) {
+        activeSegment = segments[i];
+        if (!blockType && activeSegment.meta) blockType = activeSegment.meta.guidedBlockType || null;
+        break;
+      }
+    }
+
+    return {
+      guidedStep: guidedStep,
+      guidedActivityId: guidedActivity.guidedActivityId || runtimeState.guidedActivityId || null,
+      guidedActivityKind: guidedActivity.guidedActivityKind || runtimeState.guidedActivityKind || null,
+      guidedBlockType: blockType || null,
+      activeSegmentId: activeSegmentId,
+      activeSegment: activeSegment
+    };
+  };
+
+  SparkCore.prototype.getNextGuidedStep = function(step) {
+    var steps = ["spark", "review", "newMove", "songSlice", "victoryLap"];
+    var idx = steps.indexOf(step);
+    if (idx === -1) return steps[0];
+    if (idx >= steps.length - 1) return null;
+    return steps[idx + 1];
+  };
+
+  SparkCore.prototype.startSession = function(input) {
     input = input || {};
     if (!input.flow && input.mode) return this.startLegacyPracticeSession(input);
     var flow = input.flow || this.aiEngine.suggestNextFlow();
@@ -266,6 +842,9 @@
       || !this.currentPlan.instrumentType
       || this.currentPlan.instrumentType === currentInstrumentType;
     if (!input.forceRebuild && flow === SparkSessionTypes.FLOW_DAILY_PRACTICE && this.currentPlan && this.currentPlan.generatedDate === today && cacheInstrumentMatches) {
+      if (!this.currentStateMachine || this.currentStateMachine.sessionId !== this.currentPlan.id) {
+        this.createSessionStateMachine(this.currentPlan);
+      }
       this.updateRuntimeState({
         activeFlow: this.currentPlan.flow,
         activeInstrumentId: this.currentPlan.instrumentId || this.currentPlan.instrumentType || null,
@@ -314,6 +893,11 @@
       transport: { status: "ready", positionMs: 0 }
     });
       SparkProgressBridge.syncPlanToState(this.currentPlan);
+      this.syncSessionRuntime({
+        autoAdvance: this.currentPlan.flow !== SparkSessionTypes.FLOW_GUIDED_SESSION,
+        scheduleTick: false,
+        syncState: false
+      });
       return this.currentPlan;
     }
 
@@ -326,7 +910,10 @@
       songId: input.songId,
       arrangementType: input.arrangementType,
       difficultyId: input.difficultyId,
-      lessonId: input.lessonId || null
+      lessonId: input.lessonId || null,
+      practiceTemplateId: input.practiceTemplateId || null,
+      ukuleleMiniSessionId: input.ukuleleMiniSessionId || null,
+      favoriteSongs: input.favoriteSongs || []
     });
     // Validate session plan contract
     if (plan && !plan.exercises) {
@@ -368,7 +955,11 @@
       });
     }
     this.currentPlan = plan;
-    this.sessionState.setCurrentPlanId(plan.id);
+    this.createSessionStateMachine(plan);
+    this.storage.setCurrentPlanId(plan.id);
+    var guidedRuntimeActivity = plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION
+      ? this.resolveGuidedRuntimeActivity("spark", plan)
+      : { guidedActivityId: null, guidedActivityKind: null, guidedBlockType: null };
     this.updateRuntimeState({
       activeFlow: plan.flow,
       activeInstrumentId: plan.instrumentId || plan.instrumentType || null,
@@ -379,6 +970,9 @@
       activeTab: this.runtimeState.activeTab,
       guidedStep: plan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION ? "spark" : null,
       guidedNewMovePhase: null,
+      guidedActivityId: guidedRuntimeActivity.guidedActivityId,
+      guidedActivityKind: guidedRuntimeActivity.guidedActivityKind,
+      guidedBlockType: guidedRuntimeActivity.guidedBlockType,
       performanceChartId: null,
       performanceSongData: plan.context && plan.context.performanceSong ? (plan.context.performanceSong.songData || null) : null,
       performanceSongIndex: plan.context && plan.context.performanceSong ? (plan.context.performanceSong.songIndex != null ? plan.context.performanceSong.songIndex : null) : null,
@@ -418,10 +1012,39 @@
       transport: { status: "ready", positionMs: 0 }
     });
     SparkProgressBridge.syncPlanToState(plan);
+    this.syncSessionRuntime({
+      autoAdvance: plan.flow !== SparkSessionTypes.FLOW_GUIDED_SESSION,
+      scheduleTick: false,
+      syncState: false
+    });
     return plan;
   };
 
-  SparkSuiteCore.prototype.startLegacyPracticeSession = function(input) {
+  SparkCore.prototype._unsafeStartSession = SparkCore.prototype.startSession;
+  SparkCore.prototype.startSession = function(input) {
+    var self = this;
+    input = input || {};
+    this.emitEvent("session.start.requested", {
+      flow: input.flow || null,
+      sessionNum: input.sessionNum || null,
+      songId: input.songId || null,
+      forceRebuild: !!input.forceRebuild
+    });
+    return this.runWithErrorRecovery("startSession", {
+      input: this.cloneValue(input)
+    }, function() {
+      var plan = self._unsafeStartSession(input);
+      self.emitEvent("session.start.completed", {
+        sessionId: plan && plan.id ? plan.id : null,
+        flow: plan && plan.flow ? plan.flow : null,
+        instrumentType: plan && plan.instrumentType ? plan.instrumentType : null,
+        segmentCount: plan && Array.isArray(plan.segments) ? plan.segments.length : 0
+      });
+      return plan;
+    });
+  };
+
+  SparkCore.prototype.startLegacyPracticeSession = function(input) {
     input = input || {};
     var instrumentContext = this.instrumentManager.getActiveContext();
     var plan = input.mode === "drill"
@@ -439,7 +1062,8 @@
     var legacy = plan.context && plan.context.legacyPractice ? plan.context.legacyPractice : {};
 
     this.currentPlan = plan;
-    this.sessionState.setCurrentPlanId(plan.id);
+    this.createSessionStateMachine(plan);
+    this.storage.setCurrentPlanId(plan.id);
     this.updateRuntimeState({
       activeFlow: plan.flow,
       activeInstrumentId: plan.instrumentId || plan.instrumentType || null,
@@ -459,20 +1083,23 @@
     return plan;
   };
 
-  SparkSuiteCore.prototype.openDailyPracticePlan = function(options) {
+  SparkCore.prototype.openDailyPracticePlan = function(options) {
     options = options || {};
     return this.startSession({
       flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
-      forceRebuild: !!(options.forceRebuild || options.lessonId),
-      lessonId: options.lessonId || null
+      forceRebuild: !!(options.forceRebuild || options.lessonId || options.practiceTemplateId || options.ukuleleMiniSessionId),
+      lessonId: options.lessonId || null,
+      practiceTemplateId: options.practiceTemplateId || null,
+      ukuleleMiniSessionId: options.ukuleleMiniSessionId || null,
+      favoriteSongs: options.favoriteSongs || []
     });
   };
 
-  SparkSuiteCore.prototype.openDashboardPracticePlan = function(options) {
+  SparkCore.prototype.openDashboardPracticePlan = function(options) {
     return this.openDailyPracticePlan(options || {});
   };
 
-  SparkSuiteCore.prototype.openPracticePlanScreen = function(options) {
+  SparkCore.prototype.openPracticePlanScreen = function(options) {
     var plan = this.openDashboardPracticePlan(options || {});
     this.updateRuntimeState({
       activeScreen: "practice_plan",
@@ -481,7 +1108,7 @@
     return plan;
   };
 
-  SparkSuiteCore.prototype.openLegacyPracticeSession = function(options) {
+  SparkCore.prototype.openLegacyPracticeSession = function(options) {
     options = options || {};
     var durationSec = Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : null;
     return this.updateRuntimeState({
@@ -498,7 +1125,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.openLegacyPracticeDrill = function(options) {
+  SparkCore.prototype.openLegacyPracticeDrill = function(options) {
     options = options || {};
     var durationSec = Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : null;
     return this.updateRuntimeState({
@@ -515,7 +1142,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.syncLegacyPracticeRuntimeState = function(action, options) {
+  SparkCore.prototype.syncLegacyPracticeRuntimeState = function(action, options) {
     var runtimeState = this.getRuntimeState();
     var next = {
       activeFlow: runtimeState.activeFlow || "legacy_practice_session",
@@ -563,7 +1190,7 @@
     return this.updateRuntimeState(next);
   };
 
-  SparkSuiteCore.prototype.completeLegacyPracticeSession = function(options) {
+  SparkCore.prototype.completeLegacyPracticeSession = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_practice_session",
@@ -578,7 +1205,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.completeLegacyPracticeDrill = function(options) {
+  SparkCore.prototype.completeLegacyPracticeDrill = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_practice_drill",
@@ -596,7 +1223,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.returnFromLegacyPracticeFamily = function(options) {
+  SparkCore.prototype.returnFromLegacyPracticeFamily = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeScreen: "home",
@@ -606,15 +1233,15 @@
     });
   };
 
-  SparkSuiteCore.prototype.repeatLegacyPracticeSession = function(options) {
+  SparkCore.prototype.repeatLegacyPracticeSession = function(options) {
     return this.openLegacyPracticeSession(options || {});
   };
 
-  SparkSuiteCore.prototype.repeatLegacyPracticeDrill = function(options) {
+  SparkCore.prototype.repeatLegacyPracticeDrill = function(options) {
     return this.openLegacyPracticeDrill(options || {});
   };
 
-  SparkSuiteCore.prototype.openLegacyFingerExercise = function(options) {
+  SparkCore.prototype.openLegacyFingerExercise = function(options) {
     options = options || {};
     var durationSec = Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : null;
     return this.updateRuntimeState({
@@ -632,7 +1259,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.completeLegacyFingerExercise = function(options) {
+  SparkCore.prototype.completeLegacyFingerExercise = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_finger_exercise",
@@ -655,7 +1282,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.openLegacyStrumPattern = function(options) {
+  SparkCore.prototype.openLegacyStrumPattern = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_strum_pattern",
@@ -670,7 +1297,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.syncLegacyStrumRuntimeState = function(options) {
+  SparkCore.prototype.syncLegacyStrumRuntimeState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: this.runtimeState.activeFlow || "legacy_strum_pattern",
@@ -694,7 +1321,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.syncLegacyQuizRuntimeState = function(options) {
+  SparkCore.prototype.syncLegacyQuizRuntimeState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: this.runtimeState.activeFlow || "legacy_quiz",
@@ -721,7 +1348,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.openLegacyQuiz = function(options) {
+  SparkCore.prototype.openLegacyQuiz = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_quiz",
@@ -748,7 +1375,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.syncLegacyEarTrainingRuntimeState = function(options) {
+  SparkCore.prototype.syncLegacyEarTrainingRuntimeState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: this.runtimeState.activeFlow || "legacy_ear_training",
@@ -771,7 +1398,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.openLegacyEarTraining = function(options) {
+  SparkCore.prototype.openLegacyEarTraining = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_ear_training",
@@ -798,7 +1425,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.openLegacyDailyChallenge = function(options) {
+  SparkCore.prototype.openLegacyDailyChallenge = function(options) {
     options = options || {};
     var durationSec = Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : null;
     return this.updateRuntimeState({
@@ -814,7 +1441,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.syncLegacyDailyRuntimeState = function(action, options) {
+  SparkCore.prototype.syncLegacyDailyRuntimeState = function(action, options) {
     var runtimeState = this.getRuntimeState();
     var next = {
       activeFlow: runtimeState.activeFlow || "legacy_daily_challenge",
@@ -855,7 +1482,7 @@
     return this.updateRuntimeState(next);
   };
 
-  SparkSuiteCore.prototype.completeLegacyDailyChallenge = function(options) {
+  SparkCore.prototype.completeLegacyDailyChallenge = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_daily_challenge",
@@ -870,7 +1497,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.returnFromLegacyDailyChallenge = function(options) {
+  SparkCore.prototype.returnFromLegacyDailyChallenge = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_daily_challenge",
@@ -881,7 +1508,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.openLegacyRunnerGame = function(options) {
+  SparkCore.prototype.openLegacyRunnerGame = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_runner_game",
@@ -900,7 +1527,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.syncLegacyRunnerRuntimeState = function(options) {
+  SparkCore.prototype.syncLegacyRunnerRuntimeState = function(options) {
     var runtimeState = this.getRuntimeState();
     var next = {
       activeFlow: runtimeState.activeFlow || "legacy_runner_game",
@@ -933,7 +1560,7 @@
     return this.updateRuntimeState(next);
   };
 
-  SparkSuiteCore.prototype.completeLegacyRunnerGame = function(options) {
+  SparkCore.prototype.completeLegacyRunnerGame = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_runner_game",
@@ -952,7 +1579,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.openLegacyRhythmGame = function(options) {
+  SparkCore.prototype.openLegacyRhythmGame = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_rhythm_game",
@@ -969,7 +1596,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.syncLegacyRhythmRuntimeState = function(options) {
+  SparkCore.prototype.syncLegacyRhythmRuntimeState = function(options) {
     var runtimeState = this.getRuntimeState();
     var next = {
       activeFlow: runtimeState.activeFlow || "legacy_rhythm_game",
@@ -998,7 +1625,7 @@
     return this.updateRuntimeState(next);
   };
 
-  SparkSuiteCore.prototype.completeLegacyRhythmGame = function(options) {
+  SparkCore.prototype.completeLegacyRhythmGame = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_rhythm_game",
@@ -1015,7 +1642,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.syncTunerRuntimeState = function(options) {
+  SparkCore.prototype.syncTunerRuntimeState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       tunerActive: Object.prototype.hasOwnProperty.call(options, "active") ? !!options.active : this.runtimeState.tunerActive,
@@ -1026,7 +1653,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.syncStemPlayerRuntimeState = function(options) {
+  SparkCore.prototype.syncStemPlayerRuntimeState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       stemPlaying: Object.prototype.hasOwnProperty.call(options, "playing") ? !!options.playing : this.runtimeState.stemPlaying,
@@ -1035,7 +1662,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.syncAudioInputRuntimeState = function(options) {
+  SparkCore.prototype.syncAudioInputRuntimeState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       audioInputDevices: Object.prototype.hasOwnProperty.call(options, "devices")
@@ -1047,7 +1674,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.syncMetronomeRuntimeState = function(options) {
+  SparkCore.prototype.syncMetronomeRuntimeState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       metronomeActive: Object.prototype.hasOwnProperty.call(options, "active") ? !!options.active : this.runtimeState.metronomeActive,
@@ -1057,7 +1684,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.syncChordDetectRuntimeState = function(options) {
+  SparkCore.prototype.syncChordDetectRuntimeState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       chordDetectActive: Object.prototype.hasOwnProperty.call(options, "active") ? !!options.active : this.runtimeState.chordDetectActive,
@@ -1069,7 +1696,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.completeDailyPracticePlan = function(options) {
+  SparkCore.prototype.completeDailyPracticePlan = function(options) {
     options = options || {};
     return this.completeSession({
       flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
@@ -1078,7 +1705,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.openGuidedSession = function(options) {
+  SparkCore.prototype.openGuidedSession = function(options) {
     options = options || {};
     return this.startSession({
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
@@ -1086,7 +1713,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.buildSongSessionRequest = function(options) {
+  SparkCore.prototype.buildSongSessionRequest = function(options) {
     var runtimeState = this.getRuntimeState();
     options = options || {};
     var songData = Object.prototype.hasOwnProperty.call(options, "songData")
@@ -1109,7 +1736,7 @@
     };
   };
 
-  SparkSuiteCore.prototype.openSongSession = function(options) {
+  SparkCore.prototype.openSongSession = function(options) {
     var request = this.buildSongSessionRequest(options);
     this.updateRuntimeState({
       activeFlow: "song_session",
@@ -1127,7 +1754,7 @@
     return request;
   };
 
-  SparkSuiteCore.prototype.syncSongRuntimeState = function(action, options) {
+  SparkCore.prototype.syncSongRuntimeState = function(action, options) {
     var runtimeState = this.getRuntimeState();
     var next = {
       activeFlow: runtimeState.activeFlow || "song_session",
@@ -1180,7 +1807,7 @@
     return this.updateRuntimeState(next);
   };
 
-  SparkSuiteCore.prototype.buildSongNavigationRequest = function(target, options) {
+  SparkCore.prototype.buildSongNavigationRequest = function(target, options) {
     var runtimeState = this.getRuntimeState();
     var request = {
       target: target || "songs_home",
@@ -1211,7 +1838,7 @@
     return request;
   };
 
-  SparkSuiteCore.prototype.applySongNavigationRequest = function(target, options) {
+  SparkCore.prototype.applySongNavigationRequest = function(target, options) {
     var request = this.buildSongNavigationRequest(target, options);
     return this.updateRuntimeState({
       activeFlow: request.activeFlow,
@@ -1223,7 +1850,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.completeSongSession = function(options) {
+  SparkCore.prototype.completeSongSession = function(options) {
     options = options || {};
     this.syncSongRuntimeState("complete", {
       songData: Object.prototype.hasOwnProperty.call(options, "songData") ? options.songData : this.runtimeState.songSessionData,
@@ -1233,7 +1860,7 @@
     return this.buildSongNavigationRequest("song_done", options);
   };
 
-  SparkSuiteCore.prototype.buildSongBrowserRequest = function(action, options) {
+  SparkCore.prototype.buildSongBrowserRequest = function(action, options) {
     var runtimeState = this.getRuntimeState();
     options = options || {};
     return {
@@ -1262,7 +1889,7 @@
     };
   };
 
-  SparkSuiteCore.prototype.applySongBrowserRequest = function(action, options) {
+  SparkCore.prototype.applySongBrowserRequest = function(action, options) {
     var request = this.buildSongBrowserRequest(action, options);
     return this.updateRuntimeState({
       activeTab: "songs",
@@ -1276,7 +1903,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.buildDashboardRequest = function(options) {
+  SparkCore.prototype.buildDashboardRequest = function(options) {
     var runtimeState = this.getRuntimeState();
     options = options || {};
     return {
@@ -1295,7 +1922,7 @@
     };
   };
 
-  SparkSuiteCore.prototype.applyDashboardRequest = function(options) {
+  SparkCore.prototype.applyDashboardRequest = function(options) {
     var request = this.buildDashboardRequest(options);
     return this.updateRuntimeState({
       dashboardRecommendations: request.recommendations || [],
@@ -1305,11 +1932,11 @@
     });
   };
 
-  SparkSuiteCore.prototype.refreshDashboardSnapshot = function(options) {
+  SparkCore.prototype.refreshDashboardSnapshot = function(options) {
     return this.applyDashboardRequest(options || {});
   };
 
-  SparkSuiteCore.prototype.initializeDashboardChallenges = function(options) {
+  SparkCore.prototype.initializeDashboardChallenges = function(options) {
     var runtimeState = this.getRuntimeState();
     options = options || {};
     return this.applyDashboardRequest({
@@ -1328,7 +1955,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.buildDashboardNavigationRequest = function(target) {
+  SparkCore.prototype.buildDashboardNavigationRequest = function(target) {
     var request = {
       target: target || "home_dash",
       activeScreen: "home_dash",
@@ -1345,7 +1972,7 @@
     return request;
   };
 
-  SparkSuiteCore.prototype.applyDashboardNavigationRequest = function(target) {
+  SparkCore.prototype.applyDashboardNavigationRequest = function(target) {
     var request = this.buildDashboardNavigationRequest(target);
     return this.updateRuntimeState({
       activeScreen: request.activeScreen,
@@ -1353,11 +1980,11 @@
     });
   };
 
-  SparkSuiteCore.prototype.openDashboardSection = function(target) {
+  SparkCore.prototype.openDashboardSection = function(target) {
     return this.applyDashboardNavigationRequest(target || "home_dash");
   };
 
-  SparkSuiteCore.prototype.returnFromHomeFamily = function(options) {
+  SparkCore.prototype.returnFromHomeFamily = function(options) {
     options = options || {};
     var currentScreen = options.currentScreen || this.runtimeState.activeScreen || "home";
     var isDashboardFamily = currentScreen === "recommendations"
@@ -1375,7 +2002,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.openUtilityScreen = function(target) {
+  SparkCore.prototype.openUtilityScreen = function(target) {
     var activeScreen = "home";
     if (target === "settings") activeScreen = "settings";
     else if (target === "curriculum") activeScreen = "curriculum";
@@ -1388,7 +2015,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.syncSettingsState = function(options) {
+  SparkCore.prototype.syncSettingsState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       settingsTheme: Object.prototype.hasOwnProperty.call(options, "theme")
@@ -1397,7 +2024,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.syncMidiSettingsState = function(options) {
+  SparkCore.prototype.syncMidiSettingsState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       midiEnabled: Object.prototype.hasOwnProperty.call(options, "midiEnabled")
@@ -1424,7 +2051,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.syncMidiImportState = function(options) {
+  SparkCore.prototype.syncMidiImportState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       midiImportSummary: Object.prototype.hasOwnProperty.call(options, "summary")
@@ -1442,7 +2069,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.syncCloudSettingsState = function(options) {
+  SparkCore.prototype.syncCloudSettingsState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       cloudLoggedIn: Object.prototype.hasOwnProperty.call(options, "loggedIn")
@@ -1460,13 +2087,13 @@
     });
   };
 
-  SparkSuiteCore.prototype.openCloudSettings = function(options) {
+  SparkCore.prototype.openCloudSettings = function(options) {
     options = options || {};
     this.openUtilityScreen("cloud_settings");
     return this.syncCloudSettingsState(options);
   };
 
-  SparkSuiteCore.prototype.applyCloudWorkflowRequest = function(action, options) {
+  SparkCore.prototype.applyCloudWorkflowRequest = function(action, options) {
     options = options || {};
     if (action === "open") {
       return this.openCloudSettings(options);
@@ -1488,7 +2115,7 @@
     return this.syncCloudSettingsState(options);
   };
 
-  SparkSuiteCore.prototype.syncCurriculumState = function(options) {
+  SparkCore.prototype.syncCurriculumState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       curriculumSummaries: Object.prototype.hasOwnProperty.call(options, "curriculums")
@@ -1500,7 +2127,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.applyCurriculumWorkflowRequest = function(action, options) {
+  SparkCore.prototype.applyCurriculumWorkflowRequest = function(action, options) {
     options = options || {};
     if (action === "curriculum_load_start") {
       return this.updateRuntimeState({
@@ -1541,7 +2168,7 @@
     return this.updateRuntimeState({});
   };
 
-  SparkSuiteCore.prototype.openSkillTree = function() {
+  SparkCore.prototype.openSkillTree = function() {
     return this.updateRuntimeState({
       activeScreen: "skill_tree",
       activeTab: this.runtimeState.activeTab || null,
@@ -1549,7 +2176,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.setSkillTreeFocus = function(focus) {
+  SparkCore.prototype.setSkillTreeFocus = function(focus) {
     return this.updateRuntimeState({
       activeScreen: this.runtimeState.activeScreen || "skill_tree",
       activeTab: this.runtimeState.activeTab || null,
@@ -1557,7 +2184,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.openStemPlayer = function() {
+  SparkCore.prototype.openStemPlayer = function() {
     return this.updateRuntimeState({
       activeScreen: "stems",
       activeTab: "songs",
@@ -1565,7 +2192,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.closeStemPlayer = function() {
+  SparkCore.prototype.closeStemPlayer = function() {
     return this.updateRuntimeState({
       activeScreen: "home",
       activeTab: "songs",
@@ -1574,7 +2201,7 @@
     });
   };
 
-  SparkSuiteCore.prototype.returnFromUtilityFamily = function(options) {
+  SparkCore.prototype.returnFromUtilityFamily = function(options) {
     options = options || {};
     var currentScreen = options.currentScreen || this.runtimeState.activeScreen || "home";
     var isUtilityFamily = currentScreen === "settings"
@@ -1592,7 +2219,7 @@
     return this.getRuntimeState();
   };
 
-  SparkSuiteCore.prototype.getDashboardRecommendationById = function(id) {
+  SparkCore.prototype.getDashboardRecommendationById = function(id) {
     var arr = this.runtimeState.dashboardRecommendations || [];
     var i;
     for (i = 0; i < arr.length; i++) {
@@ -1601,14 +2228,14 @@
     return null;
   };
 
-  SparkSuiteCore.prototype.buildDashboardRecommendationLaunchRequest = function(id) {
+  SparkCore.prototype.buildDashboardRecommendationLaunchRequest = function(id) {
     return {
       recommendationId: id || null,
       recommendation: id ? this.getDashboardRecommendationById(id) : null
     };
   };
 
-  SparkSuiteCore.prototype.launchDashboardRecommendation = function(id) {
+  SparkCore.prototype.launchDashboardRecommendation = function(id) {
     var request = this.buildDashboardRecommendationLaunchRequest(id);
     if (request.recommendation) {
       this.updateRuntimeState({
@@ -1619,7 +2246,7 @@
     return request;
   };
 
-  SparkSuiteCore.prototype.applyDashboardChallengeReward = function(challengeId) {
+  SparkCore.prototype.applyDashboardChallengeReward = function(challengeId) {
     var arr = this.cloneValue(this.runtimeState.dashboardChallenges || []);
     var i;
     for (i = 0; i < arr.length; i++) {
@@ -1633,24 +2260,208 @@
     });
   };
 
-  SparkSuiteCore.prototype.completeGuidedSession = function(options) {
+  SparkCore.prototype.completeGuidedSession = function(options) {
     options = options || {};
+    var activeSegmentId = Object.prototype.hasOwnProperty.call(options, "itemId")
+      ? options.itemId
+      : (this.runtimeState.activeSegmentId || this.resolveGuidedRuntimeSegmentId(this.runtimeState.guidedStep, this.currentPlan));
     var result = this.completeSession({
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
+      itemId: activeSegmentId || undefined,
       markPlanComplete: true
     });
     this.applyGuidedNavigationRequest("guided_done");
     return result;
   };
 
-  SparkSuiteCore.prototype.completeSession = function(payload) {
+  SparkCore.prototype.advanceGuidedSession = function(options) {
+    options = options || {};
+    var currentStep = options.currentStep || this.runtimeState.guidedStep || "spark";
+    var nextStep = Object.prototype.hasOwnProperty.call(options, "nextStep")
+      ? options.nextStep
+      : this.getNextGuidedStep(currentStep);
+    var nextPhase = Object.prototype.hasOwnProperty.call(options, "guidedNewMovePhase")
+      ? options.guidedNewMovePhase
+      : this.runtimeState.guidedNewMovePhase;
+    var currentActivity = this.resolveGuidedRuntimeActivity(currentStep, this.currentPlan);
+    var nextActivity = this.resolveGuidedRuntimeActivity(nextStep, this.currentPlan);
+    var currentSegmentId = this.resolveGuidedRuntimeSegmentId(currentStep, this.currentPlan) || this.runtimeState.activeSegmentId;
+    var shouldCompleteCurrentBlock = !!(
+      this.currentPlan
+      && this.currentPlan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION
+      && currentSegmentId
+      && currentActivity.guidedBlockType
+      && nextActivity.guidedBlockType
+      && currentActivity.guidedBlockType !== nextActivity.guidedBlockType
+    );
+    var completion = null;
+    var runtimeState;
+
+    if (!nextStep) {
+      completion = this.completeGuidedSession();
+      return {
+        runtimeState: this.getRuntimeState(),
+        completion: completion
+      };
+    }
+
+    if (shouldCompleteCurrentBlock) {
+      completion = this.completeSession({
+        flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
+        itemId: currentSegmentId
+      });
+      if (completion && completion.planCompleted) {
+        this.applyGuidedNavigationRequest("guided_done");
+        return {
+          runtimeState: this.getRuntimeState(),
+          completion: completion
+        };
+      }
+    }
+
+    runtimeState = this.syncGuidedRuntimeState({
+      guidedStep: nextStep,
+      guidedNewMovePhase: nextPhase,
+      transport: shouldCompleteCurrentBlock
+        ? { status: "running", positionMs: 0 }
+        : this.runtimeState.transport
+    });
+    this.syncSessionRuntime({
+      autoAdvance: false,
+      scheduleTick: nextStep !== currentStep,
+      syncState: false
+    });
+
+    return {
+      runtimeState: runtimeState,
+      completion: completion
+    };
+  };
+
+  SparkCore.prototype.skipGuidedBlock = function(options) {
+    options = options || {};
+    var currentStep = options.currentStep || this.runtimeState.guidedStep || "spark";
+    var targetStep = null;
+    if (currentStep === "spark") targetStep = "review";
+    else if (currentStep === "review" || currentStep === "newMove") targetStep = "songSlice";
+    else if (currentStep === "songSlice") targetStep = "victoryLap";
+    else if (currentStep === "victoryLap") {
+      return {
+        runtimeState: this.completeGuidedSession(options)
+      };
+    }
+    if (!targetStep) {
+      return {
+        runtimeState: this.getRuntimeState(),
+        completion: null
+      };
+    }
+    return this.advanceGuidedSession({
+      currentStep: currentStep,
+      nextStep: targetStep,
+      guidedNewMovePhase: null
+    });
+  };
+
+  SparkCore.prototype.extendGuidedBlock = function(options) {
+    options = options || {};
+    var extensionSec = Math.max(60, Math.round(options.extensionSec || 300));
+    var currentStep = options.currentStep || this.runtimeState.guidedStep || "spark";
+    var segmentId = options.itemId
+      || this.runtimeState.activeSegmentId
+      || this.resolveGuidedRuntimeSegmentId(currentStep, this.currentPlan);
+    var segments;
+    var context;
+    var guidedPlan;
+    var blockActivities;
+    var activity;
+    var runtimeState;
+    var i;
+
+    if (!this.currentPlan || this.currentPlan.flow !== SparkSessionTypes.FLOW_GUIDED_SESSION || currentStep !== "victoryLap" || !segmentId) {
+      return {
+        runtimeState: this.getRuntimeState(),
+        extended: false
+      };
+    }
+
+    segments = Array.isArray(this.currentPlan.segments) ? this.currentPlan.segments : [];
+    for (i = 0; i < segments.length; i++) {
+      if (segments[i] && segments[i].id === segmentId) {
+        if (!segments[i].meta || typeof segments[i].meta !== "object") segments[i].meta = {};
+        segments[i].meta.guidedExtensionSec = Math.max(0, Math.round(segments[i].meta.guidedExtensionSec || 0)) + extensionSec;
+        segments[i].meta.guidedExtensionCount = Math.max(0, Math.round(segments[i].meta.guidedExtensionCount || 0)) + 1;
+        segments[i].durationSec = Math.max(0, Math.round(segments[i].durationSec || 0)) + extensionSec;
+        break;
+      }
+    }
+
+    context = this.currentPlan.context || {};
+    context.guidedShellExtensionSec = Math.max(0, Math.round(context.guidedShellExtensionSec || 0)) + extensionSec;
+    context.guidedShellExtensionCount = Math.max(0, Math.round(context.guidedShellExtensionCount || 0)) + 1;
+    context.guidedShellDurationSec = Math.max(0, Math.round(context.guidedShellDurationSec || 0)) + extensionSec;
+    guidedPlan = context.guidedPlan || null;
+    blockActivities = guidedPlan && guidedPlan.blockActivities ? guidedPlan.blockActivities : null;
+    activity = blockActivities && blockActivities.cooldown ? blockActivities.cooldown : null;
+    if (activity) {
+      activity.duration_sec = Math.max(0, Math.round(activity.duration_sec || 0)) + extensionSec;
+    }
+
+    runtimeState = this.syncGuidedRuntimeState({
+      guidedStep: "victoryLap",
+      guidedNewMovePhase: null,
+      transport: {
+        status: "running",
+        positionMs: 0
+      }
+    });
+    this.syncSessionRuntime({
+      autoAdvance: false,
+      scheduleTick: true,
+      syncState: false
+    });
+
+    return {
+      runtimeState: runtimeState,
+      extended: true,
+      extensionSec: extensionSec
+    };
+  };
+
+  SparkCore.prototype.completeSession = function(payload) {
+    var sessionStates = this.getSessionStates();
     payload = payload || {};
     if (!this.currentPlan || (payload.sessionId && this.currentPlan.id !== payload.sessionId)) {
       this.startSession({ flow: payload.flow || SparkSessionTypes.FLOW_DAILY_PRACTICE });
     }
 
+    this.assertCanCompleteSession();
+    this.ensureCompletionFlowState({
+      itemId: payload.itemId || null,
+      flow: payload.flow || (this.currentPlan ? this.currentPlan.flow : null)
+    });
+
     var result = this.progressEngine.completeSession(this.currentPlan, payload);
+    var performance = payload.gameplayResult || payload.result || null;
+    var nextRecommendedSkill = this.curriculumEngine && typeof this.curriculumEngine.peekNextSkill === "function"
+      ? this.curriculumEngine.peekNextSkill({
+          session: this.currentPlan,
+          instrumentType: this.currentPlan ? this.currentPlan.instrumentType : null
+        })
+      : null;
+    if (this.aiEngine && typeof this.aiEngine.generateCoachingNote === "function") {
+      result.coaching = this.aiEngine.generateCoachingNote({
+        session: this.currentPlan,
+        performance: performance,
+        mastery: result.mastery || null,
+        nextRecommendedSkill: nextRecommendedSkill
+      });
+    }
     this.lastSessionOutcome = result;
+    this.transitionSessionState(result.planCompleted ? sessionStates.COMPLETED : sessionStates.SEGMENT_COMPLETE, {
+      reason: result.planCompleted ? "session_completed" : "segment_completed",
+      itemId: payload.itemId || null
+    });
     this.updateRuntimeState({
       activeFlow: this.currentPlan ? this.currentPlan.flow : (payload.flow || null),
       activeInstrumentId: this.currentPlan && (this.currentPlan.instrumentId || this.currentPlan.instrumentType)
@@ -1663,6 +2474,9 @@
       activeTab: this.runtimeState.activeTab,
       guidedStep: result.planCompleted ? null : this.runtimeState.guidedStep,
       guidedNewMovePhase: result.planCompleted ? null : this.runtimeState.guidedNewMovePhase,
+      guidedActivityId: result.planCompleted ? null : this.runtimeState.guidedActivityId,
+      guidedActivityKind: result.planCompleted ? null : this.runtimeState.guidedActivityKind,
+      guidedBlockType: result.planCompleted ? null : this.runtimeState.guidedBlockType,
       performanceChartId: result.planCompleted ? this.runtimeState.performanceChartId : this.runtimeState.performanceChartId,
       performanceSongData: this.runtimeState.performanceSongData,
       performanceSongIndex: this.runtimeState.performanceSongIndex,
@@ -1702,15 +2516,38 @@
       lastCompletedFlow: result.planCompleted && this.currentPlan ? this.currentPlan.flow : this.runtimeState.lastCompletedFlow,
       lastOutcomeSummary: result.completionSummary || result.performanceSummary || result.itemResultSummary || null
     });
-    if (result.planCompleted) this.sessionState.setCurrentPlanId(this.currentPlan.id);
+    if (result.planCompleted) this.storage.setCurrentPlanId(this.currentPlan.id);
     return result;
   };
 
-  SparkSuiteCore.prototype.getCurrentPlan = function() {
+  SparkCore.prototype._unsafeCompleteSession = SparkCore.prototype.completeSession;
+  SparkCore.prototype.completeSession = function(payload) {
+    var self = this;
+    payload = payload || {};
+    this.emitEvent("session.complete.requested", {
+      sessionId: payload.sessionId || (this.currentPlan && this.currentPlan.id) || null,
+      itemId: payload.itemId || null
+    });
+    return this.runWithErrorRecovery("completeSession", {
+      payload: this.cloneValue(payload),
+      sessionId: payload.sessionId || (this.currentPlan && this.currentPlan.id) || null
+    }, function() {
+      var result = self._unsafeCompleteSession(payload);
+      self.emitEvent("session.complete.completed", {
+        sessionId: self.currentPlan && self.currentPlan.id ? self.currentPlan.id : null,
+        completedItems: result && typeof result.completedItems === "number" ? result.completedItems : null,
+        planCompleted: !!(result && result.planCompleted),
+        xpAwarded: result && typeof result.xpAwarded === "number" ? result.xpAwarded : 0
+      });
+      return result;
+    });
+  };
+
+  SparkCore.prototype.getCurrentPlan = function() {
     return this.currentPlan;
   };
 
-  SparkSuiteCore.prototype.getSegmentById = function(segmentId) {
+  SparkCore.prototype.getSegmentById = function(segmentId) {
     if (!this.currentPlan || !Array.isArray(this.currentPlan.segments)) return null;
     for (var i = 0; i < this.currentPlan.segments.length; i++) {
       if (this.currentPlan.segments[i].id === segmentId) return this.currentPlan.segments[i];
@@ -1718,19 +2555,110 @@
     return null;
   };
 
-  SparkSuiteCore.prototype.getLastSessionOutcome = function() {
+  SparkCore.prototype.getLastSessionOutcome = function() {
     return this.lastSessionOutcome;
   };
 
-  SparkSuiteCore.prototype.getActiveSessionView = function() {
+  SparkCore.prototype.getActiveSessionView = function() {
+    var segment = null;
+    var exercise = null;
+    var runtime = this.getSessionRuntimeHandle();
+    var runtimeState = this.getRuntimeState();
+    var guidedViewState = null;
+    var shellPrimaryAction = "sessionPauseBlock";
+    var performSongState = null;
+    var performanceDoneState = null;
+    var segments;
+    var i;
+    if (this.currentPlan && this.currentPlan.flow === SparkSessionTypes.FLOW_GUIDED_SESSION) {
+      guidedViewState = this.resolveGuidedSessionViewState(this.currentPlan, runtimeState);
+      if (guidedViewState.activeSegment) segment = guidedViewState.activeSegment;
+      runtimeState = Object.assign({}, runtimeState, {
+        guidedStep: guidedViewState.guidedStep,
+        guidedActivityId: guidedViewState.guidedActivityId,
+        guidedActivityKind: guidedViewState.guidedActivityKind,
+        guidedBlockType: guidedViewState.guidedBlockType,
+        activeSegmentId: guidedViewState.activeSegmentId
+      });
+    }
+    if (runtime && typeof runtime.getActiveSession === "function" && runtime.getActiveSession() === this.currentPlan) {
+      if (typeof runtime.getActiveSegment === "function") segment = runtime.getActiveSegment();
+      if (typeof runtime.getActiveExercise === "function") exercise = runtime.getActiveExercise();
+    }
+    if (!segment && this.currentPlan && Array.isArray(this.currentPlan.segments)) {
+      segments = this.currentPlan.segments;
+      for (i = 0; i < segments.length; i++) {
+        if (segments[i] && segments[i].id === this.runtimeState.activeSegmentId) {
+          segment = segments[i];
+          break;
+        }
+      }
+    }
+    if (!exercise && segment && Array.isArray(segment.exerciseIds) && Array.isArray(this.currentPlan && this.currentPlan.exercises)) {
+      for (i = 0; i < this.currentPlan.exercises.length; i++) {
+        if (this.currentPlan.exercises[i] && this.currentPlan.exercises[i].id === segment.exerciseIds[0]) {
+          exercise = this.currentPlan.exercises[i];
+          break;
+        }
+      }
+    }
+    if (runtimeState && runtimeState.transport && runtimeState.transport.status === "paused") {
+      shellPrimaryAction = "sessionResumeBlock";
+    }
+    if (this.practiceEngine && typeof this.practiceEngine.getValidatedShellAction === "function") {
+      shellPrimaryAction = this.practiceEngine.getValidatedShellAction(shellPrimaryAction);
+    }
+    if (this.progressEngine && typeof this.progressEngine.buildPerformSongState === "function") {
+      performSongState = this.progressEngine.buildPerformSongState(runtimeState.performanceResults, runtimeState.performanceChart);
+    }
+    if (this.progressEngine && typeof this.progressEngine.buildPerformanceDoneState === "function") {
+      performanceDoneState = this.progressEngine.buildPerformanceDoneState(
+        runtimeState.performanceResults,
+        runtimeState.performanceChart,
+        runtimeState
+      );
+    }
     return {
       plan: this.currentPlan,
-      runtimeState: this.getRuntimeState(),
-      lastSessionOutcome: this.getLastSessionOutcome()
+      activeSegment: segment,
+      activeExercise: exercise,
+      activeBlockType: guidedViewState ? guidedViewState.guidedBlockType : null,
+      shellPrimaryAction: shellPrimaryAction,
+      showWeakestPhraseAction: !!(performSongState && performSongState.showWeakestPhraseAction),
+      performanceDoneState: performanceDoneState,
+      stateMachine: this.getSessionStateMachineSnapshot(),
+      runtimeState: runtimeState,
+      lastSessionOutcome: this.getLastSessionOutcome(),
+      recovery: this.getRecoveryState()
     };
   };
 
-  SparkSuiteCore.prototype.getPerformanceEditorDocumentView = function() {
+  SparkCore.prototype.syncSessionRuntime = function(options) {
+    var runtime = this.getSessionRuntimeHandle();
+    var view;
+    var runtimeState;
+    options = options || {};
+    if (!runtime || typeof runtime.attachSession !== "function" || !this.currentPlan) return false;
+    view = this.getActiveSessionView();
+    runtimeState = view && view.runtimeState ? view.runtimeState : this.runtimeState;
+    runtime.attachSession(this.currentPlan, {
+      segmentId: Object.prototype.hasOwnProperty.call(options, "segmentId")
+        ? options.segmentId
+        : (runtimeState && runtimeState.activeSegmentId ? runtimeState.activeSegmentId : null),
+      status: Object.prototype.hasOwnProperty.call(options, "status")
+        ? options.status
+        : ((runtimeState && runtimeState.transport && runtimeState.transport.status) || "ready"),
+      positionMs: Object.prototype.hasOwnProperty.call(options, "positionMs")
+        ? options.positionMs
+        : ((runtimeState && runtimeState.transport && runtimeState.transport.positionMs) || 0),
+      autoAdvance: !!options.autoAdvance,
+      scheduleTick: options.scheduleTick !== false,
+      syncState: options.syncState === true
+    });
+    return true;
+  };
+
+  SparkCore.prototype.getPerformanceEditorDocumentView = function() {
     var runtimeState = this.getRuntimeState();
     return {
       chart: this.cloneValue(this.performanceEditorDocument),
@@ -1759,7 +2687,7 @@
     };
   };
 
-  SparkSuiteCore.prototype.buildPerformanceEditorDocumentState = function(chart, options) {
+  SparkCore.prototype.buildPerformanceEditorDocumentState = function(chart, options) {
     var runtimeState = this.getRuntimeState();
     var payload = {};
     var events = chart && Array.isArray(chart.events) ? chart.events : [];
@@ -1851,7 +2779,7 @@
     return payload;
   };
 
-  SparkSuiteCore.prototype.syncPerformanceEditorDocument = function(chart, options) {
+  SparkCore.prototype.syncPerformanceEditorDocument = function(chart, options) {
     var action;
     options = options || {};
     this.performanceEditorDocument = chart ? this.cloneValue(chart) : null;
@@ -1859,7 +2787,7 @@
     return this.syncPerformanceRuntimeState(action, this.buildPerformanceEditorDocumentState(chart, options));
   };
 
-  SparkSuiteCore.prototype.applyPerformanceEditorMutation = function(action, payload) {
+  SparkCore.prototype.applyPerformanceEditorMutation = function(action, payload) {
     var chart = this.performanceEditorDocument ? this.cloneValue(this.performanceEditorDocument) : null;
     var library = this.cloneValue(this.performanceEditorLibrary) || [];
     var i;
@@ -2014,7 +2942,7 @@
     return result;
   };
 
-  SparkSuiteCore.prototype.getPerformanceEditorExportData = function() {
+  SparkCore.prototype.getPerformanceEditorExportData = function() {
     var chart = this.performanceEditorDocument ? this.cloneValue(this.performanceEditorDocument) : null;
     var title = chart && chart.title ? chart.title : "chart";
     return {
@@ -2024,11 +2952,11 @@
     };
   };
 
-  SparkSuiteCore.prototype.getPerformanceEditorPreviewChart = function() {
+  SparkCore.prototype.getPerformanceEditorPreviewChart = function() {
     return this.performanceEditorDocument ? this.cloneValue(this.performanceEditorDocument) : null;
   };
 
-  SparkSuiteCore.prototype.getPerformanceEditorPreviewRequest = function() {
+  SparkCore.prototype.getPerformanceEditorPreviewRequest = function() {
     var chart = this.getPerformanceEditorPreviewChart();
     var runtimeState = this.getRuntimeState();
     return {
@@ -2044,7 +2972,7 @@
     };
   };
 
-  SparkSuiteCore.prototype.startPerformanceEditorPreview = function() {
+  SparkCore.prototype.startPerformanceEditorPreview = function() {
     var request = this.getPerformanceEditorPreviewRequest();
     if (!request.chart || !request.chart.events || !request.chart.events.length) return null;
     this.syncPerformanceRuntimeState("start", {
@@ -2059,7 +2987,7 @@
     return request;
   };
 
-  SparkSuiteCore.prototype.openPerformanceStats = function(options) {
+  SparkCore.prototype.openPerformanceStats = function(options) {
     options = options || {};
     var request = {
       focus: Object.prototype.hasOwnProperty.call(options, "focus")
@@ -2070,7 +2998,7 @@
     return request;
   };
 
-  SparkSuiteCore.prototype.openPerformanceEditor = function(chart, options) {
+  SparkCore.prototype.openPerformanceEditor = function(chart, options) {
     options = options || {};
     var request = {
       action: options.action || "open_editor",
@@ -2093,11 +3021,11 @@
     return request;
   };
 
-  SparkSuiteCore.prototype.openPerformanceCalibration = function(options) {
+  SparkCore.prototype.openPerformanceCalibration = function(options) {
     return this.applyPerformanceCalibrationRequest("open_calibration", options || {});
   };
 
-  SparkSuiteCore.prototype.openPerformanceSongSelection = function(options) {
+  SparkCore.prototype.openPerformanceSongSelection = function(options) {
     options = options || {};
     var request = {
       songId: Object.prototype.hasOwnProperty.call(options, "songId") ? options.songId : null,
@@ -2142,11 +3070,11 @@
     return request;
   };
 
-  SparkSuiteCore.prototype.openCareerSongSelection = function(options) {
+  SparkCore.prototype.openCareerSongSelection = function(options) {
     return this.openPerformanceSongSelection(options || {});
   };
 
-  SparkSuiteCore.prototype.openPerformanceDailyChallenge = function(options) {
+  SparkCore.prototype.openPerformanceDailyChallenge = function(options) {
     options = options || {};
     if (options.songData || options.songId) {
       return this.openPerformanceSongSelection(options);
@@ -2158,14 +3086,14 @@
     });
   };
 
-  SparkSuiteCore.prototype.syncPerformanceDailyChallengeState = function(challenge, isComplete) {
+  SparkCore.prototype.syncPerformanceDailyChallengeState = function(challenge, isComplete) {
     return this.updateRuntimeState({
       performanceDailyChallenge: challenge ? this.cloneValue(challenge) : null,
       performanceDailyComplete: !!isComplete
     });
   };
 
-  SparkSuiteCore.prototype.buildPerformanceStartRequest = function(options) {
+  SparkCore.prototype.buildPerformanceStartRequest = function(options) {
     var runtimeState = this.getRuntimeState();
     options = options || {};
     return {
@@ -2206,7 +3134,7 @@
     };
   };
 
-  SparkSuiteCore.prototype.startPerformanceRetrySession = function(options) {
+  SparkCore.prototype.startPerformanceRetrySession = function(options) {
     var request = this.buildPerformanceStartRequest(options);
     this.syncPerformanceRuntimeState("start", {
       chartId: request.chartId,
@@ -2223,7 +3151,7 @@
     return request;
   };
 
-  SparkSuiteCore.prototype.startSelectedPerformanceSong = function(options) {
+  SparkCore.prototype.startSelectedPerformanceSong = function(options) {
     var request = this.buildPerformanceStartRequest(options);
     this.syncPerformanceRuntimeState("start", {
       chartId: request.chartId,
@@ -2240,7 +3168,7 @@
     return request;
   };
 
-  SparkSuiteCore.prototype.buildPerformanceCalibrationRequest = function(action, options) {
+  SparkCore.prototype.buildPerformanceCalibrationRequest = function(action, options) {
     var runtimeState = this.getRuntimeState();
     options = options || {};
     return {
@@ -2263,13 +3191,13 @@
     };
   };
 
-  SparkSuiteCore.prototype.applyPerformanceCalibrationRequest = function(action, options) {
+  SparkCore.prototype.applyPerformanceCalibrationRequest = function(action, options) {
     var request = this.buildPerformanceCalibrationRequest(action, options);
     this.syncPerformanceRuntimeState(request.action, request);
     return request;
   };
 
-  SparkSuiteCore.prototype.buildPerformanceCompletionRequest = function(options) {
+  SparkCore.prototype.buildPerformanceCompletionRequest = function(options) {
     var runtimeState = this.getRuntimeState();
     options = options || {};
     return {
@@ -2299,7 +3227,7 @@
     };
   };
 
-  SparkSuiteCore.prototype.buildPerformanceNavigationRequest = function(target, options) {
+  SparkCore.prototype.buildPerformanceNavigationRequest = function(target, options) {
     var runtimeState = this.getRuntimeState();
     options = options || {};
     var request = {
@@ -2312,7 +3240,7 @@
     };
 
     if (request.target === "return_after_stop") {
-      if (runtimeState.performanceChartId || runtimeState.performanceSongTitle || runtimeState.performanceSongIndex != null) {
+      if (runtimeState.performanceSongData || runtimeState.performanceSongTitle || runtimeState.performanceSongIndex != null) {
         request.target = "song_detail";
       } else {
         request.target = "songs_home";
@@ -2345,7 +3273,7 @@
     return request;
   };
 
-  SparkSuiteCore.prototype.applyPerformanceNavigationRequest = function(target, options) {
+  SparkCore.prototype.applyPerformanceNavigationRequest = function(target, options) {
     var request = this.buildPerformanceNavigationRequest(target, options);
     return this.updateRuntimeState({
       activeFlow: request.activeFlow,
@@ -2356,42 +3284,69 @@
     });
   };
 
-  SparkSuiteCore.prototype.syncGuidedRuntimeState = function(patch) {
+  SparkCore.prototype.syncGuidedRuntimeState = function(patch) {
     patch = patch || {};
+    var nextGuidedStep = Object.prototype.hasOwnProperty.call(patch, "guidedStep")
+      ? patch.guidedStep
+      : this.runtimeState.guidedStep;
+    var guidedActivity = this.resolveGuidedRuntimeActivity(nextGuidedStep, this.currentPlan);
+    var guidedSegmentId = this.resolveGuidedRuntimeSegmentId(nextGuidedStep, this.currentPlan);
     return this.updateRuntimeState({
       activeFlow: this.runtimeState.activeFlow || SparkSessionTypes.FLOW_GUIDED_SESSION,
       activeScreen: patch.activeScreen || this.runtimeState.activeScreen || "guided_session",
-      guidedStep: Object.prototype.hasOwnProperty.call(patch, "guidedStep")
-        ? patch.guidedStep
-        : this.runtimeState.guidedStep,
+      activeSegmentId: Object.prototype.hasOwnProperty.call(patch, "activeSegmentId")
+        ? patch.activeSegmentId
+        : (guidedSegmentId || this.runtimeState.activeSegmentId),
+      guidedStep: nextGuidedStep,
       guidedNewMovePhase: Object.prototype.hasOwnProperty.call(patch, "guidedNewMovePhase")
         ? patch.guidedNewMovePhase
         : this.runtimeState.guidedNewMovePhase,
+      guidedActivityId: Object.prototype.hasOwnProperty.call(patch, "guidedActivityId")
+        ? patch.guidedActivityId
+        : guidedActivity.guidedActivityId,
+      guidedActivityKind: Object.prototype.hasOwnProperty.call(patch, "guidedActivityKind")
+        ? patch.guidedActivityKind
+        : guidedActivity.guidedActivityKind,
+      guidedBlockType: Object.prototype.hasOwnProperty.call(patch, "guidedBlockType")
+        ? patch.guidedBlockType
+        : guidedActivity.guidedBlockType,
       transport: patch.transport || this.runtimeState.transport
     });
   };
 
-  SparkSuiteCore.prototype.buildGuidedNavigationRequest = function(target, options) {
+  SparkCore.prototype.buildGuidedNavigationRequest = function(target, options) {
     options = options || {};
     var request = {
       target: target || "guided_home",
       activeFlow: this.runtimeState.activeFlow || SparkSessionTypes.FLOW_GUIDED_SESSION,
       activeScreen: this.runtimeState.activeScreen || "guided_session",
       activeTab: this.runtimeState.activeTab || "practice",
+      activeSegmentId: this.runtimeState.activeSegmentId,
       guidedStep: this.runtimeState.guidedStep,
       guidedNewMovePhase: this.runtimeState.guidedNewMovePhase,
+      guidedActivityId: this.runtimeState.guidedActivityId,
+      guidedActivityKind: this.runtimeState.guidedActivityKind,
+      guidedBlockType: this.runtimeState.guidedBlockType,
       transport: { status: "idle", positionMs: 0 }
     };
 
     if (request.target === "guided_home") {
       request.activeScreen = "home";
       request.activeTab = "practice";
+      request.activeSegmentId = null;
       request.guidedStep = null;
       request.guidedNewMovePhase = null;
+      request.guidedActivityId = null;
+      request.guidedActivityKind = null;
+      request.guidedBlockType = null;
     } else if (request.target === "guided_done") {
       request.activeScreen = "guided_done";
+      request.activeSegmentId = null;
       request.guidedStep = null;
       request.guidedNewMovePhase = null;
+      request.guidedActivityId = null;
+      request.guidedActivityKind = null;
+      request.guidedBlockType = null;
       request.transport.status = "completed";
     }
 
@@ -2404,19 +3359,23 @@
     return request;
   };
 
-  SparkSuiteCore.prototype.applyGuidedNavigationRequest = function(target, options) {
+  SparkCore.prototype.applyGuidedNavigationRequest = function(target, options) {
     var request = this.buildGuidedNavigationRequest(target, options);
     return this.updateRuntimeState({
       activeFlow: request.activeFlow,
       activeScreen: request.activeScreen,
       activeTab: request.activeTab,
+      activeSegmentId: request.activeSegmentId,
       guidedStep: request.guidedStep,
       guidedNewMovePhase: request.guidedNewMovePhase,
+      guidedActivityId: request.guidedActivityId,
+      guidedActivityKind: request.guidedActivityKind,
+      guidedBlockType: request.guidedBlockType,
       transport: request.transport
     });
   };
 
-  SparkSuiteCore.prototype.syncPerformanceRuntimeState = function(action, payload) {
+  SparkCore.prototype.syncPerformanceRuntimeState = function(action, payload) {
     payload = payload || {};
     var next = {
       activeFlow: this.runtimeState.activeFlow || SparkSessionTypes.FLOW_PERFORMANCE_SONG,
@@ -2632,7 +3591,7 @@
     return this.updateRuntimeState(next);
   };
 
-  SparkSuiteCore.prototype.startPracticeFromLesson = function(lesson) {
+  SparkCore.prototype.startPracticeFromLesson = function(lesson) {
     if (!lesson) return false;
     var payload = {
       chartId: lesson.type + "_drill",
@@ -2656,6 +3615,8 @@
 
   function createDefaultSparkCore() {
     var instrumentManager = new SparkInstrumentManager();
+    var gateway;
+    var core;
     if (window.SparkSuiteInstrumentAdapters && window.SparkSuiteInstrumentAdapters.guitar) {
       instrumentManager.register("guitar", window.SparkSuiteInstrumentAdapters.guitar);
     }
@@ -2668,12 +3629,59 @@
     if (window.SparkSuiteInstrumentAdapters && window.SparkSuiteInstrumentAdapters.ukulele) {
       instrumentManager.register("ukulele", window.SparkSuiteInstrumentAdapters.ukulele);
     }
-    return new SparkSuiteCore({
+    core = new SparkCore({
       instrumentManager: instrumentManager
     });
+    gateway = window.SparkExecutionGateway || (typeof SparkExecutionGateway !== "undefined" ? SparkExecutionGateway : null);
+    if (gateway && typeof gateway.installDefaultHandlers === "function") {
+      gateway.installDefaultHandlers({
+        sparkCore: core,
+        force: true
+      });
+    } else if (gateway && typeof gateway.setSparkCoreHandle === "function") {
+      gateway.setSparkCoreHandle(core);
+    }
+    return core;
   }
 
-  window.SparkCoreRuntime = SparkSuiteCore;
+  function shouldMountSparkDebugOverlay() {
+    if (window.SPARK_DEBUG === true) return true;
+    if (!window.location || typeof window.location.search !== "string") return false;
+    return window.location.search.indexOf("debug=true") >= 0;
+  }
+
+  function mountDefaultSparkDebugOverlay(core) {
+    var gateway;
+    var runtime;
+    var debugState;
+
+    if (!shouldMountSparkDebugOverlay()) return false;
+    if (typeof window.createSparkDebugState !== "function" || typeof window.mountSparkDebugOverlay !== "function") {
+      return false;
+    }
+
+    gateway = window.SparkExecutionGateway || (typeof SparkExecutionGateway !== "undefined" ? SparkExecutionGateway : null);
+    runtime = window.SparkSessionRuntime || null;
+    debugState = window.createSparkDebugState({
+      sparkCore: core,
+      gateway: gateway,
+      runtime: runtime
+    });
+
+    if (typeof window.__unmountSparkDebugOverlay === "function") {
+      window.__unmountSparkDebugOverlay();
+    }
+
+    window.SparkDebug = debugState;
+    window.__unmountSparkDebugOverlay = window.mountSparkDebugOverlay(debugState);
+    return true;
+  }
+
+  window.SparkCoreRuntime = SparkCore;
   window.createDefaultSparkCore = createDefaultSparkCore;
   window.sparkCore = createDefaultSparkCore();
+  window.sparkEventBus = window.sparkCore && typeof window.sparkCore.getEventBus === "function"
+    ? window.sparkCore.getEventBus()
+    : null;
+  mountDefaultSparkDebugOverlay(window.sparkCore);
 })();

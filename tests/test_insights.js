@@ -194,6 +194,23 @@ test("renderHomePracticeCard ignores sentinel item titles and falls back to ids"
   assert.strictEqual(html.indexOf("undefined"), -1);
 });
 
+test("renderHomePracticeCard offers ADHD-friendly 10-minute templates", function() {
+  var html = renderHomePracticeCard({ todayPlan: [] });
+
+  assert.ok(html.indexOf("openPracticeTemplate") >= 0);
+  assert.ok(html.indexOf("quick_win") >= 0);
+  assert.ok(html.indexOf("low_energy") >= 0);
+  assert.ok(html.indexOf("reset_focus") >= 0);
+  assert.strictEqual(html.indexOf("openUkuleleMiniSession"), -1);
+});
+
+test("renderHomePracticeCard gates ukulele mini-sessions to ukulele context", function() {
+  var html = renderHomePracticeCard({ todayPlan: [], activeInstrumentType: "ukulele" });
+
+  assert.ok(html.indexOf("openUkuleleMiniSession") >= 0);
+  assert.ok(html.indexOf("uke_favorites_set_a") >= 0);
+});
+
 test("renderHomeRecommendationCard ignores sentinel titles and falls back to ids", function() {
   var html = renderHomeRecommendationCard([{
     id: "next_focus_item",

@@ -36,7 +36,7 @@ function runApply() {
   console.log("");
   console.log("[watch] Change detected, running apply...");
   try {
-    cp.execSync("node scripts/apply_generated_instrument_final.js --skip-validate", { stdio: "inherit" });
+    cp.execSync("node scripts/apply_generated_instrument.js --skip-validate", { stdio: "inherit" });
     writeSignal();
     console.log("[watch] Done. Browser will reload.");
   } catch (e) {
@@ -53,7 +53,7 @@ function onFileChange(eventType, filename) {
 // Initial generate if instrument dir does not exist
 if (!fs.existsSync(rtDir)) {
   console.log("[watch] Instrument not found. Generating scaffold...");
-  cp.execSync("node scripts/generate_instrument_pipeline_final.js " + instrument + " --type " + template + " --apply", { stdio: "inherit" });
+  cp.execSync("node scripts/generate_instrument_pipeline.js " + instrument + " --type " + template + " --apply", { stdio: "inherit" });
 } else {
   // Run initial apply
   runApply();

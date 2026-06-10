@@ -1,8 +1,8 @@
 [package]
-name = "chordspark"
-version = "3.1.0"
-description = "Guitar chord learning app"
-authors = ["ChordSpark"]
+name = "sparksuite"
+version = "1.0.0"
+description = "Multi-instrument music learning suite"
+authors = ["SparkSuite"]
 edition = "2021"
 
 [build-dependencies]

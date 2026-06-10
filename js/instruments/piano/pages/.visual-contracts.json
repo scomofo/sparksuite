@@ -1,0 +1,5 @@
+{
+  "allowed": [
+    "js[\\\\/]instruments[\\\\/]piano[\\\\/]pages[\\\\/]games\\.js\\|.*font-size:2[0246]px;font-weight:900"
+  ]
+}

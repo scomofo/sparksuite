@@ -1,0 +1,33 @@
+{
+  "id": "knockin_on_heavens_door_piano_chords",
+  "title": "Knockin' on Heaven's Door",
+  "artist": "Bob Dylan",
+  "bpm": 69,
+  "beatsPerBar": 4,
+  "offsetSec": 0,
+  "instrument": "piano",
+  "audio": { "type": "silent" },
+  "phrases": [
+    { "id": 0, "name": "Verse", "startSec": 0, "endSec": 20.87 },
+    { "id": 1, "name": "Chorus", "startSec": 20.87, "endSec": 41.739 },
+    { "id": 2, "name": "Outro", "startSec": 41.739, "endSec": 62.609 }
+  ],
+  "events": [
+    { "id": 1, "t": 0, "dur": 0.55, "type": "tap", "chord": "G_root", "notes": ["G2"], "laneLabel": "G", "strum": "tap" },
+    { "id": 2, "t": 0.55, "dur": 4.668, "type": "chord", "chord": "G", "notes": ["G3", "B3", "D4"], "laneLabel": "G", "strum": "down" },
+    { "id": 3, "t": 5.218, "dur": 0.55, "type": "tap", "chord": "D_root", "notes": ["D3"], "laneLabel": "D", "strum": "tap" },
+    { "id": 4, "t": 5.768, "dur": 4.667, "type": "chord", "chord": "D", "notes": ["D4", "F#4", "A4"], "laneLabel": "D", "strum": "down" },
+    { "id": 5, "t": 10.435, "dur": 0.55, "type": "tap", "chord": "Am_root", "notes": ["A2"], "laneLabel": "Am", "strum": "tap" },
+    { "id": 6, "t": 10.985, "dur": 4.667, "type": "chord", "chord": "Am", "notes": ["A3", "C4", "E4"], "laneLabel": "Am", "strum": "down" },
+    { "id": 7, "t": 15.652, "dur": 0.55, "type": "tap", "chord": "C_root", "notes": ["C3"], "laneLabel": "C", "strum": "tap" },
+    { "id": 8, "t": 16.202, "dur": 4.668, "type": "chord", "chord": "C", "notes": ["C4", "E4", "G4"], "laneLabel": "C", "strum": "down" },
+    { "id": 9, "t": 20.87, "dur": 0.55, "type": "tap", "chord": "G_root", "notes": ["G2"], "laneLabel": "G", "strum": "tap" },
+    { "id": 10, "t": 21.42, "dur": 4.667, "type": "chord", "chord": "G", "notes": ["G3", "B3", "D4"], "laneLabel": "G", "strum": "down" },
+    { "id": 11, "t": 26.087, "dur": 0.55, "type": "tap", "chord": "D_root", "notes": ["D3"], "laneLabel": "D", "strum": "tap" },
+    { "id": 12, "t": 26.637, "dur": 4.667, "type": "chord", "chord": "D", "notes": ["D4", "F#4", "A4"], "laneLabel": "D", "strum": "down" },
+    { "id": 13, "t": 31.304, "dur": 0.55, "type": "tap", "chord": "Am_root", "notes": ["A2"], "laneLabel": "Am", "strum": "tap" },
+    { "id": 14, "t": 31.854, "dur": 4.668, "type": "chord", "chord": "Am", "notes": ["A3", "C4", "E4"], "laneLabel": "Am", "strum": "down" },
+    { "id": 15, "t": 36.522, "dur": 0.55, "type": "tap", "chord": "C_root", "notes": ["C3"], "laneLabel": "C", "strum": "tap" },
+    { "id": 16, "t": 37.072, "dur": 4.667, "type": "chord", "chord": "C", "notes": ["C4", "E4", "G4"], "laneLabel": "C", "strum": "down" }
+  ]
+}
