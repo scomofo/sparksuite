@@ -1260,6 +1260,7 @@ function _guidedNewMove(plan) {
       if (ch) {
         h += '<div class="flex-center" style="margin-bottom:12px">' + UI.chord(ch, 180) + '</div>';
         h += '<button onclick="act(\'previewChord\',\'' + ch.name + '\')" style="background:none;font-size:13px;color:var(--text-muted);margin-bottom:8px">&#128264; Listen</button><br>';
+        h += renderGuidedTryVerifyCard(ch);
       }
       if (plan.newMove.strum) {
         h += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Strum: <strong>' + escHTML(plan.newMove.strum) + '</strong> at ' + guidedBpm + ' BPM</div>';
@@ -1468,4 +1469,98 @@ function getGuidedSessionView() {
     blockProgress: blockProgress,
     shellSummary: getGuidedShellSummary(currentPlan, blockProgress, runtimeState)
   };
+}
+
+// ===== MIC-VERIFIED TRY (guided New Move) =====
+// The Try phase was pure self-report even though mic chord detection
+// exists (audio.js startChordDetect scores S.detectedNotes against
+// S.currentChord). This wires them together: hold a clean target chord
+// for ~1.2s and the step verifies itself, with a small XP bonus.
+// Optional everywhere — no mic, no support, or a denial all degrade back
+// to the self-report button.
+
+var _guidedTryVerify = { timer: null, tracker: null, chord: null };
+
+function guidedTryVerifySupported() {
+  return typeof navigator !== "undefined" && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+}
+
+function guidedTryVerifyStart() {
+  // The chord object is stashed by renderGuidedTryVerifyCard — chord shapes
+  // live in instrument data (D.ALL_CHORDS/D.CHORDS), not a global lookup.
+  var ch = _guidedTryVerify.chord;
+  if (!ch || !guidedTryVerifySupported()) return;
+  guidedTryVerifyStop(false);
+  S.currentChord = ch;
+  S.guidedTryVerified = false;
+  _guidedTryVerify.tracker = typeof createVerificationTracker === "function"
+    ? createVerificationTracker({ threshold: 75, holdMs: 1200 })
+    : null;
+  if (typeof startChordDetect === "function") startChordDetect();
+  _guidedTryVerify.timer = setInterval(function() {
+    // Self-disarm if the user left the Try phase with the mic running.
+    if (S.newMovePhase !== "try" || S.screen !== SCR.GUIDED) {
+      guidedTryVerifyStop(false);
+      return;
+    }
+    if (!S.chordDetectOn || !_guidedTryVerify.tracker) return;
+    var done = _guidedTryVerify.tracker.update(S.chordMatch);
+    var el = document.getElementById("guided-verify-status");
+    if (el && !done) el.innerHTML = guidedTryVerifyStatusInner();
+    if (done) {
+      S.guidedTryVerified = true;
+      guidedTryVerifyStop(true);
+      if (typeof awardXP === "function") awardXP(5, "mic_verified_try");
+      S.microToast = { msg: "Verified — clean " + (ch.name || "chord") + "! +5 XP", icon: "🎤", time: Date.now() };
+      if (typeof render === "function") render();
+    }
+  }, 200);
+  if (typeof render === "function") render();
+}
+
+function guidedTryVerifyStop(keepVerified) {
+  if (_guidedTryVerify.timer) {
+    clearInterval(_guidedTryVerify.timer);
+    _guidedTryVerify.timer = null;
+  }
+  _guidedTryVerify.tracker = null;
+  if (S.chordDetectOn && typeof stopChordDetect === "function") stopChordDetect();
+  if (!keepVerified) S.guidedTryVerified = false;
+}
+
+function guidedTryVerifyStatusInner() {
+  var match = typeof S.chordMatch === "number" ? S.chordMatch : -1;
+  var progress = _guidedTryVerify.tracker ? _guidedTryVerify.tracker.progress() : 0;
+  var h = "";
+  if (match < 0) {
+    h += '<div style="color:var(--text-muted);font-size:13px">Listening&hellip; strum the chord and let it ring.</div>';
+  } else {
+    h += '<div style="font-size:13px;color:var(--text-secondary)">Match: <strong>' + match + '%</strong>' + (match >= 75 ? ' — hold it!' : '') + '</div>';
+  }
+  h += '<div style="background:var(--input-bg);border-radius:6px;height:6px;margin-top:6px;overflow:hidden">'
+     + '<div style="background:#4ECDC4;height:100%;width:' + Math.round(progress * 100) + '%;transition:width .2s"></div>'
+     + '</div>';
+  return h;
+}
+
+function renderGuidedTryVerifyCard(ch) {
+  if (!ch || !guidedTryVerifySupported()) return "";
+  _guidedTryVerify.chord = ch;
+  var h = '<div class="card" style="margin:0 0 12px;padding:12px;text-align:left">';
+  if (S.guidedTryVerified) {
+    h += '<div style="color:#6bcb77;font-weight:800;font-size:14px">&#10003; Verified by mic &mdash; clean ' + escHTML(ch.name) + '!</div>';
+  } else if (S.chordDetectOn) {
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px">'
+       + '<span style="font-weight:700;font-size:13px">&#127908; Listening for ' + escHTML(ch.name) + '</span>'
+       + '<button class="btn btn-sm" onclick="guidedTryVerifyStop(false);render()" style="background:var(--input-bg);color:var(--text-secondary)">Stop</button>'
+       + '</div>'
+       + '<div id="guided-verify-status">' + guidedTryVerifyStatusInner() + '</div>';
+  } else {
+    h += '<button class="btn btn-sm" onclick="guidedTryVerifyStart()" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#127908; Verify with mic (+5 XP)</button>';
+    if (S.chordDetectErr) {
+      h += '<div style="color:var(--text-muted);font-size:12px;margin-top:6px">' + escHTML(S.chordDetectErr) + ' &mdash; no problem, self-report still works.</div>';
+    }
+  }
+  h += '</div>';
+  return h;
 }
