@@ -561,11 +561,16 @@
          + '<div class="showroom-bottomnav-inner">' + inner + '</div></nav>';
   }
 
+  // The one canonical suite-level bottom nav. Every suite screen renders
+  // this same set — screens used to ship their own variants (Path/Practice/
+  // Instruments/Profile, Practice/Journey/Leaderboard/Profile, …), which
+  // meant the bottom bar reshuffled as you navigated.
   function launcherBottomNavItems() {
     return [
       { id:"home",     label:"Home",     icon:"home_app_logo", onClick: nav("home") },
-      { id:"library",  label:"Library",  icon:"library_music", onClick: nav("library") },
       { id:"learn",    label:"Learn",    icon:"school",        onClick: nav("learn") },
+      { id:"library",  label:"Library",  icon:"library_music", onClick: nav("library") },
+      { id:"profile",  label:"Profile",  icon:"person",        onClick: nav("profile") },
       { id:"settings", label:"Settings", icon:"settings",      onClick: nav("settings") }
     ];
   }
@@ -1048,18 +1053,18 @@
               + '</div>';
     }
 
-    var navItems = [
-      { id:"home",     label:"Home",     icon:"home",         onClick: nav("home") },
-      { id:"practice", label:"Practice", icon:"music_note" },
-      { id:"insights", label:"Insights", icon:"query_stats",  onClick: nav("insights") },
-      { id:"profile",  label:"Profile",  icon:"person",       onClick: nav("profile") }
-    ];
+    var navItems = launcherBottomNavItems();
 
     return '<div class="showroom-root with-bg">'
          + '<header class="showroom-appbar">'
          + '<div class="showroom-appbar-left"><button class="showroom-iconbtn" onclick="' + backToHome() + '" aria-label="Back"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span></button></div>'
          + '<h1 class="showroom-appbar-title" style="font-family:\'Plus Jakarta Sans\';font-weight:700">Practice Session</h1>'
-         + '<div class="showroom-appbar-right"><button class="showroom-iconbtn" onclick="' + nav("settings") + '" aria-label="Settings"><span class="material-symbols-outlined" aria-hidden="true">settings</span></button></div>'
+         // Insights moved out of this page's bottom nav when the suite nav
+         // was unified; keep it one tap away as an appbar action.
+         + '<div class="showroom-appbar-right">'
+           + '<button class="showroom-iconbtn" onclick="' + nav("insights") + '" aria-label="Insights"><span class="material-symbols-outlined" aria-hidden="true">query_stats</span></button>'
+           + '<button class="showroom-iconbtn" onclick="' + nav("settings") + '" aria-label="Settings"><span class="material-symbols-outlined" aria-hidden="true">settings</span></button>'
+         + '</div>'
          + '</header>'
          + '<main class="showroom-canvas" style="padding-top:80px">'
            + '<section><h2 class="showroom-practice-h" style="font-family:\'Syne\';font-weight:900;font-size:28px">Daily Practice</h2><p class="showroom-practice-sub">Stay in the flow state.</p></section>'
@@ -1097,7 +1102,7 @@
              + '<h3 style="font-family:\'Syne\';font-weight:800;font-size:15px">Quick Drills</h3><span class="link" style="font-size:11px;font-weight:700;color:var(--text-secondary);cursor:pointer" role="button" tabindex="0" onclick="' + nav("path") + '" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();' + nav("path") + '}">View All</span></div>'
              + '<div style="display:flex;flex-direction:column;gap:8px">' + (drillHtml || '<div class="showroom-empty-state"><p>No drills loaded yet. Start or refresh a practice plan to populate this list.</p></div>') + '</div></section>'
          + '</main>'
-         + bottomNav(navItems, "practice")
+         + bottomNav(navItems, "learn")
          + '</div>';
   }
 
@@ -1277,12 +1282,7 @@
            + '<div style="font-family:\'JetBrains Mono\';font-weight:900;color:var(--primary-fixed)">' + escHtml(item.score) + '</div>'
          + '</div>';
     }
-    var navItems = [
-      { id:"home", label:"Practice", icon:"music_note", onClick: nav("practice") },
-      { id:"journey", label:"Journey", icon:"explore", onClick: nav("path") },
-      { id:"leaderboard", label:"Leaderboard", icon:"military_tech" },
-      { id:"profile", label:"Profile", icon:"person", onClick: nav("profile") }
-    ];
+    var navItems = launcherBottomNavItems();
     return '<div class="showroom-root with-bg showroom-profile-ember">'
          + '<div class="showroom-profile-ember-wash" aria-hidden="true"></div>'
          + '<header class="showroom-appbar showroom-profile-ember-appbar">'
@@ -1295,7 +1295,7 @@
          + '<div style="display:flex;justify-content:space-between;align-items:end;margin-bottom:14px"><div><div class="showroom-focus-eyebrow">Top Local Runs</div><h3 style="margin:0;font-family:\'Syne\';font-size:24px">Best Scores</h3></div><div style="font-size:12px;color:var(--text-muted)">Updated from this device</div></div>'
          + '<div style="display:flex;flex-direction:column;gap:10px">' + (rows || '<div class="showroom-empty-state"><p>No scored runs yet. Finish a performance session to seed your local board.</p></div>') + '</div>'
          + '</section>'
-         + bottomNav(navItems, "leaderboard")
+         + bottomNav(navItems, "profile")
          + '</div>'
          + '</div>';
   }
@@ -1354,12 +1354,7 @@
       ? '<img src="' + escHtml(coverSrc) + '" alt="">'
       : '<div class="showroom-summary-lesson-thumb-fb" aria-hidden="true">\uD83C\uDFB5</div>';
 
-    var navItems = [
-      { id:"practice", label:"Practice", icon:"music_note", onClick: nav("practice") },
-      { id:"journey",  label:"Journey",  icon:"explore",    onClick: nav("path") },
-      { id:"library",  label:"Library",  icon:"library_music", onClick: nav("library") },
-      { id:"profile",  label:"Profile",  icon:"person",     onClick: nav("profile") }
-    ];
+    var navItems = launcherBottomNavItems();
 
     // CSP note: Stitch source uses an external album-art URL for the
     // lesson thumbnail; we swap it for a gradient placeholder carrying a
@@ -1437,7 +1432,7 @@
             + '<button class="showroom-summary-cta ghost" onclick="' + secondaryAction + '">' + secondaryActionLabel + '</button>'
            + '</section>'
          + '</main>'
-         + bottomNav(navItems, "practice")
+         + bottomNav(navItems, "learn")
          + '</div>';
   }
 
@@ -1642,12 +1637,7 @@
         return "finger " + f.num + " on string " + (stringIdx + 1);
       }).join(", ");
 
-    var navItems = [
-      { id:"learn",    label:"Learn",    icon:"school",     onClick: nav("path") },
-      { id:"practice", label:"Practice", icon:"music_note" },
-      { id:"library",  label:"Songs",    icon:"library_music", onClick: nav("library") },
-      { id:"profile",  label:"Profile",  icon:"person",     onClick: nav("profile") }
-    ];
+    var navItems = launcherBottomNavItems();
 
     return '<div class="showroom-root with-bg showroom-lesson-2026">'
          + '<div class="showroom-woodgrain-overlay"></div>'
@@ -1751,7 +1741,7 @@
         // no real lesson context, fall back to the showroom performance
         // launcher so the CTA still enters a playable flow.
        + '<div class="showroom-lesson-cta-wrap"><button class="showroom-lesson-cta showroom-ember-glow-button" onclick="' + getShowroomLessonCtaAction(activeLesson) + '"><span class="material-symbols-outlined fill">play_arrow</span>' + escHtml(getShowroomLessonCtaLabel(activeLesson)) + '</button></div>'
-        + bottomNav(navItems, "practice")
+        + bottomNav(navItems, "learn")
         + '</div>';
   }
 
@@ -1864,12 +1854,7 @@
       lessonsHtml = '<div class="showroom-empty-state"><p>No lessons loaded yet. Select an instrument path or load curriculum to continue.</p></div>';
     }
 
-    var navItems = [
-      { id:"path",        label:"Path",        icon:"map" },
-      { id:"practice",    label:"Practice",    icon:"timer",       onClick: nav("practice") },
-      { id:"instruments", label:"Instruments", icon:"piano",       onClick: nav("instruments") },
-      { id:"profile",     label:"Profile",     icon:"person",      onClick: nav("profile") }
-    ];
+    var navItems = launcherBottomNavItems();
 
     var avatarSrc = profile && (profile.avatarImage || profile.avatarUrl);
     var avatarHtml = avatarSrc
@@ -1915,7 +1900,7 @@
            + '<div style="display:flex;flex-direction:column;gap:8px">' + lessonsHtml + '</div>'
          + '</div>'
          + '<button class="showroom-path-fab" aria-label="Start practice" onclick="' + nav("practice") + '"><span class="material-symbols-outlined" aria-hidden="true" style="font-size:28px">timer</span></button>'
-         + bottomNav(navItems, "path")
+         + bottomNav(navItems, "learn")
          + '</div>';
   }
 

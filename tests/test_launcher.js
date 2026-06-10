@@ -791,7 +791,9 @@ test('showroom source wires remaining library, tuner, and syllabus controls', fu
   assert.ok(showroomSource.indexOf('nav("insights")') >= 0);
   assert.ok(showroomSource.indexOf('{ id:"home",     label:"Home",     icon:"home_app_logo", onClick: nav("home") }') >= 0);
   assert.ok(showroomSource.indexOf('{ id:"settings", label:"Settings", icon:"settings",      onClick: nav("settings") }') >= 0);
-  assert.ok(showroomSource.indexOf('label:"Instruments", icon:"piano",       onClick: nav("instruments")') >= 0);
+  // The dedicated Instruments nav slot was retired when the suite bottom nav
+  // was unified; the view stays reachable (Settings -> Switch Instrument).
+  assert.ok(showroomSource.indexOf('nav("instruments")') >= 0);
   assert.ok(showroomSource.indexOf('"instruments":     function(){ SparkInstruments.deactivate(); S.activeInstrument = null; S._showroomOverride = null; S.launcherView = "instruments"; }') >= 0);
 assert.ok(showroomSource.indexOf('"curriculum":      function(){ S._showroomOverride = "curriculum"; }') >= 0);
 assert.ok(showroomSource.indexOf('"syllabus":        function(){ S._showroomOverride = "syllabus"; }') >= 0);
