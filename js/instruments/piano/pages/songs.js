@@ -256,6 +256,10 @@ function stylesTab() {
 
 // ── Progression Builder ──
 function buildTab() {
+  // This global shadows js/pages/games.js buildTab for every instrument
+  // (piano pages load last), so it can render outside piano flows where
+  // buildChords was never initialized.
+  if (!Array.isArray(S.buildChords)) S.buildChords = [];
   var html = '<div class="card"><h2>Progression Builder</h2>';
   html += '<p>Create your own chord progressions.</p>';
 
