@@ -23,5 +23,6 @@ contextBridge.exposeInMainWorld('sparkDesktop', {
   saveJson: function(payload) { return ipcRenderer.invoke('save-json', payload); },
   openJson: function(options) { return ipcRenderer.invoke('open-json', options || null); },
   getAppInfo: function() { return ipcRenderer.invoke('get-app-info'); },
-  checkForUpdates: function() { return ipcRenderer.invoke('check-for-updates'); }
+  checkForUpdates: function() { return ipcRenderer.invoke('check-for-updates'); },
+  openReleasesPage: function() { return ipcRenderer.invoke('open-releases-page'); }
 });
