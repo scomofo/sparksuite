@@ -1,6 +1,6 @@
 {
   "name": "sparksuite",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Multi-instrument music learning suite",
   "main": "main.js",
   "repository": {
@@ -82,14 +82,16 @@
       "data/**/*",
       "content/**/*",
       "sparkgame/**/*",
-      "desktop/**/*"
+      "desktop/**/*",
+      "resources/instruments/**/*"
     ],
     "extraResources": [
       {
         "from": "resources/",
         "to": "resources/",
         "filter": [
-          "**/*"
+          "**/*",
+          "!instruments/**"
         ]
       }
     ]
