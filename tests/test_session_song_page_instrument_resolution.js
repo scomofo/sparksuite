@@ -12,6 +12,7 @@ function loadJS(file) {
 global.window = global.window || global;
 var _testEval = eval;
 _testEval(loadJS("js/utils/normalize.js"));
+_testEval(loadJS("js/utils/chord_progress.js")); // defines SparkChordProgress global used by page modules
 
 
 function resetEnvironment() {

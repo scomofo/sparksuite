@@ -7,7 +7,7 @@
 (function () {
   "use strict";
 
-  if (typeof SparkCore === "undefined") return;
+  if (typeof SparkSuiteCore === "undefined") return;
 
   function normalizeInstrumentType(instrument) {
     var candidate = instrument || "guitar";
@@ -26,7 +26,7 @@
   // initPlayAlongSystems
   // ---------------------------------------------------------------
 
-  SparkCore.prototype.initPlayAlongSystems = function () {
+  SparkSuiteCore.prototype.initPlayAlongSystems = function () {
     // Audio pipeline
     this.audioEngine = new SparkAudioEngine();
     this.audioTransport = new SparkAudioTransport(this.audioEngine);
@@ -97,7 +97,7 @@
   // getPlaybackTimeMs
   // ---------------------------------------------------------------
 
-  SparkCore.prototype.getPlaybackTimeMs = function () {
+  SparkSuiteCore.prototype.getPlaybackTimeMs = function () {
     // Single time source: SparkTimeSource (bound in initPlayAlongSystems)
     if (typeof SparkTimeSource !== "undefined" && SparkTimeSource.isPlaying()) {
       return SparkTimeSource.getTimeMs();
@@ -113,7 +113,7 @@
   // getInputTimeMs
   // ---------------------------------------------------------------
 
-  SparkCore.prototype.getInputTimeMs = function () {
+  SparkSuiteCore.prototype.getInputTimeMs = function () {
     var offset = 0;
     if (this.latencyCalibrator && typeof this.latencyCalibrator.getOffset === "function") {
       offset = this.latencyCalibrator.getOffset();
@@ -125,7 +125,7 @@
   // startPlayAlongSession
   // ---------------------------------------------------------------
 
-  SparkCore.prototype.startPlayAlongSession = function (params) {
+  SparkSuiteCore.prototype.startPlayAlongSession = function (params) {
     var self = this;
     params = params || {};
 
@@ -190,7 +190,7 @@
   // processPlayAlongFrame
   // ---------------------------------------------------------------
 
-  SparkCore.prototype.processPlayAlongFrame = function () {
+  SparkSuiteCore.prototype.processPlayAlongFrame = function () {
     var timeMs = this.getPlaybackTimeMs();
     var inputTimeMs = this.getInputTimeMs();
     var chart = this._activeChart;
@@ -237,7 +237,7 @@
   // processPlayAlongInput
   // ---------------------------------------------------------------
 
-  SparkCore.prototype.processPlayAlongInput = function (inputEvent) {
+  SparkSuiteCore.prototype.processPlayAlongInput = function (inputEvent) {
     var chart = this._activeChart;
     var result = null;
     var chordResult = null;
@@ -301,7 +301,7 @@
   // completePlayAlongSession
   // ---------------------------------------------------------------
 
-  SparkCore.prototype.completePlayAlongSession = function () {
+  SparkSuiteCore.prototype.completePlayAlongSession = function () {
     // 1. Stop all audio
     if (this.audioEngine && typeof this.audioEngine.stop === "function") {
       this.audioEngine.stop();
@@ -373,7 +373,7 @@
   // startMicDetection
   // ---------------------------------------------------------------
 
-  SparkCore.prototype.startMicDetection = function () {
+  SparkSuiteCore.prototype.startMicDetection = function () {
     var self = this;
     this._micActive = true;
 
@@ -409,7 +409,7 @@
   // stopMicDetection
   // ---------------------------------------------------------------
 
-  SparkCore.prototype.stopMicDetection = function () {
+  SparkSuiteCore.prototype.stopMicDetection = function () {
     this._micActive = false;
     if (this.micInput && typeof this.micInput.stop === "function") {
       this.micInput.stop();
@@ -420,7 +420,7 @@
   // startVoiceCommands
   // ---------------------------------------------------------------
 
-  SparkCore.prototype.startVoiceCommands = function () {
+  SparkSuiteCore.prototype.startVoiceCommands = function () {
     var self = this;
 
     this.voiceInput.start(function (transcript) {
@@ -466,7 +466,7 @@
   // _generateChartFromAudio (helper)
   // ---------------------------------------------------------------
 
-  SparkCore.prototype._generateChartFromAudio = function (audioFile, trackId, difficulty, instrument) {
+  SparkSuiteCore.prototype._generateChartFromAudio = function (audioFile, trackId, difficulty, instrument) {
     var self = this;
     var loadedAudio = null;
     return SparkAudioLoader.fromFile(audioFile).then(function (audioData) {
@@ -485,7 +485,7 @@
   // _startAudioForSession (helper)
   // ---------------------------------------------------------------
 
-  SparkCore.prototype._startAudioForSession = function (params, chart) {
+  SparkSuiteCore.prototype._startAudioForSession = function (params, chart) {
     if (params.audioFile) {
       SparkTimeSource.bind(this.audioEngine);
       this.audioEngine.play();
@@ -503,7 +503,7 @@
   // _computeAvgTiming (helper)
   // ---------------------------------------------------------------
 
-  SparkCore.prototype._computeAvgTiming = function (events) {
+  SparkSuiteCore.prototype._computeAvgTiming = function (events) {
     if (!events || events.length === 0) return 0;
     var sum = 0;
     for (var i = 0; i < events.length; i++) {
