@@ -30,9 +30,9 @@ function hashFilePath(filePath) {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 500,
-    height: 850,
-    minWidth: 400,
+    width: 1400,
+    height: 900,
+    minWidth: 1100,
     minHeight: 700,
     resizable: true,
     title: 'SparkSuite',
