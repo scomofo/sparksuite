@@ -425,6 +425,27 @@
       '</header>';
   }
 
+  // The onboarding implementation-intention ("Every day, when I X, I will
+  // open SparkSuite") was collected and persisted but never shown again.
+  // Surfacing the user's own cue on the home screen is what makes the
+  // if-then plan actually fire.
+  function renderIntentionRibbon(featured) {
+    var intention = typeof S !== "undefined" && typeof S.practiceIntention === "string"
+      ? S.practiceIntention.trim()
+      : "";
+    if (!intention || (typeof S !== "undefined" && S.focusMode)) return "";
+    var target = featured && featured.name ? featured.name : "an instrument";
+    return '' +
+      '<section class="showroom-section" aria-label="Your practice cue">' +
+        '<div class="showroom-card showroom-glass" style="flex-direction:row;align-items:center;gap:10px;padding:12px 16px;cursor:default">' +
+          '<span style="font-size:18px" aria-hidden="true">&#127919;</span>' +
+          '<div style="font-size:13px;line-height:1.45;color:var(--text-secondary,#cfcfd6)">' +
+            'Your cue: after you <strong>' + safeEsc(intention) + '</strong> &rarr; one ' + safeEsc(target) + ' session keeps the streak alive.' +
+          '</div>' +
+        '</div>' +
+      '</section>';
+  }
+
   function renderHome() {
     var profile = typeof SparkStorage !== "undefined" ? SparkStorage.load() : null;
     var summary = sumSuiteStats(profile);
@@ -452,6 +473,7 @@
         renderTopbar(profile, summary.totalXp) +
         '<div class="showroom-content">' +
           renderHero(featured, profile) +
+          renderIntentionRibbon(featured) +
           '<section class="showroom-section">' +
             '<div class="showroom-section-head">' +
               '<h3 class="showroom-section-title">Your Collection</h3>' +
