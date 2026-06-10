@@ -281,10 +281,25 @@ ipcMain.handle('sparkgame:charter', async (event, mp3Path, instrument, difficult
 
 // ===== APP LIFECYCLE =====
 
-app.whenReady().then(() => {
-  registerDesktopBridgeHandlers();
-  createWindow();
-});
+// Single instance: a second launch focuses the existing window instead of
+// spawning another process (multiple instances also confuse electron-updater's
+// install-on-quit handoff).
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+
+  app.whenReady().then(() => {
+    registerDesktopBridgeHandlers();
+    createWindow();
+  });
+}
 
 app.on('window-all-closed', () => {
   if (demucsProcess) {

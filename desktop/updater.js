@@ -1,10 +1,28 @@
-const { ipcMain, app, shell } = require('electron');
+const { ipcMain, app, shell, dialog } = require('electron');
 const { autoUpdater } = require('electron-updater');
 
 const RELEASES_URL = 'https://github.com/scomofo/sparksuite/releases/latest';
 
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
+
+// install-on-quit alone proved unreliable (a downloaded update sat in
+// pending/ across launches), so offer an explicit restart as the primary
+// path and keep install-on-quit as the fallback.
+autoUpdater.on('update-downloaded', function(info) {
+  var version = info && info.version ? info.version : 'new version';
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'Update ready',
+    message: 'SparkSuite ' + version + ' is ready to install.',
+    detail: 'Restart now to update, or it will install when you quit.',
+    buttons: ['Restart now', 'Later'],
+    defaultId: 0,
+    cancelId: 1
+  }).then(function(choice) {
+    if (choice.response === 0) autoUpdater.quitAndInstall();
+  });
+});
 
 function compareVersions(a, b) {
   var pa = String(a || '0').split('.').map(Number);
