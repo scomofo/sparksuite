@@ -383,10 +383,13 @@
   }
 
   function renderBottomNav(activeView) {
+    // Keep in sync with launcherBottomNavItems() in spark-showroom.js —
+    // one canonical suite nav everywhere.
     var items = [
       { id:"home",     label:"Home",     icon:"home_app_logo", onClick:"act('showLauncher')" },
-      { id:"library",  label:"Library",  icon:"library_music", onClick:"act('openLauncherView','library')" },
       { id:"learn",    label:"Learn",    icon:"school",        onClick:"act('openLauncherView','learn')" },
+      { id:"library",  label:"Library",  icon:"library_music", onClick:"act('openLauncherView','library')" },
+      { id:"profile",  label:"Profile",  icon:"person",        onClick:"act('openLauncherView','profile')" },
       { id:"settings", label:"Settings", icon:"settings",      onClick:"act('openLauncherView','settings')" }
     ];
     var inner = '';
