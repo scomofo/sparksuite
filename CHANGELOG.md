@@ -1,5 +1,30 @@
 # Changelog
 
+## 2026-06-09 — v1.0.3: Repo/installer reconciliation, real auto-update, CI test gate
+
+First release published through CI. Reconciles the repository with the v1.0.2 installer (which had been built from a never-pushed local tree), then moves the release pipeline onto GitHub Releases.
+
+### Fixes
+
+- `validateBeatGrid` now validates raw input downbeats (the ordering/BPM checks were unreachable after normalization) — via PR #50
+- Transport `pause()` no longer emits a spurious `tick` event — via PR #50
+- `power_chords_01` chart completed to 16 beats / 2 phrases — via PR #50
+- Desktop window restored to 1400x900 (repo still had the 500x850 phone-shaped default)
+- Packaged builds no longer omit `spark-showroom.css` and `spark-visual-v2.css`
+- Community page URL scheme corrected (`https` → `http` for the local server)
+
+### Auto-update
+
+- `electron-updater` against GitHub Releases: background check at startup, install on quit, manual check via the existing settings flow
+- Tag-triggered Windows workflow builds and publishes the NSIS installer + `latest.yml`
+- Removed the placeholder updater that pointed at `your-domain.example`
+
+### CI & hygiene
+
+- Full 78-file test suite now gates every push and PR (`tests.yml`)
+- Removed the unwired second Electron app under `desktop/`, the unreferenced Caption Sync Engine, vendored binaries, and nested duplicate asset directories (PR #50)
+- Community server documented as an optional self-hosted extra and excluded from the installer
+
 ## 2026-04-02 — SparkSuite Platform Convergence
 
 A major architecture day: merged the feature/convergence branch, built out the SparkCore engine layer, added BassSpark as a full instrument, introduced capo support for guitar, integrated PixiJS highway rendering, and migrated practice/performance pages toward core-backed session state.
