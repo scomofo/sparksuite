@@ -425,7 +425,9 @@ function runnerTick(){
 }
 
 // ===== COMMUNITY API =====
-var COMMUNITY_URL="https://localhost:3456";
+// The community server (server/) is optional and self-hosted; it serves
+// plain HTTP locally. Use HTTPS when pointing at a remote deployment.
+var COMMUNITY_URL="http://localhost:3456";
 if(!COMMUNITY_URL.startsWith("https")&&COMMUNITY_URL.indexOf("localhost")===-1&&COMMUNITY_URL.indexOf("127.0.0.1")===-1)
   console.warn("ChordSpark: Community URL should use HTTPS for non-local servers");
 
