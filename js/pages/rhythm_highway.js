@@ -9,9 +9,9 @@
   };
 
   var ASSIST_PRESETS = [
-    { id: "spark_learning", label: "Guided", hint: "Wider timing and fret forgiveness" },
+    { id: "spark_learning", label: "Guided", hint: "Wider timing windows and extra forgiveness" },
     { id: "spark_balanced", label: "Balanced", hint: "Closer to standard timing" },
-    { id: "spark_challenge", label: "Challenge", hint: "Tighter timing and stricter fret checks" }
+    { id: "spark_challenge", label: "Challenge", hint: "Tighter timing and stricter accuracy checks" }
   ];
 
   function normalizeRhythmInstrumentType(instrument) {
@@ -236,7 +236,7 @@
     var activePreset = getCurrentAssistPreset();
     var noteHeight = accessibility.noteSize === "large" ? 24 : (accessibility.noteSize === "compact" ? 14 : 18);
     var h = '<div class="text-center"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Rhythm Highway</h2>';
-    h += '<p style="color:var(--text-dim);font-size:13px;margin-bottom:8px">Hold frets 1-5 and strum on time. Audio clock drives the run; this page only renders snapshots.</p>';
+    h += '<p style="color:var(--text-dim);font-size:13px;margin-bottom:8px">' + escHTML(getRhythmHighwayInstructions(snapshot)) + '</p>';
     h += '<div style="margin-bottom:14px">';
     h += '<div class="metric-label" style="margin-bottom:6px">Assist Mode</div>';
     h += '<div class="action-row" style="justify-content:center">';
@@ -341,8 +341,8 @@
 
   function buildFeedback(result) {
     var weakAreas = result && result.learning && result.learning.weakAreas ? result.learning.weakAreas : [];
-    if (weakAreas.indexOf("late") >= 0) return "You were drifting late. Try strumming a hair earlier.";
-    if (weakAreas.indexOf("wrong_fret") >= 0) return "Most misses came from fret mismatch. Lock the chord shape before you strum.";
+    if (weakAreas.indexOf("late") >= 0) return "You were drifting late. Try coming in a hair earlier.";
+    if (weakAreas.indexOf("wrong_fret") >= 0) return "Most misses came from the wrong position. Lock in the shape before the beat.";
     return "Nice run. Keep the same lane shape steady and aim for longer combos.";
   }
 
@@ -351,7 +351,7 @@
     if (resolution.judgement === "perfect") return "Perfect";
     if (resolution.judgement === "good") return "Good";
     if (resolution.judgement === "ok") return "A little off, but it counted.";
-    if (resolution.reason === "wrong_fret") return "Wrong fret shape.";
+    if (resolution.reason === "wrong_fret") return "Wrong position.";
     if (resolution.reason === "early") return "Too early.";
     if (resolution.reason === "late") return "Too late.";
     return "Miss.";
@@ -405,6 +405,25 @@
       if (ASSIST_PRESETS[i].id === presetName) return ASSIST_PRESETS[i];
     }
     return ASSIST_PRESETS[0];
+  }
+
+  function getRhythmHighwayInstructions(snapshot) {
+    var payload = runtime.activePayload || runtime.sourcePayload || null;
+    if (payload && typeof payload.instructions === "string" && payload.instructions) {
+      return payload.instructions;
+    }
+    var instrumentType = normalizeRhythmInstrumentType(
+      (S.rhythmHighwayLaunchContext && S.rhythmHighwayLaunchContext.instrument) || (payload && payload.adapterType) || null
+    );
+    var copy = {
+      guitar: "Hold frets 1-5 and strum on time.",
+      bass: "Hold the frets and pluck on time.",
+      ukulele: "Hold the chord shapes and strum on time.",
+      piano: "Play the highlighted keys on time.",
+      drums: "Hit each pad on time.",
+      vocals: "Sing each syllable as it crosses the line."
+    };
+    return copy[instrumentType] || "Hit each lane on time.";
   }
 
   function getRhythmHighwayLaneLabels(accessibility) {
