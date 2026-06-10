@@ -2,7 +2,7 @@
 /*
  * SparkSuite lesson A/V smoke tests
  *
- * Validates lesson assets described by lessons/**/manifest.json.
+ * Validates lesson assets described by each lessons/<id>/manifest.json.
  * Designed to fail with teacher-friendly messages rather than raw stack traces.
  */
 
@@ -10,7 +10,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execa } from 'execa';
-import mm from 'music-metadata';
+import * as mm from 'music-metadata';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -68,7 +68,7 @@ async function findManifestDirs(root) {
 
     await Promise.all(
       entries
-        .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.'))
+        .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.') && !entry.name.startsWith('_'))
         .map((entry) => walk(path.join(dir, entry.name)))
     );
   }

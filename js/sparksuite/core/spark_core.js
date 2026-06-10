@@ -1,7 +1,7 @@
 (function() {
-  function SparkCore(options) {
+  function SparkSuiteCore(options) {
     options = options || {};
-    this.storage = options.storage || new SparkSuiteStorage();
+    this.sessionState = options.sessionState || new SparkSuiteSessionState();
     this.aiEngine = options.aiEngine || new SparkAIEngine();
     this.instrumentManager = options.instrumentManager || new SparkInstrumentManager();
     this.psychologyEngine = options.psychologyEngine || new SparkSuitePsychologyEngine();
@@ -21,12 +21,12 @@
     this.runtimeState = this.createInitialRuntimeState();
   }
 
-  SparkCore.prototype.cloneValue = function(value) {
+  SparkSuiteCore.prototype.cloneValue = function(value) {
     if (value == null) return value;
     return JSON.parse(JSON.stringify(value));
   };
 
-  SparkCore.prototype.createInitialRuntimeState = function() {
+  SparkSuiteCore.prototype.createInitialRuntimeState = function() {
     return {
       activeFlow: null,
       activeInstrumentId: null,
@@ -193,11 +193,11 @@
     };
   };
 
-  SparkCore.prototype.getRuntimeState = function() {
+  SparkSuiteCore.prototype.getRuntimeState = function() {
     return this.runtimeState;
   };
 
-  SparkCore.prototype.updateRuntimeState = function(patch) {
+  SparkSuiteCore.prototype.updateRuntimeState = function(patch) {
     var key;
     var next = {};
     patch = patch || {};
@@ -240,7 +240,7 @@
     if (type === "challenge") return "challenge";
     return "practice";
   }
-  SparkCore.prototype.deriveRuntimeScreen = function(flow) {
+  SparkSuiteCore.prototype.deriveRuntimeScreen = function(flow) {
     if (flow === SparkSessionTypes.FLOW_GUIDED_SESSION) return "guided_session";
     if (flow === SparkSessionTypes.FLOW_PERFORMANCE_SONG) return "performance_song";
     if (flow === SparkSessionTypes.FLOW_DAILY_PRACTICE) return "daily_practice";
@@ -249,7 +249,7 @@
     return flow || null;
   };
 
-  SparkCore.prototype.startSession = function(input) {
+  SparkSuiteCore.prototype.startSession = function(input) {
     input = input || {};
     if (!input.flow && input.mode) return this.startLegacyPracticeSession(input);
     var flow = input.flow || this.aiEngine.suggestNextFlow();
@@ -368,7 +368,7 @@
       });
     }
     this.currentPlan = plan;
-    this.storage.setCurrentPlanId(plan.id);
+    this.sessionState.setCurrentPlanId(plan.id);
     this.updateRuntimeState({
       activeFlow: plan.flow,
       activeInstrumentId: plan.instrumentId || plan.instrumentType || null,
@@ -421,7 +421,7 @@
     return plan;
   };
 
-  SparkCore.prototype.startLegacyPracticeSession = function(input) {
+  SparkSuiteCore.prototype.startLegacyPracticeSession = function(input) {
     input = input || {};
     var instrumentContext = this.instrumentManager.getActiveContext();
     var plan = input.mode === "drill"
@@ -439,7 +439,7 @@
     var legacy = plan.context && plan.context.legacyPractice ? plan.context.legacyPractice : {};
 
     this.currentPlan = plan;
-    this.storage.setCurrentPlanId(plan.id);
+    this.sessionState.setCurrentPlanId(plan.id);
     this.updateRuntimeState({
       activeFlow: plan.flow,
       activeInstrumentId: plan.instrumentId || plan.instrumentType || null,
@@ -459,7 +459,7 @@
     return plan;
   };
 
-  SparkCore.prototype.openDailyPracticePlan = function(options) {
+  SparkSuiteCore.prototype.openDailyPracticePlan = function(options) {
     options = options || {};
     return this.startSession({
       flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
@@ -468,11 +468,11 @@
     });
   };
 
-  SparkCore.prototype.openDashboardPracticePlan = function(options) {
+  SparkSuiteCore.prototype.openDashboardPracticePlan = function(options) {
     return this.openDailyPracticePlan(options || {});
   };
 
-  SparkCore.prototype.openPracticePlanScreen = function(options) {
+  SparkSuiteCore.prototype.openPracticePlanScreen = function(options) {
     var plan = this.openDashboardPracticePlan(options || {});
     this.updateRuntimeState({
       activeScreen: "practice_plan",
@@ -481,7 +481,7 @@
     return plan;
   };
 
-  SparkCore.prototype.openLegacyPracticeSession = function(options) {
+  SparkSuiteCore.prototype.openLegacyPracticeSession = function(options) {
     options = options || {};
     var durationSec = Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : null;
     return this.updateRuntimeState({
@@ -498,7 +498,7 @@
     });
   };
 
-  SparkCore.prototype.openLegacyPracticeDrill = function(options) {
+  SparkSuiteCore.prototype.openLegacyPracticeDrill = function(options) {
     options = options || {};
     var durationSec = Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : null;
     return this.updateRuntimeState({
@@ -515,7 +515,7 @@
     });
   };
 
-  SparkCore.prototype.syncLegacyPracticeRuntimeState = function(action, options) {
+  SparkSuiteCore.prototype.syncLegacyPracticeRuntimeState = function(action, options) {
     var runtimeState = this.getRuntimeState();
     var next = {
       activeFlow: runtimeState.activeFlow || "legacy_practice_session",
@@ -563,7 +563,7 @@
     return this.updateRuntimeState(next);
   };
 
-  SparkCore.prototype.completeLegacyPracticeSession = function(options) {
+  SparkSuiteCore.prototype.completeLegacyPracticeSession = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_practice_session",
@@ -578,7 +578,7 @@
     });
   };
 
-  SparkCore.prototype.completeLegacyPracticeDrill = function(options) {
+  SparkSuiteCore.prototype.completeLegacyPracticeDrill = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_practice_drill",
@@ -596,7 +596,7 @@
     });
   };
 
-  SparkCore.prototype.returnFromLegacyPracticeFamily = function(options) {
+  SparkSuiteCore.prototype.returnFromLegacyPracticeFamily = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeScreen: "home",
@@ -606,15 +606,15 @@
     });
   };
 
-  SparkCore.prototype.repeatLegacyPracticeSession = function(options) {
+  SparkSuiteCore.prototype.repeatLegacyPracticeSession = function(options) {
     return this.openLegacyPracticeSession(options || {});
   };
 
-  SparkCore.prototype.repeatLegacyPracticeDrill = function(options) {
+  SparkSuiteCore.prototype.repeatLegacyPracticeDrill = function(options) {
     return this.openLegacyPracticeDrill(options || {});
   };
 
-  SparkCore.prototype.openLegacyFingerExercise = function(options) {
+  SparkSuiteCore.prototype.openLegacyFingerExercise = function(options) {
     options = options || {};
     var durationSec = Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : null;
     return this.updateRuntimeState({
@@ -632,7 +632,7 @@
     });
   };
 
-  SparkCore.prototype.completeLegacyFingerExercise = function(options) {
+  SparkSuiteCore.prototype.completeLegacyFingerExercise = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_finger_exercise",
@@ -655,7 +655,7 @@
     });
   };
 
-  SparkCore.prototype.openLegacyStrumPattern = function(options) {
+  SparkSuiteCore.prototype.openLegacyStrumPattern = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_strum_pattern",
@@ -670,7 +670,7 @@
     });
   };
 
-  SparkCore.prototype.syncLegacyStrumRuntimeState = function(options) {
+  SparkSuiteCore.prototype.syncLegacyStrumRuntimeState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: this.runtimeState.activeFlow || "legacy_strum_pattern",
@@ -694,7 +694,7 @@
     });
   };
 
-  SparkCore.prototype.syncLegacyQuizRuntimeState = function(options) {
+  SparkSuiteCore.prototype.syncLegacyQuizRuntimeState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: this.runtimeState.activeFlow || "legacy_quiz",
@@ -721,7 +721,7 @@
     });
   };
 
-  SparkCore.prototype.openLegacyQuiz = function(options) {
+  SparkSuiteCore.prototype.openLegacyQuiz = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_quiz",
@@ -748,7 +748,7 @@
     });
   };
 
-  SparkCore.prototype.syncLegacyEarTrainingRuntimeState = function(options) {
+  SparkSuiteCore.prototype.syncLegacyEarTrainingRuntimeState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: this.runtimeState.activeFlow || "legacy_ear_training",
@@ -771,7 +771,7 @@
     });
   };
 
-  SparkCore.prototype.openLegacyEarTraining = function(options) {
+  SparkSuiteCore.prototype.openLegacyEarTraining = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_ear_training",
@@ -798,7 +798,7 @@
     });
   };
 
-  SparkCore.prototype.openLegacyDailyChallenge = function(options) {
+  SparkSuiteCore.prototype.openLegacyDailyChallenge = function(options) {
     options = options || {};
     var durationSec = Object.prototype.hasOwnProperty.call(options, "durationSec") ? options.durationSec : null;
     return this.updateRuntimeState({
@@ -814,7 +814,7 @@
     });
   };
 
-  SparkCore.prototype.syncLegacyDailyRuntimeState = function(action, options) {
+  SparkSuiteCore.prototype.syncLegacyDailyRuntimeState = function(action, options) {
     var runtimeState = this.getRuntimeState();
     var next = {
       activeFlow: runtimeState.activeFlow || "legacy_daily_challenge",
@@ -855,7 +855,7 @@
     return this.updateRuntimeState(next);
   };
 
-  SparkCore.prototype.completeLegacyDailyChallenge = function(options) {
+  SparkSuiteCore.prototype.completeLegacyDailyChallenge = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_daily_challenge",
@@ -870,7 +870,7 @@
     });
   };
 
-  SparkCore.prototype.returnFromLegacyDailyChallenge = function(options) {
+  SparkSuiteCore.prototype.returnFromLegacyDailyChallenge = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_daily_challenge",
@@ -881,7 +881,7 @@
     });
   };
 
-  SparkCore.prototype.openLegacyRunnerGame = function(options) {
+  SparkSuiteCore.prototype.openLegacyRunnerGame = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_runner_game",
@@ -900,7 +900,7 @@
     });
   };
 
-  SparkCore.prototype.syncLegacyRunnerRuntimeState = function(options) {
+  SparkSuiteCore.prototype.syncLegacyRunnerRuntimeState = function(options) {
     var runtimeState = this.getRuntimeState();
     var next = {
       activeFlow: runtimeState.activeFlow || "legacy_runner_game",
@@ -933,7 +933,7 @@
     return this.updateRuntimeState(next);
   };
 
-  SparkCore.prototype.completeLegacyRunnerGame = function(options) {
+  SparkSuiteCore.prototype.completeLegacyRunnerGame = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_runner_game",
@@ -952,7 +952,7 @@
     });
   };
 
-  SparkCore.prototype.openLegacyRhythmGame = function(options) {
+  SparkSuiteCore.prototype.openLegacyRhythmGame = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_rhythm_game",
@@ -969,7 +969,7 @@
     });
   };
 
-  SparkCore.prototype.syncLegacyRhythmRuntimeState = function(options) {
+  SparkSuiteCore.prototype.syncLegacyRhythmRuntimeState = function(options) {
     var runtimeState = this.getRuntimeState();
     var next = {
       activeFlow: runtimeState.activeFlow || "legacy_rhythm_game",
@@ -998,7 +998,7 @@
     return this.updateRuntimeState(next);
   };
 
-  SparkCore.prototype.completeLegacyRhythmGame = function(options) {
+  SparkSuiteCore.prototype.completeLegacyRhythmGame = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       activeFlow: "legacy_rhythm_game",
@@ -1015,7 +1015,7 @@
     });
   };
 
-  SparkCore.prototype.syncTunerRuntimeState = function(options) {
+  SparkSuiteCore.prototype.syncTunerRuntimeState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       tunerActive: Object.prototype.hasOwnProperty.call(options, "active") ? !!options.active : this.runtimeState.tunerActive,
@@ -1026,7 +1026,7 @@
     });
   };
 
-  SparkCore.prototype.syncStemPlayerRuntimeState = function(options) {
+  SparkSuiteCore.prototype.syncStemPlayerRuntimeState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       stemPlaying: Object.prototype.hasOwnProperty.call(options, "playing") ? !!options.playing : this.runtimeState.stemPlaying,
@@ -1035,7 +1035,7 @@
     });
   };
 
-  SparkCore.prototype.syncAudioInputRuntimeState = function(options) {
+  SparkSuiteCore.prototype.syncAudioInputRuntimeState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       audioInputDevices: Object.prototype.hasOwnProperty.call(options, "devices")
@@ -1047,7 +1047,7 @@
     });
   };
 
-  SparkCore.prototype.syncMetronomeRuntimeState = function(options) {
+  SparkSuiteCore.prototype.syncMetronomeRuntimeState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       metronomeActive: Object.prototype.hasOwnProperty.call(options, "active") ? !!options.active : this.runtimeState.metronomeActive,
@@ -1057,7 +1057,7 @@
     });
   };
 
-  SparkCore.prototype.syncChordDetectRuntimeState = function(options) {
+  SparkSuiteCore.prototype.syncChordDetectRuntimeState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       chordDetectActive: Object.prototype.hasOwnProperty.call(options, "active") ? !!options.active : this.runtimeState.chordDetectActive,
@@ -1069,7 +1069,7 @@
     });
   };
 
-  SparkCore.prototype.completeDailyPracticePlan = function(options) {
+  SparkSuiteCore.prototype.completeDailyPracticePlan = function(options) {
     options = options || {};
     return this.completeSession({
       flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
@@ -1078,7 +1078,7 @@
     });
   };
 
-  SparkCore.prototype.openGuidedSession = function(options) {
+  SparkSuiteCore.prototype.openGuidedSession = function(options) {
     options = options || {};
     return this.startSession({
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
@@ -1086,7 +1086,7 @@
     });
   };
 
-  SparkCore.prototype.buildSongSessionRequest = function(options) {
+  SparkSuiteCore.prototype.buildSongSessionRequest = function(options) {
     var runtimeState = this.getRuntimeState();
     options = options || {};
     var songData = Object.prototype.hasOwnProperty.call(options, "songData")
@@ -1109,7 +1109,7 @@
     };
   };
 
-  SparkCore.prototype.openSongSession = function(options) {
+  SparkSuiteCore.prototype.openSongSession = function(options) {
     var request = this.buildSongSessionRequest(options);
     this.updateRuntimeState({
       activeFlow: "song_session",
@@ -1127,7 +1127,7 @@
     return request;
   };
 
-  SparkCore.prototype.syncSongRuntimeState = function(action, options) {
+  SparkSuiteCore.prototype.syncSongRuntimeState = function(action, options) {
     var runtimeState = this.getRuntimeState();
     var next = {
       activeFlow: runtimeState.activeFlow || "song_session",
@@ -1180,7 +1180,7 @@
     return this.updateRuntimeState(next);
   };
 
-  SparkCore.prototype.buildSongNavigationRequest = function(target, options) {
+  SparkSuiteCore.prototype.buildSongNavigationRequest = function(target, options) {
     var runtimeState = this.getRuntimeState();
     var request = {
       target: target || "songs_home",
@@ -1211,7 +1211,7 @@
     return request;
   };
 
-  SparkCore.prototype.applySongNavigationRequest = function(target, options) {
+  SparkSuiteCore.prototype.applySongNavigationRequest = function(target, options) {
     var request = this.buildSongNavigationRequest(target, options);
     return this.updateRuntimeState({
       activeFlow: request.activeFlow,
@@ -1223,7 +1223,7 @@
     });
   };
 
-  SparkCore.prototype.completeSongSession = function(options) {
+  SparkSuiteCore.prototype.completeSongSession = function(options) {
     options = options || {};
     this.syncSongRuntimeState("complete", {
       songData: Object.prototype.hasOwnProperty.call(options, "songData") ? options.songData : this.runtimeState.songSessionData,
@@ -1233,7 +1233,7 @@
     return this.buildSongNavigationRequest("song_done", options);
   };
 
-  SparkCore.prototype.buildSongBrowserRequest = function(action, options) {
+  SparkSuiteCore.prototype.buildSongBrowserRequest = function(action, options) {
     var runtimeState = this.getRuntimeState();
     options = options || {};
     return {
@@ -1262,7 +1262,7 @@
     };
   };
 
-  SparkCore.prototype.applySongBrowserRequest = function(action, options) {
+  SparkSuiteCore.prototype.applySongBrowserRequest = function(action, options) {
     var request = this.buildSongBrowserRequest(action, options);
     return this.updateRuntimeState({
       activeTab: "songs",
@@ -1276,7 +1276,7 @@
     });
   };
 
-  SparkCore.prototype.buildDashboardRequest = function(options) {
+  SparkSuiteCore.prototype.buildDashboardRequest = function(options) {
     var runtimeState = this.getRuntimeState();
     options = options || {};
     return {
@@ -1295,7 +1295,7 @@
     };
   };
 
-  SparkCore.prototype.applyDashboardRequest = function(options) {
+  SparkSuiteCore.prototype.applyDashboardRequest = function(options) {
     var request = this.buildDashboardRequest(options);
     return this.updateRuntimeState({
       dashboardRecommendations: request.recommendations || [],
@@ -1305,11 +1305,11 @@
     });
   };
 
-  SparkCore.prototype.refreshDashboardSnapshot = function(options) {
+  SparkSuiteCore.prototype.refreshDashboardSnapshot = function(options) {
     return this.applyDashboardRequest(options || {});
   };
 
-  SparkCore.prototype.initializeDashboardChallenges = function(options) {
+  SparkSuiteCore.prototype.initializeDashboardChallenges = function(options) {
     var runtimeState = this.getRuntimeState();
     options = options || {};
     return this.applyDashboardRequest({
@@ -1328,7 +1328,7 @@
     });
   };
 
-  SparkCore.prototype.buildDashboardNavigationRequest = function(target) {
+  SparkSuiteCore.prototype.buildDashboardNavigationRequest = function(target) {
     var request = {
       target: target || "home_dash",
       activeScreen: "home_dash",
@@ -1345,7 +1345,7 @@
     return request;
   };
 
-  SparkCore.prototype.applyDashboardNavigationRequest = function(target) {
+  SparkSuiteCore.prototype.applyDashboardNavigationRequest = function(target) {
     var request = this.buildDashboardNavigationRequest(target);
     return this.updateRuntimeState({
       activeScreen: request.activeScreen,
@@ -1353,11 +1353,11 @@
     });
   };
 
-  SparkCore.prototype.openDashboardSection = function(target) {
+  SparkSuiteCore.prototype.openDashboardSection = function(target) {
     return this.applyDashboardNavigationRequest(target || "home_dash");
   };
 
-  SparkCore.prototype.returnFromHomeFamily = function(options) {
+  SparkSuiteCore.prototype.returnFromHomeFamily = function(options) {
     options = options || {};
     var currentScreen = options.currentScreen || this.runtimeState.activeScreen || "home";
     var isDashboardFamily = currentScreen === "recommendations"
@@ -1375,7 +1375,7 @@
     });
   };
 
-  SparkCore.prototype.openUtilityScreen = function(target) {
+  SparkSuiteCore.prototype.openUtilityScreen = function(target) {
     var activeScreen = "home";
     if (target === "settings") activeScreen = "settings";
     else if (target === "curriculum") activeScreen = "curriculum";
@@ -1388,7 +1388,7 @@
     });
   };
 
-  SparkCore.prototype.syncSettingsState = function(options) {
+  SparkSuiteCore.prototype.syncSettingsState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       settingsTheme: Object.prototype.hasOwnProperty.call(options, "theme")
@@ -1397,7 +1397,7 @@
     });
   };
 
-  SparkCore.prototype.syncMidiSettingsState = function(options) {
+  SparkSuiteCore.prototype.syncMidiSettingsState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       midiEnabled: Object.prototype.hasOwnProperty.call(options, "midiEnabled")
@@ -1424,7 +1424,7 @@
     });
   };
 
-  SparkCore.prototype.syncMidiImportState = function(options) {
+  SparkSuiteCore.prototype.syncMidiImportState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       midiImportSummary: Object.prototype.hasOwnProperty.call(options, "summary")
@@ -1442,7 +1442,7 @@
     });
   };
 
-  SparkCore.prototype.syncCloudSettingsState = function(options) {
+  SparkSuiteCore.prototype.syncCloudSettingsState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       cloudLoggedIn: Object.prototype.hasOwnProperty.call(options, "loggedIn")
@@ -1460,13 +1460,13 @@
     });
   };
 
-  SparkCore.prototype.openCloudSettings = function(options) {
+  SparkSuiteCore.prototype.openCloudSettings = function(options) {
     options = options || {};
     this.openUtilityScreen("cloud_settings");
     return this.syncCloudSettingsState(options);
   };
 
-  SparkCore.prototype.applyCloudWorkflowRequest = function(action, options) {
+  SparkSuiteCore.prototype.applyCloudWorkflowRequest = function(action, options) {
     options = options || {};
     if (action === "open") {
       return this.openCloudSettings(options);
@@ -1488,7 +1488,7 @@
     return this.syncCloudSettingsState(options);
   };
 
-  SparkCore.prototype.syncCurriculumState = function(options) {
+  SparkSuiteCore.prototype.syncCurriculumState = function(options) {
     options = options || {};
     return this.updateRuntimeState({
       curriculumSummaries: Object.prototype.hasOwnProperty.call(options, "curriculums")
@@ -1500,7 +1500,7 @@
     });
   };
 
-  SparkCore.prototype.applyCurriculumWorkflowRequest = function(action, options) {
+  SparkSuiteCore.prototype.applyCurriculumWorkflowRequest = function(action, options) {
     options = options || {};
     if (action === "curriculum_load_start") {
       return this.updateRuntimeState({
@@ -1541,7 +1541,7 @@
     return this.updateRuntimeState({});
   };
 
-  SparkCore.prototype.openSkillTree = function() {
+  SparkSuiteCore.prototype.openSkillTree = function() {
     return this.updateRuntimeState({
       activeScreen: "skill_tree",
       activeTab: this.runtimeState.activeTab || null,
@@ -1549,7 +1549,7 @@
     });
   };
 
-  SparkCore.prototype.setSkillTreeFocus = function(focus) {
+  SparkSuiteCore.prototype.setSkillTreeFocus = function(focus) {
     return this.updateRuntimeState({
       activeScreen: this.runtimeState.activeScreen || "skill_tree",
       activeTab: this.runtimeState.activeTab || null,
@@ -1557,7 +1557,7 @@
     });
   };
 
-  SparkCore.prototype.openStemPlayer = function() {
+  SparkSuiteCore.prototype.openStemPlayer = function() {
     return this.updateRuntimeState({
       activeScreen: "stems",
       activeTab: "songs",
@@ -1565,7 +1565,7 @@
     });
   };
 
-  SparkCore.prototype.closeStemPlayer = function() {
+  SparkSuiteCore.prototype.closeStemPlayer = function() {
     return this.updateRuntimeState({
       activeScreen: "home",
       activeTab: "songs",
@@ -1574,7 +1574,7 @@
     });
   };
 
-  SparkCore.prototype.returnFromUtilityFamily = function(options) {
+  SparkSuiteCore.prototype.returnFromUtilityFamily = function(options) {
     options = options || {};
     var currentScreen = options.currentScreen || this.runtimeState.activeScreen || "home";
     var isUtilityFamily = currentScreen === "settings"
@@ -1592,7 +1592,7 @@
     return this.getRuntimeState();
   };
 
-  SparkCore.prototype.getDashboardRecommendationById = function(id) {
+  SparkSuiteCore.prototype.getDashboardRecommendationById = function(id) {
     var arr = this.runtimeState.dashboardRecommendations || [];
     var i;
     for (i = 0; i < arr.length; i++) {
@@ -1601,14 +1601,14 @@
     return null;
   };
 
-  SparkCore.prototype.buildDashboardRecommendationLaunchRequest = function(id) {
+  SparkSuiteCore.prototype.buildDashboardRecommendationLaunchRequest = function(id) {
     return {
       recommendationId: id || null,
       recommendation: id ? this.getDashboardRecommendationById(id) : null
     };
   };
 
-  SparkCore.prototype.launchDashboardRecommendation = function(id) {
+  SparkSuiteCore.prototype.launchDashboardRecommendation = function(id) {
     var request = this.buildDashboardRecommendationLaunchRequest(id);
     if (request.recommendation) {
       this.updateRuntimeState({
@@ -1619,7 +1619,7 @@
     return request;
   };
 
-  SparkCore.prototype.applyDashboardChallengeReward = function(challengeId) {
+  SparkSuiteCore.prototype.applyDashboardChallengeReward = function(challengeId) {
     var arr = this.cloneValue(this.runtimeState.dashboardChallenges || []);
     var i;
     for (i = 0; i < arr.length; i++) {
@@ -1633,7 +1633,7 @@
     });
   };
 
-  SparkCore.prototype.completeGuidedSession = function(options) {
+  SparkSuiteCore.prototype.completeGuidedSession = function(options) {
     options = options || {};
     var result = this.completeSession({
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
@@ -1643,7 +1643,7 @@
     return result;
   };
 
-  SparkCore.prototype.completeSession = function(payload) {
+  SparkSuiteCore.prototype.completeSession = function(payload) {
     payload = payload || {};
     if (!this.currentPlan || (payload.sessionId && this.currentPlan.id !== payload.sessionId)) {
       this.startSession({ flow: payload.flow || SparkSessionTypes.FLOW_DAILY_PRACTICE });
@@ -1702,15 +1702,15 @@
       lastCompletedFlow: result.planCompleted && this.currentPlan ? this.currentPlan.flow : this.runtimeState.lastCompletedFlow,
       lastOutcomeSummary: result.completionSummary || result.performanceSummary || result.itemResultSummary || null
     });
-    if (result.planCompleted) this.storage.setCurrentPlanId(this.currentPlan.id);
+    if (result.planCompleted) this.sessionState.setCurrentPlanId(this.currentPlan.id);
     return result;
   };
 
-  SparkCore.prototype.getCurrentPlan = function() {
+  SparkSuiteCore.prototype.getCurrentPlan = function() {
     return this.currentPlan;
   };
 
-  SparkCore.prototype.getSegmentById = function(segmentId) {
+  SparkSuiteCore.prototype.getSegmentById = function(segmentId) {
     if (!this.currentPlan || !Array.isArray(this.currentPlan.segments)) return null;
     for (var i = 0; i < this.currentPlan.segments.length; i++) {
       if (this.currentPlan.segments[i].id === segmentId) return this.currentPlan.segments[i];
@@ -1718,11 +1718,11 @@
     return null;
   };
 
-  SparkCore.prototype.getLastSessionOutcome = function() {
+  SparkSuiteCore.prototype.getLastSessionOutcome = function() {
     return this.lastSessionOutcome;
   };
 
-  SparkCore.prototype.getActiveSessionView = function() {
+  SparkSuiteCore.prototype.getActiveSessionView = function() {
     return {
       plan: this.currentPlan,
       runtimeState: this.getRuntimeState(),
@@ -1730,7 +1730,7 @@
     };
   };
 
-  SparkCore.prototype.getPerformanceEditorDocumentView = function() {
+  SparkSuiteCore.prototype.getPerformanceEditorDocumentView = function() {
     var runtimeState = this.getRuntimeState();
     return {
       chart: this.cloneValue(this.performanceEditorDocument),
@@ -1759,7 +1759,7 @@
     };
   };
 
-  SparkCore.prototype.buildPerformanceEditorDocumentState = function(chart, options) {
+  SparkSuiteCore.prototype.buildPerformanceEditorDocumentState = function(chart, options) {
     var runtimeState = this.getRuntimeState();
     var payload = {};
     var events = chart && Array.isArray(chart.events) ? chart.events : [];
@@ -1851,7 +1851,7 @@
     return payload;
   };
 
-  SparkCore.prototype.syncPerformanceEditorDocument = function(chart, options) {
+  SparkSuiteCore.prototype.syncPerformanceEditorDocument = function(chart, options) {
     var action;
     options = options || {};
     this.performanceEditorDocument = chart ? this.cloneValue(chart) : null;
@@ -1859,7 +1859,7 @@
     return this.syncPerformanceRuntimeState(action, this.buildPerformanceEditorDocumentState(chart, options));
   };
 
-  SparkCore.prototype.applyPerformanceEditorMutation = function(action, payload) {
+  SparkSuiteCore.prototype.applyPerformanceEditorMutation = function(action, payload) {
     var chart = this.performanceEditorDocument ? this.cloneValue(this.performanceEditorDocument) : null;
     var library = this.cloneValue(this.performanceEditorLibrary) || [];
     var i;
@@ -2014,7 +2014,7 @@
     return result;
   };
 
-  SparkCore.prototype.getPerformanceEditorExportData = function() {
+  SparkSuiteCore.prototype.getPerformanceEditorExportData = function() {
     var chart = this.performanceEditorDocument ? this.cloneValue(this.performanceEditorDocument) : null;
     var title = chart && chart.title ? chart.title : "chart";
     return {
@@ -2024,11 +2024,11 @@
     };
   };
 
-  SparkCore.prototype.getPerformanceEditorPreviewChart = function() {
+  SparkSuiteCore.prototype.getPerformanceEditorPreviewChart = function() {
     return this.performanceEditorDocument ? this.cloneValue(this.performanceEditorDocument) : null;
   };
 
-  SparkCore.prototype.getPerformanceEditorPreviewRequest = function() {
+  SparkSuiteCore.prototype.getPerformanceEditorPreviewRequest = function() {
     var chart = this.getPerformanceEditorPreviewChart();
     var runtimeState = this.getRuntimeState();
     return {
@@ -2044,7 +2044,7 @@
     };
   };
 
-  SparkCore.prototype.startPerformanceEditorPreview = function() {
+  SparkSuiteCore.prototype.startPerformanceEditorPreview = function() {
     var request = this.getPerformanceEditorPreviewRequest();
     if (!request.chart || !request.chart.events || !request.chart.events.length) return null;
     this.syncPerformanceRuntimeState("start", {
@@ -2059,7 +2059,7 @@
     return request;
   };
 
-  SparkCore.prototype.openPerformanceStats = function(options) {
+  SparkSuiteCore.prototype.openPerformanceStats = function(options) {
     options = options || {};
     var request = {
       focus: Object.prototype.hasOwnProperty.call(options, "focus")
@@ -2070,7 +2070,7 @@
     return request;
   };
 
-  SparkCore.prototype.openPerformanceEditor = function(chart, options) {
+  SparkSuiteCore.prototype.openPerformanceEditor = function(chart, options) {
     options = options || {};
     var request = {
       action: options.action || "open_editor",
@@ -2093,11 +2093,11 @@
     return request;
   };
 
-  SparkCore.prototype.openPerformanceCalibration = function(options) {
+  SparkSuiteCore.prototype.openPerformanceCalibration = function(options) {
     return this.applyPerformanceCalibrationRequest("open_calibration", options || {});
   };
 
-  SparkCore.prototype.openPerformanceSongSelection = function(options) {
+  SparkSuiteCore.prototype.openPerformanceSongSelection = function(options) {
     options = options || {};
     var request = {
       songId: Object.prototype.hasOwnProperty.call(options, "songId") ? options.songId : null,
@@ -2142,11 +2142,11 @@
     return request;
   };
 
-  SparkCore.prototype.openCareerSongSelection = function(options) {
+  SparkSuiteCore.prototype.openCareerSongSelection = function(options) {
     return this.openPerformanceSongSelection(options || {});
   };
 
-  SparkCore.prototype.openPerformanceDailyChallenge = function(options) {
+  SparkSuiteCore.prototype.openPerformanceDailyChallenge = function(options) {
     options = options || {};
     if (options.songData || options.songId) {
       return this.openPerformanceSongSelection(options);
@@ -2158,14 +2158,14 @@
     });
   };
 
-  SparkCore.prototype.syncPerformanceDailyChallengeState = function(challenge, isComplete) {
+  SparkSuiteCore.prototype.syncPerformanceDailyChallengeState = function(challenge, isComplete) {
     return this.updateRuntimeState({
       performanceDailyChallenge: challenge ? this.cloneValue(challenge) : null,
       performanceDailyComplete: !!isComplete
     });
   };
 
-  SparkCore.prototype.buildPerformanceStartRequest = function(options) {
+  SparkSuiteCore.prototype.buildPerformanceStartRequest = function(options) {
     var runtimeState = this.getRuntimeState();
     options = options || {};
     return {
@@ -2206,7 +2206,7 @@
     };
   };
 
-  SparkCore.prototype.startPerformanceRetrySession = function(options) {
+  SparkSuiteCore.prototype.startPerformanceRetrySession = function(options) {
     var request = this.buildPerformanceStartRequest(options);
     this.syncPerformanceRuntimeState("start", {
       chartId: request.chartId,
@@ -2223,7 +2223,7 @@
     return request;
   };
 
-  SparkCore.prototype.startSelectedPerformanceSong = function(options) {
+  SparkSuiteCore.prototype.startSelectedPerformanceSong = function(options) {
     var request = this.buildPerformanceStartRequest(options);
     this.syncPerformanceRuntimeState("start", {
       chartId: request.chartId,
@@ -2240,7 +2240,7 @@
     return request;
   };
 
-  SparkCore.prototype.buildPerformanceCalibrationRequest = function(action, options) {
+  SparkSuiteCore.prototype.buildPerformanceCalibrationRequest = function(action, options) {
     var runtimeState = this.getRuntimeState();
     options = options || {};
     return {
@@ -2263,13 +2263,13 @@
     };
   };
 
-  SparkCore.prototype.applyPerformanceCalibrationRequest = function(action, options) {
+  SparkSuiteCore.prototype.applyPerformanceCalibrationRequest = function(action, options) {
     var request = this.buildPerformanceCalibrationRequest(action, options);
     this.syncPerformanceRuntimeState(request.action, request);
     return request;
   };
 
-  SparkCore.prototype.buildPerformanceCompletionRequest = function(options) {
+  SparkSuiteCore.prototype.buildPerformanceCompletionRequest = function(options) {
     var runtimeState = this.getRuntimeState();
     options = options || {};
     return {
@@ -2299,7 +2299,7 @@
     };
   };
 
-  SparkCore.prototype.buildPerformanceNavigationRequest = function(target, options) {
+  SparkSuiteCore.prototype.buildPerformanceNavigationRequest = function(target, options) {
     var runtimeState = this.getRuntimeState();
     options = options || {};
     var request = {
@@ -2345,7 +2345,7 @@
     return request;
   };
 
-  SparkCore.prototype.applyPerformanceNavigationRequest = function(target, options) {
+  SparkSuiteCore.prototype.applyPerformanceNavigationRequest = function(target, options) {
     var request = this.buildPerformanceNavigationRequest(target, options);
     return this.updateRuntimeState({
       activeFlow: request.activeFlow,
@@ -2356,7 +2356,7 @@
     });
   };
 
-  SparkCore.prototype.syncGuidedRuntimeState = function(patch) {
+  SparkSuiteCore.prototype.syncGuidedRuntimeState = function(patch) {
     patch = patch || {};
     return this.updateRuntimeState({
       activeFlow: this.runtimeState.activeFlow || SparkSessionTypes.FLOW_GUIDED_SESSION,
@@ -2371,7 +2371,7 @@
     });
   };
 
-  SparkCore.prototype.buildGuidedNavigationRequest = function(target, options) {
+  SparkSuiteCore.prototype.buildGuidedNavigationRequest = function(target, options) {
     options = options || {};
     var request = {
       target: target || "guided_home",
@@ -2404,7 +2404,7 @@
     return request;
   };
 
-  SparkCore.prototype.applyGuidedNavigationRequest = function(target, options) {
+  SparkSuiteCore.prototype.applyGuidedNavigationRequest = function(target, options) {
     var request = this.buildGuidedNavigationRequest(target, options);
     return this.updateRuntimeState({
       activeFlow: request.activeFlow,
@@ -2416,7 +2416,7 @@
     });
   };
 
-  SparkCore.prototype.syncPerformanceRuntimeState = function(action, payload) {
+  SparkSuiteCore.prototype.syncPerformanceRuntimeState = function(action, payload) {
     payload = payload || {};
     var next = {
       activeFlow: this.runtimeState.activeFlow || SparkSessionTypes.FLOW_PERFORMANCE_SONG,
@@ -2632,7 +2632,7 @@
     return this.updateRuntimeState(next);
   };
 
-  SparkCore.prototype.startPracticeFromLesson = function(lesson) {
+  SparkSuiteCore.prototype.startPracticeFromLesson = function(lesson) {
     if (!lesson) return false;
     var payload = {
       chartId: lesson.type + "_drill",
@@ -2668,12 +2668,12 @@
     if (window.SparkSuiteInstrumentAdapters && window.SparkSuiteInstrumentAdapters.ukulele) {
       instrumentManager.register("ukulele", window.SparkSuiteInstrumentAdapters.ukulele);
     }
-    return new SparkCore({
+    return new SparkSuiteCore({
       instrumentManager: instrumentManager
     });
   }
 
-  window.SparkCoreRuntime = SparkCore;
+  window.SparkCoreRuntime = SparkSuiteCore;
   window.createDefaultSparkCore = createDefaultSparkCore;
   window.sparkCore = createDefaultSparkCore();
 })();

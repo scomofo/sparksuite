@@ -30,7 +30,7 @@ SessionPlan
 UI Rendering Layer  (PixiJS highway, React components)
 ```
 
-The UI is a **dumb renderer of session state** — all logic lives in the engines. See `CLAUDE.md` for the full architectural contract and `REFACTOR_PLAN.md` for migration status.
+The UI is a **dumb renderer of session state** — all logic lives in the engines. See `CLAUDE.md` for the full architectural contract and `docs/engineering/migration-checklist.md` for migration status.
 
 ## 🎵 Features
 
@@ -81,20 +81,22 @@ Or just open `index.html` in any browser.
 ```
 sparksuite/
 ├── js/
-│   ├── spark-core/          Core engines (session, curriculum, psychology, progress, AI)
-│   ├── instruments/         Instrument modules (guitar, bass, piano, ukulele)
-│   ├── performance-core/    Session runtime & scoring
-│   ├── curriculum/          Lesson content & progression data
+│   ├── sparksuite/          Primary engine tree: core/ (session, curriculum,
+│   │                        psychology, practice, progress, AI), instruments/,
+│   │                        domain/, audio/, music/, input/, bridges/, ui/
+│   ├── core/, spark-core/   Earlier core layers, still loaded during migration
+│   ├── instruments/         Legacy per-instrument page code (pre-engine)
 │   ├── pages/               UI pages (practice, songs, games, tools…)
-│   ├── spark-highway.js     PixiJS note-highway renderer
-│   └── app.js               App coordinator
+│   ├── performance/         Session runtime & scoring
+│   ├── spark-highway.js     PixiJS note-highway renderer (vendored bundle)
+│   └── app.js               Thin bootstrap (logic split into actions/render/timers)
+├── engine/                  Standalone TypeScript engine (audio, gameplay, timing)
 ├── engine/
 │   ├── audio/               Mic input, analyser, pitch detection
 │   ├── gameplay/            Runtime loop, scoring, event logging
 │   ├── runtime/             Session runtime orchestration
 │   └── timing/              Timeline → notes, bar/beat conversion
 ├── guitar_chords/           Real WAV chord samples
-├── harmony_knight/          Companion Flutter app (experimental)
 ├── src-tauri/               Tauri shell
 ├── desktop/                 Electron/desktop config
 ├── tests/                   ~30 test suites across core, runtime, curriculum
@@ -114,14 +116,15 @@ Test suites cover the core engines, instrument runtime migrations (piano, bass),
 ## 📄 Documentation
 
 - `CLAUDE.md` — architecture rules for AI coding agents (the non-negotiables)
-- `REFACTOR_PLAN.md` — engine-first migration plan
-- `IMPROVEMENTS.md` — roadmap and follow-ups
+- `docs/engineering/architecture-map.md` — current engine/module map
 - `CHANGELOG.md` — release notes
-- `chordspark-addendum.md`, `fingering-mastery-module.md`, `stickiness-layer.md` — design docs
+- `docs/archive/REFACTOR_PLAN.md` — engine-first migration plan (archived)
+- `docs/archive/IMPROVEMENTS.md` — roadmap and follow-ups (archived)
+- `docs/archive/chordspark-addendum.md`, `docs/archive/fingering-mastery-module.md`, `docs/archive/stickiness-layer.md` — design docs (archived)
 
 ## 🎹 Companion project
 
-`harmony_knight/` is an experimental Flutter-based companion app exploring a different UI approach to the same curriculum model.
+`harmony_knight/` is an experimental Flutter-based companion app exploring a different UI approach to the same curriculum model. It is maintained separately and is **not included on this branch**.
 
 ## 📜 License
 
