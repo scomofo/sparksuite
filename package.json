@@ -81,8 +81,7 @@
       "data/**/*",
       "content/**/*",
       "sparkgame/**/*",
-      "desktop/**/*",
-      "server/**/*"
+      "desktop/**/*"
     ],
     "extraResources": [
       {
