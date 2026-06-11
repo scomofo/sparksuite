@@ -503,6 +503,20 @@ function isStreakFreezeAvailable(todayISO){
   return days>=7;
 }
 
+// A streak is "at risk" when the last session was exactly yesterday and
+// nothing has been practiced yet today — one session today keeps it, doing
+// nothing loses it at the next day rollover (modulo the freeze). Pure read
+// for the home screen's rescue nudge.
+function isStreakAtRisk(){
+  if(!S.streak||S.streak<1||!S.lastSessionDate) return false;
+  var today=new Date().toISOString().split("T")[0];
+  var lastISO;
+  try{ lastISO=new Date(S.lastSessionDate).toISOString().split("T")[0]; }
+  catch(e){ return false; }
+  var diff=Math.floor((new Date(today)-new Date(lastISO))/86400000);
+  return diff===1;
+}
+
 function checkStreak(){
   var today=new Date().toISOString().split("T")[0];
   if(S.lastSessionDate){

@@ -1403,6 +1403,9 @@ function guidedDonePage() {
   h += '<div><div style="font-size:28px;font-weight:900;color:#FF6B6B">&#128293;' + streak + '</div><div style="font-size:11px;color:var(--text-muted)">' + escHTML(statLabels.streak) + '</div></div>';
   h += '<div><div style="font-size:28px;font-weight:900;color:#4ECDC4">' + completedSessions + '/' + totalSessions + '</div><div style="font-size:11px;color:var(--text-muted)">' + escHTML(statLabels.sessions) + '</div></div>';
   h += '</div></div>';
+  // Daily-goal cross-link: the most effective moment to ask for a few more
+  // minutes is right after a win. Only shows when the ring is still open.
+  h += renderGuidedDoneGoalNudge();
   if (extensionCount >= 2) {
     h += '<div class="card mb16" style="max-width:520px;margin:0 auto 16px;border:1px solid #D8D2EA;background:#FAF7FF;text-align:left">';
     h += '<div class="guided-status-line" style="text-transform:uppercase;color:#6E56B3;margin-bottom:8px">' + escHTML(getGuidedDonePauseTitle(extensionCount)) + '</div>';
@@ -1616,4 +1619,23 @@ function renderGuidedTryVerifyCard(ch) {
   }
   h += '</div>';
   return h;
+}
+
+// Daily-goal cross-link rendered on the session-complete screen: when the
+// daily ring is still open, say exactly how close it is. The "Next Session"
+// button directly below is the action — this line gives it a reason.
+function renderGuidedDoneGoalNudge() {
+  var goalMinutes = typeof S.dailyGoalMinutes === "number" && S.dailyGoalMinutes > 0 ? S.dailyGoalMinutes : 0;
+  if (!goalMinutes) return "";
+  var doneSeconds = typeof S.todayPracticeSeconds === "number" && S.todayPracticeSeconds > 0 ? S.todayPracticeSeconds : 0;
+  var remainingSeconds = goalMinutes * 60 - doneSeconds;
+  if (remainingSeconds <= 0) {
+    return '<div class="card mb16" style="max-width:520px;margin:0 auto 16px;border:1px solid #4ECDC433;background:#4ECDC411">'
+      + '<div style="font-size:14px;font-weight:700;color:#4ECDC4">&#127919; Daily goal complete &mdash; the ring is closed!</div>'
+      + '</div>';
+  }
+  var remainingMinutes = Math.max(1, Math.ceil(remainingSeconds / 60));
+  return '<div class="card mb16" style="max-width:520px;margin:0 auto 16px;border:1px solid #FFE66D33;background:#FFE66D0D">'
+    + '<div style="font-size:14px;line-height:1.6;color:var(--text-secondary)">&#127919; <strong style="color:#FFE66D">' + remainingMinutes + ' more minute' + (remainingMinutes === 1 ? '' : 's') + '</strong> closes today\'s ring &mdash; the next session does it.</div>'
+    + '</div>';
 }

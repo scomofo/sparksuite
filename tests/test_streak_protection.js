@@ -152,6 +152,20 @@ test('streakFreezeUsedAt is persisted', function() {
   assert.strictEqual(raw.streakFreezeUsedAt, isoDaysAgo(1));
 });
 
+test('isStreakAtRisk: yesterday-only practice flags the rescue window', function() {
+  var ctx = makeContext();
+  ctx.S.streak = 5;
+  ctx.S.lastSessionDate = isoDaysAgo(1);
+  assert.strictEqual(ctx.isStreakAtRisk(), true, 'last session yesterday = at risk');
+  ctx.S.lastSessionDate = isoDaysAgo(0);
+  assert.strictEqual(ctx.isStreakAtRisk(), false, 'practiced today = safe');
+  ctx.S.lastSessionDate = isoDaysAgo(2);
+  assert.strictEqual(ctx.isStreakAtRisk(), false, 'already missed a day = not a rescue case');
+  ctx.S.streak = 0;
+  ctx.S.lastSessionDate = isoDaysAgo(1);
+  assert.strictEqual(ctx.isStreakAtRisk(), false, 'no streak, nothing to rescue');
+});
+
 test('applyStreakFreeze credits only freeze-covered apps, never the count', function() {
   var saved = null;
   var profile = {

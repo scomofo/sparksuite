@@ -453,6 +453,29 @@
       '</section>';
   }
 
+  // Streak rescue: when the last session was yesterday and nothing has
+  // happened today, the streak dies at the next rollover. One urgent,
+  // specific line beats a generic reminder — and the CTA is the featured
+  // instrument, one tap from a 2-minute save.
+  function renderStreakRescueRibbon(featured) {
+    if (typeof isStreakAtRisk !== "function" || !isStreakAtRisk()) return "";
+    if (typeof S !== "undefined" && S.focusMode) return "";
+    var streak = typeof S !== "undefined" && typeof S.streak === "number" ? S.streak : 0;
+    if (!streak) return "";
+    var cta = featured
+      ? '<button class="showroom-cta" style="margin-left:auto;padding:8px 16px;font-size:12px;white-space:nowrap" onclick="act(\'launcherSelectInstrument\',\'' + safeEsc(featured.id) + '\')">2-min save</button>'
+      : '';
+    return '' +
+      '<section class="showroom-section" aria-label="Streak at risk">' +
+        '<div class="showroom-card showroom-glass" style="display:flex;flex-direction:row;align-items:center;gap:10px;padding:12px 16px;cursor:default;border:1px solid rgba(255,107,107,.35)">' +
+          '<span style="font-size:18px" aria-hidden="true">&#128293;</span>' +
+          '<div style="font-size:13px;line-height:1.45;color:var(--text-secondary,#cfcfd6)">' +
+            'Your <strong>' + streak + '-day streak</strong> is on the line &mdash; one short session today keeps it alive.' +
+          '</div>' + cta +
+        '</div>' +
+      '</section>';
+  }
+
   function renderHome() {
     var profile = typeof SparkStorage !== "undefined" ? SparkStorage.load() : null;
     var summary = sumSuiteStats(profile);
@@ -480,6 +503,7 @@
         renderTopbar(profile, summary.totalXp) +
         '<div class="showroom-content">' +
           renderHero(featured, profile) +
+          renderStreakRescueRibbon(featured) +
           renderIntentionRibbon(featured) +
           '<section class="showroom-section">' +
             '<div class="showroom-section-head">' +
