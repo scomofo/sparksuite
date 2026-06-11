@@ -470,20 +470,25 @@
       return false;
     },
 
+    // Primary tab bar — the daily loop; secondary activities live in the
+    // Practice tab's toolbox grid (all ids stay routable via act('tab')).
     tabs: [
       { id: "practice", label: "Practice", icon: "&#127925;" },
+      { id: "songs",    label: "Songs",    icon: "&#127926;" },
+      { id: "stats",    label: "Stats",    icon: "&#128202;" },
+      { id: "guide",    label: "Guide",    icon: "&#128214;" }
+    ],
+
+    toolbox: [
       { id: "drill",    label: "Drill",    icon: "&#9889;" },
       { id: "daily",    label: "Daily",    icon: "&#127941;" },
       { id: "quiz",     label: "Quiz",     icon: "&#129504;" },
       { id: "ear",      label: "Ear",      icon: "&#128066;" },
       { id: "strum",    label: "Strum",    icon: "&#127932;" },
-      { id: "songs",    label: "Songs",    icon: "&#127926;" },
       { id: "rhythm",   label: "Rhythm",   icon: "&#129345;" },
       { id: "runner",   label: "Runner",   icon: "&#127918;" },
       { id: "build",    label: "Build",    icon: "&#128295;" },
-      { id: "tuner",    label: "Tuner",    icon: "&#127908;" },
-      { id: "stats",    label: "Stats",    icon: "&#128202;" },
-      { id: "guide",    label: "Guide",    icon: "&#128214;" }
+      { id: "tuner",    label: "Tuner",    icon: "&#127908;" }
     ],
 
     stemMutePreset: {

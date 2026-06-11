@@ -1230,7 +1230,29 @@ function practiceTab(){
   h += renderPracticeQuickStartCard();
 
   h += renderPracticeChordPicker(D, UI);
+  // Secondary activities the instrument moved out of its tab bar — every
+  // id stays routable, this grid is their navigation home now.
+  h += renderPracticeToolboxCard(inst);
   h += renderPracticeProgressAndLibrary(currentLevel);
+  return h;
+}
+
+function renderPracticeToolboxCard(inst){
+  var toolbox = inst && Array.isArray(inst.toolbox) ? inst.toolbox : [];
+  if (!toolbox.length) return "";
+  var h = '<div class="card mb16">';
+  h += '<h3 class="card-section-heading" style="margin-bottom:10px">&#129520; Toolbox</h3>';
+  h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px">';
+  for (var i = 0; i < toolbox.length; i++) {
+    var tool = toolbox[i];
+    if (!tool || !tool.id) continue;
+    h += '<button class="btn" onclick="act(\'tab\',\'' + escHTML(tool.id) + '\')"'
+       + ' style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;background:var(--input-bg);color:var(--text-secondary);font-size:12px;font-weight:700">'
+       + '<span style="font-size:18px" aria-hidden="true">' + (tool.icon || "&#127925;") + '</span>'
+       + '<span>' + escHTML(tool.label || tool.id) + '</span>'
+       + '</button>';
+  }
+  h += '</div></div>';
   return h;
 }
 
