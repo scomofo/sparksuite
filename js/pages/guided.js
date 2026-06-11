@@ -1482,7 +1482,33 @@ function getGuidedSessionView() {
 var _guidedTryVerify = { timer: null, tracker: null, chord: null, verifiedKey: null };
 
 function guidedTryVerifySupported() {
+  if (typeof S !== "undefined" && S.midiEnabled) return true;
   return typeof navigator !== "undefined" && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+}
+
+// MIDI keyboards feed S.detectedNotes directly (piano's _handleMidiMessage)
+// but S.chordMatch is only computed inside the mic FFT loop — score the
+// held notes against the target ourselves, same hits-minus-penalty formula
+// as audio.js.
+function guidedMidiChordMatch(ch) {
+  if (typeof getExpectedNotes !== "function") return -1;
+  var expected = getExpectedNotes(ch && ch.name ? ch.name : "");
+  var found = typeof S !== "undefined" && Array.isArray(S.detectedNotes) ? S.detectedNotes : [];
+  if (!expected.length || !found.length) return -1;
+  var hits = 0;
+  for (var i = 0; i < expected.length; i++) if (found.indexOf(expected[i]) !== -1) hits++;
+  var wrong = 0;
+  for (var j = 0; j < found.length; j++) if (expected.indexOf(found[j]) === -1) wrong++;
+  var accuracy = hits / expected.length;
+  var penalty = wrong > 0 ? wrong / (found.length + expected.length) : 0;
+  return Math.max(0, Math.round((accuracy - penalty) * 100));
+}
+
+function guidedTryVerifyCurrentMatch() {
+  if (typeof S === "undefined") return -1;
+  if (S.chordDetectOn) return typeof S.chordMatch === "number" ? S.chordMatch : -1;
+  if (S.midiEnabled) return guidedMidiChordMatch(_guidedTryVerify.chord);
+  return -1;
 }
 
 // Verification is keyed to its full context — session number, activity, and
@@ -1509,7 +1535,8 @@ function guidedTryVerifyStart() {
   _guidedTryVerify.tracker = typeof createVerificationTracker === "function"
     ? createVerificationTracker({ threshold: 75, holdMs: 1200 })
     : null;
-  if (typeof startChordDetect === "function") startChordDetect();
+  // A connected MIDI keyboard already feeds S.detectedNotes — no mic needed.
+  if (!S.midiEnabled && typeof startChordDetect === "function") startChordDetect();
   _guidedTryVerify.timer = setInterval(function() {
     // Self-disarm if the user left the Try phase with the mic running.
     if (S.newMovePhase !== "try" || S.screen !== SCR.GUIDED) {
@@ -1518,13 +1545,13 @@ function guidedTryVerifyStart() {
     }
     // Mic denied or failed after start — disarm instead of idling forever;
     // the card re-renders with the error and the self-report fallback.
-    if (S.chordDetectErr) {
+    if (!S.midiEnabled && S.chordDetectErr) {
       guidedTryVerifyStop();
       if (typeof render === "function") render();
       return;
     }
-    if (!S.chordDetectOn || !_guidedTryVerify.tracker) return;
-    var done = _guidedTryVerify.tracker.update(S.chordMatch);
+    if ((!S.chordDetectOn && !S.midiEnabled) || !_guidedTryVerify.tracker) return;
+    var done = _guidedTryVerify.tracker.update(guidedTryVerifyCurrentMatch());
     var el = document.getElementById("guided-verify-status");
     if (el && !done) el.innerHTML = guidedTryVerifyStatusInner();
     if (done) {
@@ -1548,11 +1575,11 @@ function guidedTryVerifyStop() {
 }
 
 function guidedTryVerifyStatusInner() {
-  var match = typeof S.chordMatch === "number" ? S.chordMatch : -1;
+  var match = guidedTryVerifyCurrentMatch();
   var progress = _guidedTryVerify.tracker ? _guidedTryVerify.tracker.progress() : 0;
   var h = "";
   if (match < 0) {
-    h += '<div style="color:var(--text-muted);font-size:13px">Listening&hellip; strum the chord and let it ring.</div>';
+    h += '<div style="color:var(--text-muted);font-size:13px">' + (S.midiEnabled ? 'Listening&hellip; play the chord and hold it.' : 'Listening&hellip; strum the chord and let it ring.') + '</div>';
   } else {
     h += '<div style="font-size:13px;color:var(--text-secondary)">Match: <strong>' + match + '%</strong>' + (match >= 75 ? ' — hold it!' : '') + '</div>';
   }
@@ -1571,17 +1598,19 @@ function renderGuidedTryVerifyCard(ch) {
   var verified = _guidedTryVerify.verifiedKey !== null
     && _guidedTryVerify.verifiedKey === guidedTryVerifyContextKey(ch);
   var h = '<div class="card" style="margin:0 0 12px;padding:12px;text-align:left">';
+  var inputLabel = S.midiEnabled ? "MIDI" : "mic";
+  var inputIcon = S.midiEnabled ? "&#127929;" : "&#127908;";
   if (verified) {
-    h += '<div style="color:#6bcb77;font-weight:800;font-size:14px">&#10003; Verified by mic &mdash; clean ' + escHTML(ch.name) + '!</div>';
-  } else if (S.chordDetectOn) {
+    h += '<div style="color:#6bcb77;font-weight:800;font-size:14px">&#10003; Verified &mdash; clean ' + escHTML(ch.name) + '!</div>';
+  } else if (S.chordDetectOn || (S.midiEnabled && _guidedTryVerify.timer)) {
     h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px">'
-       + '<span style="font-weight:700;font-size:13px">&#127908; Listening for ' + escHTML(ch.name) + '</span>'
+       + '<span style="font-weight:700;font-size:13px">' + inputIcon + ' Listening on ' + inputLabel + ' for ' + escHTML(ch.name) + '</span>'
        + '<button class="btn btn-sm" onclick="guidedTryVerifyStop();render()" style="background:var(--input-bg);color:var(--text-secondary)">Stop</button>'
        + '</div>'
        + '<div id="guided-verify-status">' + guidedTryVerifyStatusInner() + '</div>';
   } else {
-    h += '<button class="btn btn-sm" onclick="guidedTryVerifyStart()" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#127908; Verify with mic (+5 XP)</button>';
-    if (S.chordDetectErr) {
+    h += '<button class="btn btn-sm" onclick="guidedTryVerifyStart()" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">' + inputIcon + ' Verify with ' + inputLabel + ' (+5 XP)</button>';
+    if (S.chordDetectErr && !S.midiEnabled) {
       h += '<div style="color:var(--text-muted);font-size:12px;margin-top:6px">' + escHTML(S.chordDetectErr) + ' &mdash; no problem, self-report still works.</div>';
     }
   }
