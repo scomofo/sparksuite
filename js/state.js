@@ -513,6 +513,11 @@ function checkStreak(){
     if(diff===2&&S.streak>0&&isStreakFreezeAvailable(today)){
       // Exactly one missed day — consume the freeze instead of resetting.
       S.streakFreezeUsedAt=today;
+      // Credit the missed day as a virtual session: without this, a re-run
+      // of checkStreak the same day sees diff===2 again with the freeze now
+      // on cooldown and wipes the streak the freeze just protected.
+      var yesterday=new Date(new Date(today)-86400000).toISOString().split("T")[0];
+      S.lastSessionDate=yesterday;
       S.microToast={msg:"Streak freeze used — your "+S.streak+"-day streak is safe!",icon:"🧊",time:Date.now()};
       saveState(true);
     } else if(diff>1){

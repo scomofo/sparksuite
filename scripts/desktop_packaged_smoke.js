@@ -12,10 +12,19 @@ function resolveElectronPortableArtifact(rootDir) {
 }
 
 function resolveTauriBundleArtifact(rootDir) {
+  // Derive the installer name from the Tauri bundle version instead of
+  // hardcoding it — a stale literal here let smoke validation pass against
+  // a wrong-versioned artifact.
+  let tauriVersion = "";
+  try {
+    tauriVersion = JSON.parse(fs.readFileSync(path.join(rootDir, "src-tauri", "tauri.conf.json"), "utf8")).version || "";
+  } catch (e) {}
   const candidates = [
-    path.join(rootDir, "src-tauri", "target", "release", "SparkSuite.exe"),
-    path.join(rootDir, "src-tauri", "target", "release", "bundle", "nsis", "SparkSuite_1.0.0_x64-setup.exe")
+    path.join(rootDir, "src-tauri", "target", "release", "SparkSuite.exe")
   ];
+  if (tauriVersion) {
+    candidates.push(path.join(rootDir, "src-tauri", "target", "release", "bundle", "nsis", "SparkSuite_" + tauriVersion + "_x64-setup.exe"));
+  }
   return resolveFirstExisting(candidates);
 }
 

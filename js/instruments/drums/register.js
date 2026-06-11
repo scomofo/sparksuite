@@ -1,11 +1,15 @@
 // js/instruments/drums/register.js
 (function() {
-  function loadScriptOnce(src) {
+  function loadScriptOnce(src, onload) {
     if (typeof document === "undefined" || !document.head) return;
     if (document.querySelector('script[src="' + src + '"]')) return;
     var script = document.createElement("script");
     script.src = src;
-    script.defer = false;
+    // Dynamically inserted scripts are async by default and execute in
+    // completion order — drums_module.js could run before the data files
+    // it composes. async=false restores insertion-order execution.
+    script.async = false;
+    if (onload) script.onload = onload;
     script.onerror = function() {
       console.error("DrumSpark: failed to load", src);
     };
@@ -28,7 +32,11 @@
     loadScriptOnce("js/sparksuite/instruments/drums/drums_chart_library.js");
     loadScriptOnce("js/sparksuite/instruments/drums/drums_runtime_adapter.js");
     loadScriptOnce("js/sparksuite/instruments/drums/drums_rhythm_adapter.js");
-    loadScriptOnce("js/sparksuite/instruments/drums/drums_module.js");
+    loadScriptOnce("js/sparksuite/instruments/drums/drums_module.js", function() {
+      // The runtime may arrive after a render that had nothing to show —
+      // repaint so DrumSpark renders with its module instead of a shell.
+      if (typeof render === "function") render();
+    });
   }
 
   function esc(value) {

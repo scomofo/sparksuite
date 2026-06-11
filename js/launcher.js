@@ -436,14 +436,18 @@
     var intention = typeof S !== "undefined" && typeof S.practiceIntention === "string"
       ? S.practiceIntention.trim()
       : "";
+    // Older/bad persisted state can hold literal "undefined"/"null"/"nan" —
+    // the rest of the app (normalizeAppTextInputValue) treats those as empty.
+    var sentinel = intention.toLowerCase();
+    if (sentinel === "undefined" || sentinel === "null" || sentinel === "nan") intention = "";
     if (!intention || (typeof S !== "undefined" && S.focusMode)) return "";
-    var target = featured && featured.name ? featured.name : "an instrument";
+    var targetText = featured && featured.name ? safeEsc(featured.name) + ' ' : '';
     return '' +
       '<section class="showroom-section" aria-label="Your practice cue">' +
-        '<div class="showroom-card showroom-glass" style="flex-direction:row;align-items:center;gap:10px;padding:12px 16px;cursor:default">' +
+        '<div class="showroom-card showroom-glass" style="display:flex;flex-direction:row;align-items:center;gap:10px;padding:12px 16px;cursor:default">' +
           '<span style="font-size:18px" aria-hidden="true">&#127919;</span>' +
           '<div style="font-size:13px;line-height:1.45;color:var(--text-secondary,#cfcfd6)">' +
-            'Your cue: after you <strong>' + safeEsc(intention) + '</strong> &rarr; one ' + safeEsc(target) + ' session keeps the streak alive.' +
+            'Your cue: after you <strong>' + safeEsc(intention) + '</strong> &rarr; one ' + targetText + 'session keeps the streak alive.' +
           '</div>' +
         '</div>' +
       '</section>';

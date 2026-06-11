@@ -1493,6 +1493,7 @@ function guidedTryVerifyStart() {
   guidedTryVerifyStop(false);
   S.currentChord = ch;
   S.guidedTryVerified = false;
+  S.chordDetectErr = null;
   _guidedTryVerify.tracker = typeof createVerificationTracker === "function"
     ? createVerificationTracker({ threshold: 75, holdMs: 1200 })
     : null;
@@ -1501,6 +1502,13 @@ function guidedTryVerifyStart() {
     // Self-disarm if the user left the Try phase with the mic running.
     if (S.newMovePhase !== "try" || S.screen !== SCR.GUIDED) {
       guidedTryVerifyStop(false);
+      return;
+    }
+    // Mic denied or failed after start — disarm instead of idling forever;
+    // the card re-renders with the error and the self-report fallback.
+    if (S.chordDetectErr) {
+      guidedTryVerifyStop(false);
+      if (typeof render === "function") render();
       return;
     }
     if (!S.chordDetectOn || !_guidedTryVerify.tracker) return;
@@ -1545,7 +1553,20 @@ function guidedTryVerifyStatusInner() {
 
 function renderGuidedTryVerifyCard(ch) {
   if (!ch || !guidedTryVerifySupported()) return "";
-  _guidedTryVerify.chord = ch;
+  // New target chord (next session, different drill): clear the verified
+  // flag and any live tracking — one verified Em must not pre-verify every
+  // later chord. The mic teardown is deferred a tick because this runs
+  // inside render() and stopChordDetect() itself calls render().
+  if (!_guidedTryVerify.chord || _guidedTryVerify.chord.name !== ch.name) {
+    var hadLiveSession = !!_guidedTryVerify.timer;
+    _guidedTryVerify.chord = ch;
+    S.guidedTryVerified = false;
+    if (hadLiveSession) {
+      setTimeout(function() { guidedTryVerifyStop(false); }, 0);
+    }
+  } else {
+    _guidedTryVerify.chord = ch;
+  }
   var h = '<div class="card" style="margin:0 0 12px;padding:12px;text-align:left">';
   if (S.guidedTryVerified) {
     h += '<div style="color:#6bcb77;font-weight:800;font-size:14px">&#10003; Verified by mic &mdash; clean ' + escHTML(ch.name) + '!</div>';

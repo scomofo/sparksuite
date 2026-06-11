@@ -408,10 +408,16 @@
   }
 
   function getRhythmHighwayInstructions(snapshot) {
-    var payload = runtime.activePayload || runtime.sourcePayload || null;
-    if (payload && typeof payload.instructions === "string" && payload.instructions) {
-      return payload.instructions;
-    }
+    // Check both payloads: buildRhythmHighwayLoopPayload builds the loop's
+    // active payload without copying instructions, but the adapter-supplied
+    // copy still lives on the source payload.
+    var active = runtime.activePayload || null;
+    var source = runtime.sourcePayload || null;
+    var override = (active && typeof active.instructions === "string" && active.instructions)
+      || (source && typeof source.instructions === "string" && source.instructions)
+      || "";
+    if (override) return override;
+    var payload = active || source;
     var instrumentType = normalizeRhythmInstrumentType(
       (S.rhythmHighwayLaunchContext && S.rhythmHighwayLaunchContext.instrument) || (payload && payload.adapterType) || null
     );
@@ -423,7 +429,10 @@
       drums: "Hit each pad on time.",
       vocals: "Sing each syllable as it crosses the line."
     };
-    return copy[instrumentType] || "Hit each lane on time.";
+    // normalizeRhythmInstrumentType passes module names through as-is, which
+    // may be capitalized ("Guitar") — the table keys are lowercase.
+    var key = typeof instrumentType === "string" ? instrumentType.toLowerCase() : "";
+    return copy[key] || "Hit each lane on time.";
   }
 
   function getRhythmHighwayLaneLabels(accessibility) {
