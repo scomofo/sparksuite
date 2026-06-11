@@ -4075,7 +4075,7 @@ test("dashboard utility UI surfaces can resolve sparkCore from the global bindin
   global.S.importedMidi = null;
   global.S.importedMidiAssignments = {};
   global.S.settings = { theme: "dark", uiVolume: 0.5, practiceReminder: false };
-  global.S.releaseInfo = { version: "1.2.3", build: 7 };
+  global.S.releaseInfo = { version: "1.2.3", buildNumber: 7 };
   global.getCurriculumItem = function() { return null; };
   global.getSettingsCategories = function() {
     return [
@@ -4116,6 +4116,8 @@ test("dashboard utility UI surfaces can resolve sparkCore from the global bindin
   assert.ok(midiHtml.indexOf("Demo Seed") >= 0);
   assert.ok(insightsHtml.indexOf("tap notes is still at 78% in night drive") >= 0);
   assert.ok(settingsHtml.indexOf("retro") >= 0);
+  assert.ok(settingsHtml.indexOf("Version: 1.2.3") >= 0);
+  assert.ok(settingsHtml.indexOf("Build: 7") >= 0, "About should render the manifest buildNumber field");
 
   delete global.sparkCore;
 });

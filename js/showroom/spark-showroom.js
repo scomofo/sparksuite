@@ -632,7 +632,7 @@
     var reminderOn = settings.practiceReminder !== false;
     var release = (typeof S !== "undefined" && S.releaseInfo) || {};
     var releaseVersion = release.version || "dev";
-    var releaseBuild = release.build ? (" build " + release.build) : "";
+    var releaseBuild = release.buildNumber ? (" build " + release.buildNumber) : "";
 
     var sections = [
       { title: "Account", rows: [

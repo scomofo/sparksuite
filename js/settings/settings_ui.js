@@ -69,7 +69,7 @@ function renderSettingsCategory(cat){
   }
   if(cat.id === "about"){
     h += '<div style="margin-top:8px">Version: '+escHTML((S.releaseInfo && S.releaseInfo.version) || "dev")+'</div>';
-    h += '<div>Build: '+((S.releaseInfo && S.releaseInfo.build) || 0)+'</div>';
+    h += '<div>Build: '+((S.releaseInfo && S.releaseInfo.buildNumber) || 0)+'</div>';
   }
   if(cat.id === "general"){
     h += '<div style="margin-top:8px"><button onclick="act(\'openOnboarding\')">Rerun Setup</button></div>';
