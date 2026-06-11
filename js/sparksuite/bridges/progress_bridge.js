@@ -76,7 +76,8 @@
       completedAt: completionSummary.completedAt,
       sessionId: completionSummary.sessionId,
       flow: completionSummary.flow,
-      durationSec: completionSummary.durationSec || 0
+      durationSec: completionSummary.durationSec || 0,
+      skipped: completionSummary.skipped === true
     });
     if (S.practicePlanHistory.length > 30) S.practicePlanHistory.shift();
 

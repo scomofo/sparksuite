@@ -145,6 +145,28 @@
   font-variation-settings:"FILL" 0,"wght" 400,"GRAD" 0,"opsz" 24;
 }
 .showroom-root .material-symbols-outlined.fill{font-variation-settings:"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 24}
+/* The hydrated SVGs (hydrateLocalMaterialIcons in js/render.js) are
+   hand-drawn 2px STROKE line art with open paths — not Material's filled
+   glyph outlines. fill:none + stroke is the correct default for the whole
+   set; switching to fill:currentColor would render zero-area paths like
+   add/menu/graphic_eq invisible. The .fill modifier mirrors FILL=1 usage.
+   Deliberately NOT scoped to .showroom-root: hydration runs on all of
+   #app, and screens outside the showroom shell (e.g. the performance
+   bar's Pause button) otherwise get an unsized 0x0 SVG. */
+.spark-local-icon{
+  width:1em;
+  height:1em;
+  display:block;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.material-symbols-outlined.fill .spark-local-icon{
+  fill:currentColor;
+  stroke:currentColor;
+}
 
 .showroom-woodgrain{
   position:fixed;inset:0;z-index:0;pointer-events:none;
@@ -4194,6 +4216,16 @@
   position:relative;
   margin:16px 0;
 }
+.showroom-lesson-2026 .showroom-chord::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:8px;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+  transform:translateX(-110%);
+  animation:showroom-lesson-scan 2.8s ease-in-out infinite;
+  pointer-events:none;
+}
 .showroom-lesson-2026 .showroom-chord-finger{
   position:absolute;
   width:16px; height:16px;
@@ -4206,6 +4238,31 @@
   font-family:'Plus Jakarta Sans', var(--font-body);
   font-size:8px; font-weight:700;
   transform:translate(-50%, -50%);
+  animation:showroom-finger-pop .58s cubic-bezier(.2,.9,.2,1.2) both;
+}
+.showroom-lesson-2026 .showroom-chord-finger:nth-child(2){animation-delay:.08s}
+.showroom-lesson-2026 .showroom-chord-finger:nth-child(3){animation-delay:.16s}
+.showroom-lesson-2026 .showroom-chord-finger:nth-child(4){animation-delay:.24s}
+.showroom-lesson-2026 .showroom-chord-strings span{
+  animation:showroom-string-ring 1.9s ease-in-out infinite;
+}
+.showroom-lesson-2026 .showroom-chord-strings span:nth-child(2){animation-delay:.08s}
+.showroom-lesson-2026 .showroom-chord-strings span:nth-child(3){animation-delay:.16s}
+.showroom-lesson-2026 .showroom-chord-strings span:nth-child(4){animation-delay:.24s}
+.showroom-lesson-2026 .showroom-chord-strings span:nth-child(5){animation-delay:.32s}
+.showroom-lesson-2026 .showroom-chord-strings span:nth-child(6){animation-delay:.4s}
+@keyframes showroom-finger-pop{
+  from{opacity:0;transform:translate(-50%, -50%) scale(.55)}
+  70%{opacity:1;transform:translate(-50%, -50%) scale(1.14)}
+  to{opacity:1;transform:translate(-50%, -50%) scale(1)}
+}
+@keyframes showroom-string-ring{
+  0%,100%{box-shadow:none;opacity:.7}
+  18%{box-shadow:0 0 12px rgba(255,181,150,.65);opacity:1}
+}
+@keyframes showroom-lesson-scan{
+  0%,45%{transform:translateX(-110%)}
+  75%,100%{transform:translateX(110%)}
 }
 .showroom-lesson-2026 .showroom-chord-meta{
   display:flex; justify-content:space-around;

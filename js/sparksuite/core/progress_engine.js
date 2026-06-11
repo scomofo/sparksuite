@@ -250,7 +250,20 @@
       planCompleted: true
     };
 
+    // Reward integrity: force-completing a plan counts as earned only with
+    // evidence of work — a segment already done, an item being completed
+    // now, gameplay results, or the caller explicitly vouching via
+    // payload.earnedCompletion. Otherwise it is a skip. Inferred here
+    // (not just trusted from callers) because completeDailyPracticePlan
+    // and its request wrappers force markPlanComplete unconditionally.
+    var earnedCompletion = payload.earnedCompletion;
     if (payload.markPlanComplete) {
+      if (earnedCompletion === undefined && !payload.itemId && !payload.gameplayResult) {
+        earnedCompletion = false;
+        for (var s = 0; s < plan.segments.length; s++) {
+          if (plan.segments[s].completed) { earnedCompletion = true; break; }
+        }
+      }
       for (var i = 0; i < plan.segments.length; i++) plan.segments[i].completed = true;
       progress.completedItems = plan.segments.length;
       progress.totalItems = plan.segments.length;
@@ -259,6 +272,34 @@
     }
 
     if (progress.planCompleted) {
+      // An unearned completion (zero items actually done — the "Skip
+      // today" path) still finalizes the plan so the day is closed out,
+      // but awards nothing: no XP, no toast, no orchestrator credit.
+      // History records it as a skip.
+      if (earnedCompletion === false) {
+        var skipSummary = buildCompletionSummary(plan, 0, 0);
+        skipSummary.skipped = true;
+        SparkProgressBridge.finalizePlan(plan, {
+          xpAwarded: 0,
+          sessionStatePatch: {},
+          completionSummary: skipSummary
+        });
+        // The segments were force-marked above so the day closes out, but
+        // the reported progress must say what actually happened: nothing.
+        progress.completedItems = 0;
+        progress.xpAwarded = 0;
+        progress.sessionStatePatch = {};
+        progress.completionSummary = skipSummary;
+        emitProgressEvent(this, "progress.session.completed", {
+          sessionId: plan.id,
+          flow: plan.flow,
+          xpAwarded: 0,
+          skipped: true,
+          completedItems: progress.completedItems,
+          totalItems: progress.totalItems
+        });
+        return progress;
+      }
       var summary = SparkPerformanceBridge.buildPerformanceSummary(plan);
       var xpAwarded = 20;
       var sessionStatePatch = {

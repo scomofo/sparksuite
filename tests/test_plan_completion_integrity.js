@@ -50,7 +50,7 @@ function makeContext(opts) {
     ctx.orchestratorCalls = [];
     ctx.sparkCore = {
       startSession: function() { return null; },
-      completeSession: function() { ctx.coreCompleted = true; }
+      completeSession: function(payload) { ctx.coreCompleted = true; ctx.corePayload = payload; }
     };
     ctx.SparkContracts = { createSessionResult: function(r) { return r; } };
     ctx.SparkProgressOrchestrator = { applySessionOutcome: function(r) { ctx.orchestratorCalls.push(r); } };
@@ -67,6 +67,7 @@ test('earned completion routes credit to the orchestrator', function() {
   var ctx = makeContext({ withCore: true, items: [{ id: 'a', completed: true }, { id: 'b' }] });
   ctx.completePracticePlan();
   assert.strictEqual(ctx.coreCompleted, true, 'plan should still be marked done in the core');
+  assert.strictEqual(ctx.corePayload.earnedCompletion, true, 'core must be told the completion was earned');
   assert.strictEqual(ctx.orchestratorCalls.length, 1, 'credit should be awarded');
   assert.strictEqual(ctx.orchestratorCalls[0].completed, true);
 });
@@ -75,6 +76,10 @@ test('zero items done marks the plan finished but earns nothing', function() {
   var ctx = makeContext({ withCore: true, items: [{ id: 'a' }, { id: 'b' }] });
   ctx.completePracticePlan();
   assert.strictEqual(ctx.coreCompleted, true, 'plan should still be marked done so the UI stops nagging');
+  // The real ProgressEngine.completeSession reads this flag to withhold the
+  // plan-completion XP/toast — covered end-to-end in
+  // test_sparksuite_core_migration.js ("unearned completion ... without reward").
+  assert.strictEqual(ctx.corePayload.earnedCompletion, false, 'core must be told nothing was earned');
   assert.strictEqual(ctx.orchestratorCalls.length, 0, 'no credit without doing anything');
 });
 

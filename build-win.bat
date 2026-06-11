@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo   ChordSpark - Windows Build
+echo   SparkSuite - Windows Build
 echo ========================================
 echo.
 
@@ -24,6 +24,10 @@ if %errorlevel% neq 0 (
 
 echo.
 echo [3/3] Building Windows installer...
+echo Code signing disabled for local unsigned build.
+set CSC_IDENTITY_AUTO_DISCOVERY=false
+set WIN_CSC_LINK=
+set CSC_LINK=
 call npm run build
 if %errorlevel% neq 0 (
     echo ERROR: Build failed
@@ -34,7 +38,7 @@ if %errorlevel% neq 0 (
 echo.
 echo ========================================
 echo   Build complete!
-echo   Installer: dist\ChordSpark Setup 1.0.0.exe
+echo   Installer: dist\SparkSuite Setup 1.0.2.exe
 echo ========================================
 echo.
 
