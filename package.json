@@ -1,6 +1,6 @@
 {
   "name": "sparksuite",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Multi-instrument music learning suite",
   "main": "main.js",
   "repository": {
