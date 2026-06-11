@@ -5892,6 +5892,7 @@ test("completeSession with unearned completion finalizes the plan without reward
   });
 
   assert.strictEqual(result.planCompleted, true, "the day should still be closed out");
+  assert.strictEqual(result.completedItems, 0, "a skip must report zero items done");
   assert.strictEqual(result.xpAwarded, 0);
   assert.strictEqual(result.completionSummary.skipped, true);
   assert.strictEqual(S.practicePlanComplete, true);
@@ -5913,6 +5914,7 @@ test("completeDailyPracticePlan with zero items done is inferred as a skip", fun
   var result = core.completeDailyPracticePlan();
 
   assert.strictEqual(result.planCompleted, true);
+  assert.strictEqual(result.completedItems, 0, "a skip must report zero items done");
   assert.strictEqual(result.xpAwarded, 0);
   assert.strictEqual(S.practicePlanComplete, true);
   assert.strictEqual(S.xp, 0, "force-completing an untouched plan must not award XP");

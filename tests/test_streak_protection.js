@@ -190,6 +190,25 @@ test('applyStreakFreeze credits only freeze-covered apps, never the count', func
   assert.strictEqual(profile.apps.ukulele._lastStreakDate, isoDaysAgo(1), 'current app untouched');
 });
 
+test('applyStreakFreeze tolerates a full-ISO _lastStreakDate (time component)', function() {
+  var saved = null;
+  var profile = {
+    apps: {
+      guitar: { _lastStreakDate: isoDaysAgo(2) + 'T15:30:00.000Z', stats: { streakDays: 4 } }
+    }
+  };
+  var ctx = { window: {}, console: console, Date: Date, Math: Math, JSON: JSON,
+    SparkStorage: { load: function() { return profile; }, save: function(p) { saved = p; } } };
+  ctx.window = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(loadSource('js/utils/instrument_progress.js'), ctx);
+
+  var touched = ctx.SparkInstrumentProgress.applyStreakFreeze(isoDaysAgo(1));
+  assert.strictEqual(touched, true, 'date part alone should drive the gap math');
+  assert.ok(saved, 'profile should be saved');
+  assert.strictEqual(profile.apps.guitar._lastStreakDate, isoDaysAgo(1), 'covered app date moves to the missed day');
+});
+
 console.log('');
 console.log(passed + ' passed, ' + failed + ' failed');
 if (failed > 0) process.exit(1);

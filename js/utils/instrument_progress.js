@@ -139,9 +139,10 @@
       for (var appId in profile.apps) {
         var app = profile.apps[appId];
         if (!app || !app._lastStreakDate) continue;
-        // Parse at explicit UTC midnight and round, mirroring the engine's
-        // _daysBetween — immune to DST-length days or stray time components.
-        var gap = Math.round((new Date(missedIsoDate + "T00:00:00Z") - new Date(app._lastStreakDate + "T00:00:00Z")) / 86400000);
+        // Parse the date part at explicit UTC midnight and round — immune
+        // to DST-length days, and the slice keeps a stray full-ISO value
+        // (with a time component) from producing an Invalid Date.
+        var gap = Math.round((new Date(missedIsoDate.slice(0, 10) + "T00:00:00Z") - new Date(app._lastStreakDate.slice(0, 10) + "T00:00:00Z")) / 86400000);
         if (gap === 1) {
           app._lastStreakDate = missedIsoDate;
           touched = true;

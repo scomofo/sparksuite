@@ -284,6 +284,9 @@
           sessionStatePatch: {},
           completionSummary: skipSummary
         });
+        // The segments were force-marked above so the day closes out, but
+        // the reported progress must say what actually happened: nothing.
+        progress.completedItems = 0;
         progress.xpAwarded = 0;
         progress.sessionStatePatch = {};
         progress.completionSummary = skipSummary;

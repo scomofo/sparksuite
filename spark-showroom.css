@@ -145,6 +145,11 @@
   font-variation-settings:"FILL" 0,"wght" 400,"GRAD" 0,"opsz" 24;
 }
 .showroom-root .material-symbols-outlined.fill{font-variation-settings:"FILL" 1,"wght" 400,"GRAD" 0,"opsz" 24}
+/* The hydrated SVGs (hydrateLocalMaterialIcons in js/render.js) are
+   hand-drawn 2px STROKE line art with open paths — not Material's filled
+   glyph outlines. fill:none + stroke is the correct default for the whole
+   set; switching to fill:currentColor would render zero-area paths like
+   add/menu/graphic_eq invisible. The .fill modifier mirrors FILL=1 usage. */
 .showroom-root .spark-local-icon{
   width:1em;
   height:1em;
