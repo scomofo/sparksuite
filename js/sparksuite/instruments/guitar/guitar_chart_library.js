@@ -1,8 +1,9 @@
 (function() {
   // Power-chord chart kept on its original gtr_* skill IDs because it's
   // referenced by the legacy ChordSpark gameplay flow. New curriculum
-  // skills are mapped to dedicated clones below so mastery accrues to
-  // the per-skill chart id rather than the source chart's skill.
+  // skills are mapped to dedicated authored charts or clones below so
+  // mastery accrues to the per-skill chart id rather than the source
+  // chart's skill.
   var CHARTS = {
     power_chords_01: {
       id: "power_chords_01",
@@ -143,6 +144,114 @@
         { id: 1, name: "Run B", startBeat: 8, endBeat: 16, flags: { special: true } }
       ]
     },
+    gtr_power_chord_move_01: {
+      id: "gtr_power_chord_move_01",
+      title: "Power Chord Move 01",
+      bpm: 96,
+      enginePreset: "spark_learning",
+      totalBeats: 16,
+      notes: [
+        { beat: 0,  laneMask: 5,  label: "G5", skillId: "power_chords" },
+        { beat: 1,  laneMask: 5,  label: "G5", skillId: "power_chords" },
+        { beat: 2,  laneMask: 6,  label: "A5", skillId: "power_chords" },
+        { beat: 3,  laneMask: 6,  label: "A5", skillId: "power_chords" },
+        { beat: 4,  laneMask: 12, label: "B5", skillId: "power_chords" },
+        { beat: 5,  laneMask: 12, label: "B5", skillId: "power_chords" },
+        { beat: 6,  laneMask: 20, label: "C5", skillId: "power_chords", flags: { specialPhrase: true } },
+        { beat: 7,  laneMask: 24, label: "D5", skillId: "power_chords", flags: { specialPhrase: true } },
+        { beat: 8,  laneMask: 5,  label: "G5", skillId: "power_chords" },
+        { beat: 9,  laneMask: 20, label: "C5", skillId: "power_chords" },
+        { beat: 10, laneMask: 6,  label: "A5", skillId: "power_chords" },
+        { beat: 11, laneMask: 24, label: "D5", skillId: "power_chords" },
+        { beat: 12, laneMask: 12, label: "B5", skillId: "power_chords", flags: { specialPhrase: true } },
+        { beat: 13, laneMask: 3,  label: "E5", skillId: "power_chords", flags: { specialPhrase: true } },
+        { beat: 14, laneMask: 6,  label: "A5", skillId: "power_chords" },
+        { beat: 15, laneMask: 5,  label: "G5", skillId: "power_chords" }
+      ],
+      phrases: [
+        { id: 0, name: "Ladder Up", startBeat: 0, endBeat: 8,  flags: { special: true } },
+        { id: 1, name: "Jump Back", startBeat: 8, endBeat: 16, flags: { special: true } }
+      ]
+    },
+    gtr_barre_intro_01: {
+      id: "gtr_barre_intro_01",
+      title: "Barre Intro 01",
+      bpm: 88,
+      enginePreset: "spark_learning",
+      totalBeats: 16,
+      notes: [
+        { beat: 0,  laneMask: 7,  lengthBeats: 2, label: "F",   skillId: "barre_intro", flags: { sustain: true } },
+        { beat: 2,  laneMask: 1,  lengthBeats: 0, label: "Em",  skillId: "barre_intro", flags: { open: true } },
+        { beat: 4,  laneMask: 14, lengthBeats: 2, label: "Bm",  skillId: "barre_intro", flags: { sustain: true } },
+        { beat: 6,  laneMask: 2,  lengthBeats: 0, label: "Am",  skillId: "barre_intro", flags: { open: true } },
+        { beat: 8,  laneMask: 15, lengthBeats: 2, label: "F#m", skillId: "barre_intro", flags: { sustain: true, specialPhrase: true } },
+        { beat: 10, laneMask: 28, lengthBeats: 2, label: "B",   skillId: "barre_intro", flags: { sustain: true, specialPhrase: true } },
+        { beat: 12, laneMask: 1,  lengthBeats: 0, label: "Em",  skillId: "barre_intro", flags: { open: true } },
+        { beat: 14, laneMask: 7,  lengthBeats: 2, label: "F",   skillId: "barre_intro", flags: { sustain: true } }
+      ],
+      phrases: [
+        { id: 0, name: "Plant and Rest", startBeat: 0, endBeat: 8,  flags: {} },
+        { id: 1, name: "Barre Stamina",  startBeat: 8, endBeat: 16, flags: { special: true } }
+      ]
+    },
+    gtr_caged_intro_01: {
+      id: "gtr_caged_intro_01",
+      title: "CAGED Intro 01",
+      bpm: 90,
+      enginePreset: "spark_learning",
+      totalBeats: 16,
+      notes: [
+        { beat: 0,  laneMask: 1,  label: "C (C)", skillId: "caged_intro" },
+        { beat: 1,  laneMask: 1,  label: "C (C)", skillId: "caged_intro" },
+        { beat: 2,  laneMask: 2,  label: "C (A)", skillId: "caged_intro" },
+        { beat: 3,  laneMask: 2,  label: "C (A)", skillId: "caged_intro" },
+        { beat: 4,  laneMask: 4,  label: "C (G)", skillId: "caged_intro" },
+        { beat: 5,  laneMask: 4,  label: "C (G)", skillId: "caged_intro" },
+        { beat: 6,  laneMask: 8,  label: "C (E)", skillId: "caged_intro" },
+        { beat: 7,  laneMask: 8,  label: "C (E)", skillId: "caged_intro" },
+        { beat: 8,  laneMask: 16, label: "C (D)", skillId: "caged_intro", flags: { specialPhrase: true } },
+        { beat: 9,  laneMask: 16, label: "C (D)", skillId: "caged_intro", flags: { specialPhrase: true } },
+        { beat: 10, laneMask: 8,  label: "C (E)", skillId: "caged_intro" },
+        { beat: 11, laneMask: 8,  label: "C (E)", skillId: "caged_intro" },
+        { beat: 12, laneMask: 4,  label: "C (G)", skillId: "caged_intro" },
+        { beat: 13, laneMask: 4,  label: "C (G)", skillId: "caged_intro" },
+        { beat: 14, laneMask: 2,  label: "C (A)", skillId: "caged_intro" },
+        { beat: 15, laneMask: 1,  label: "C (C)", skillId: "caged_intro", flags: { specialPhrase: true } }
+      ],
+      phrases: [
+        { id: 0, name: "Ascent", startBeat: 0, endBeat: 8,  flags: { special: true } },
+        { id: 1, name: "Return", startBeat: 8, endBeat: 16, flags: { special: true } }
+      ]
+    },
+    gtr_triads_intro_01: {
+      id: "gtr_triads_intro_01",
+      title: "Triads Intro 01",
+      bpm: 92,
+      enginePreset: "spark_learning",
+      totalBeats: 16,
+      notes: [
+        { beat: 0,  laneMask: 7,  label: "C",    skillId: "triads_intro" },
+        { beat: 1,  laneMask: 7,  label: "C",    skillId: "triads_intro" },
+        { beat: 2,  laneMask: 7,  label: "F",    skillId: "triads_intro" },
+        { beat: 3,  laneMask: 7,  label: "F",    skillId: "triads_intro" },
+        { beat: 4,  laneMask: 14, label: "G",    skillId: "triads_intro" },
+        { beat: 5,  laneMask: 14, label: "G",    skillId: "triads_intro" },
+        { beat: 6,  laneMask: 7,  label: "Am",   skillId: "triads_intro" },
+        { beat: 7,  laneMask: 7,  label: "Am",   skillId: "triads_intro", flags: { specialPhrase: true } },
+        { beat: 8,  laneMask: 14, label: "C/E",  skillId: "triads_intro" },
+        { beat: 9,  laneMask: 14, label: "C/E",  skillId: "triads_intro" },
+        { beat: 10, laneMask: 14, label: "F/A",  skillId: "triads_intro" },
+        { beat: 11, laneMask: 14, label: "F/A",  skillId: "triads_intro" },
+        { beat: 12, laneMask: 28, label: "G/B",  skillId: "triads_intro" },
+        { beat: 13, laneMask: 28, label: "G/B",  skillId: "triads_intro" },
+        { beat: 14, laneMask: 14, label: "Am/C", skillId: "triads_intro" },
+        { beat: 15, laneMask: 14, label: "Am/C", skillId: "triads_intro", flags: { specialPhrase: true } }
+      ],
+      phrases: [
+        { id: 0, name: "Root Shapes", startBeat: 0, endBeat: 8,  flags: { special: true } },
+        { id: 1, name: "Inversions",  startBeat: 8, endBeat: 16, flags: { special: true } }
+      ]
+    },
     gtr_stage_flow_01: {
       id: "gtr_stage_flow_01",
       title: "Stage Flow 01",
@@ -222,13 +331,10 @@
   cloneChartWithSkill("gtr_stage_flow_01",   "gtr_phrase_retry_01",    "Phrase Retry 01",       "song_phrase_retry",  84);
   cloneChartWithSkill("gtr_stage_flow_01",   "gtr_song_full_easy_01",  "Song Full Easy 01",     "song_performance",   90);
 
-  // Lead / fretboard
+  // Lead / fretboard (power-chord, barre, CAGED and triad skills use the
+  // authored gtr_* charts defined in CHARTS above)
   cloneChartWithSkill("gtr_pentatonic_run_01", "gtr_single_note_timing_01", "Single-Note Timing 01", "single_note_timing", 78);
   cloneChartWithSkill("gtr_pentatonic_run_01", "gtr_bend_slide_intro_01",   "Bend & Slide Intro 01", "bend_slide_intro",   76);
-  cloneChartWithSkill("power_chords_01",       "gtr_power_chord_move_01",   "Power Chord Move 01",   "power_chords",       96);
-  cloneChartWithSkill("power_chords_01",       "gtr_barre_intro_01",        "Barre Intro 01",        "barre_intro",        88);
-  cloneChartWithSkill("power_chords_01",       "gtr_caged_intro_01",        "CAGED Intro 01",        "caged_intro",        90);
-  cloneChartWithSkill("power_chords_01",       "gtr_triads_intro_01",       "Triads Intro 01",       "triads_intro",       92);
 
   window.SparkGuitarChartLibrary = {
     getChartDefinition: function(chartId) {
