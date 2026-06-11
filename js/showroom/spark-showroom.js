@@ -2010,7 +2010,7 @@
              + '</div>'
             + '</div>'
          + '</div>'
-         + bottomNav(navItems, "")
+         + bottomNav(navItems, "settings")
          + '</div>';
   }
 

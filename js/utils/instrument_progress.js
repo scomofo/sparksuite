@@ -123,6 +123,32 @@
       }
     },
 
+    // Streak-freeze credit: checkStreak() consumed a freeze for one missed
+    // day. Move _lastStreakDate forward to the missed day WITHOUT touching
+    // streakDays, so the next completed session reads a 1-day gap and
+    // increments instead of resetting to 1 (SparkProgress.updateStreak
+    // resets on any gap other than exactly one day). All apps with a last
+    // session on the day before the missed day are credited — checkStreak
+    // runs at boot when no instrument is active, and the legacy streak the
+    // freeze protects mirrors whichever instrument activates next.
+    applyStreakFreeze: function(missedIsoDate) {
+      if (typeof SparkStorage === "undefined" || !SparkStorage.load || !missedIsoDate) return false;
+      var profile = SparkStorage.load();
+      if (!profile || !profile.apps) return false;
+      var touched = false;
+      for (var appId in profile.apps) {
+        var app = profile.apps[appId];
+        if (!app || !app._lastStreakDate) continue;
+        var gap = Math.floor((new Date(missedIsoDate) - new Date(app._lastStreakDate)) / 86400000);
+        if (gap === 1) {
+          app._lastStreakDate = missedIsoDate;
+          touched = true;
+        }
+      }
+      if (touched) SparkStorage.save(profile);
+      return touched;
+    },
+
     setLevel: function(level) {
       var routed = withProfile(function(profile, appId) {
         profile.apps[appId].stats.level = level;

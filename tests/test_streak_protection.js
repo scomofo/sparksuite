@@ -82,6 +82,17 @@ test('one missed day consumes the freeze and keeps the streak', function() {
   assert.strictEqual(ctx.S.lastSessionDate, isoDaysAgo(1), 'missed day should be credited as a virtual session');
 });
 
+test('consuming the freeze syncs the virtual date into instrument profiles', function() {
+  var ctx = makeContext();
+  var calls = [];
+  ctx.SparkInstrumentProgress = { applyStreakFreeze: function(d) { calls.push(d); } };
+  ctx.S.streak = 6;
+  ctx.S.lastSessionDate = isoDaysAgo(2);
+  ctx.S.streakFreezeUsedAt = null;
+  ctx.checkStreak();
+  assert.deepStrictEqual(calls, [isoDaysAgo(1)], 'profiles should be credited with the missed day');
+});
+
 test('re-running checkStreak the same day does not undo the freeze', function() {
   var ctx = makeContext();
   ctx.S.streak = 9;
@@ -139,6 +150,30 @@ test('streakFreezeUsedAt is persisted', function() {
   ctx.saveState(true);
   var raw = JSON.parse(ctx.localStorage.getItem('chordspark_state'));
   assert.strictEqual(raw.streakFreezeUsedAt, isoDaysAgo(1));
+});
+
+test('applyStreakFreeze credits only freeze-covered apps, never the count', function() {
+  var saved = null;
+  var profile = {
+    apps: {
+      guitar:  { _lastStreakDate: isoDaysAgo(2), stats: { streakDays: 5 } },  // freeze-covered
+      piano:   { _lastStreakDate: isoDaysAgo(6), stats: { streakDays: 9 } },  // long broken — leave
+      ukulele: { _lastStreakDate: isoDaysAgo(1), stats: { streakDays: 3 } }   // already current — leave
+    }
+  };
+  var ctx = { window: {}, console: console, Date: Date, Math: Math, JSON: JSON,
+    SparkStorage: { load: function() { return profile; }, save: function(p) { saved = p; } } };
+  ctx.window = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(loadSource('js/utils/instrument_progress.js'), ctx);
+
+  var touched = ctx.SparkInstrumentProgress.applyStreakFreeze(isoDaysAgo(1));
+  assert.strictEqual(touched, true);
+  assert.ok(saved, 'profile should be saved');
+  assert.strictEqual(profile.apps.guitar._lastStreakDate, isoDaysAgo(1), 'covered app date moves to the missed day');
+  assert.strictEqual(profile.apps.guitar.stats.streakDays, 5, 'count must not change');
+  assert.strictEqual(profile.apps.piano._lastStreakDate, isoDaysAgo(6), 'stale app untouched');
+  assert.strictEqual(profile.apps.ukulele._lastStreakDate, isoDaysAgo(1), 'current app untouched');
 });
 
 console.log('');
