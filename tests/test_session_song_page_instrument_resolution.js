@@ -681,16 +681,9 @@ test("songsTab ignores stale performance daily copy tokens", function() {
   assert.ok(html.indexOf("Technique focus") === -1);
 });
 
-test("songs surfaces ignore stale chart and community text tokens", function() {
-  S.songsSubTab = "community";
-  S.communitySongs = [{
-    id: "community_song_1",
-    title: "undefined",
-    artist: "null",
-    bpm: "NaN",
-    votes: 3,
-    chords: "[]"
-  }];
+test("songs surfaces ignore stale chart text tokens", function() {
+  // The community feature was removed (single-user app) — the songs page
+  // has no community sub-tab anymore.
   global.getPerformanceChartLibrary = function() {
     return [{
       id: "chart_1",
@@ -701,10 +694,6 @@ test("songs surfaces ignore stale chart and community text tokens", function() {
       bpm: "NaN"
     }];
   };
-
-  var communityHtml = songsTab();
-  assert.ok(communityHtml.indexOf("community_song_1") >= 0);
-  assert.ok(communityHtml.indexOf(">null<") === -1);
 
   S.songsSubTab = "perform";
   var performHtml = songsTab();
@@ -735,23 +724,8 @@ test("songs import list ignores stale imported song text tokens", function() {
   assert.ok(html.indexOf("NaN") === -1);
 });
 
-test("songs forms ignore stale cached submit and import field values", function() {
-  S.songsSubTab = "community";
-  S.communityTab = "submit";
-  S.submitSong = {
-    title: "undefined",
-    artist: "null",
-    submittedBy: "NaN",
-    bpm: "NaN",
-    chords: [],
-    progression: []
-  };
-
-  var submitHtml = songsTab();
-  assert.ok(submitHtml.indexOf('value="undefined"') === -1);
-  assert.ok(submitHtml.indexOf('value="null"') === -1);
-  assert.ok(submitHtml.indexOf('value="NaN"') === -1);
-
+test("songs forms ignore stale cached import field values", function() {
+  // Community submit form removed with the community feature.
   S.songsSubTab = "import";
   S.importText = "undefined";
   S.importedSong = {
@@ -769,9 +743,7 @@ test("songs forms ignore stale cached submit and import field values", function(
   assert.ok(importHtml.indexOf(">undefined</textarea>") === -1);
   assert.ok(importHtml.indexOf('value="import song 2"') >= 0);
   assert.ok(importHtml.indexOf('value="90"') >= 0);
-  assert.ok(submitHtml.indexOf('value="90"') >= 0);
   assert.ok(importHtml.indexOf("NaN") === -1);
-  assert.ok(submitHtml.indexOf("NaN") === -1);
 });
 
 test("songs search inputs ignore stale sentinel strings", function() {

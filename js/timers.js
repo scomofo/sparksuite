@@ -1,8 +1,8 @@
 // js/timers.js
 // Legacy game-loop / timer / parser block extracted from js/app.js.
 // Owns: practice/drill/daily timer ticks (tickS / tickD / tickDy / genQ),
-// the rhythm-game and chord-runner per-frame loops, the community-songs
-// fetch helper, the chord-sheet import parser, the stem-file URL loader,
+// the rhythm-game and chord-runner per-frame loops,
+// the chord-sheet import parser, the stem-file URL loader,
 // the _prevChordKey morph-tracker var, and stopAllTimers (the cleanup
 // entry point used by SparkInstruments.deactivate).
 //
@@ -429,30 +429,6 @@ function runnerTick(){
 
   render();
   _runnerAnim=requestAnimationFrame(runnerTick);
-}
-
-// ===== COMMUNITY API =====
-// The community server (server/) is optional and self-hosted; it serves
-// plain HTTP locally. Use HTTPS when pointing at a remote deployment.
-var COMMUNITY_URL="http://localhost:3456";
-if(!COMMUNITY_URL.startsWith("https")&&COMMUNITY_URL.indexOf("localhost")===-1&&COMMUNITY_URL.indexOf("127.0.0.1")===-1)
-  console.warn("ChordSpark: Community URL should use HTTPS for non-local servers");
-
-function fetchCommunity(){
-  S.communityLoading=true;S.communityError=null;render();
-  var url=COMMUNITY_URL+"/api/songs";
-  if(S.communitySearch)url+="?q="+encodeURIComponent(S.communitySearch)+"&sort="+S.communitySort;
-  else url+="?sort="+S.communitySort;
-  // Reject non-2xx responses so a JSON error body doesn't get assigned to
-  // S.communitySongs (which subsequent UI code expects to be an array).
-  fetch(url).then(function(r){
-    if(!r.ok) return Promise.reject(new Error("HTTP "+r.status));
-    return r.json();
-  }).then(function(data){
-    S.communitySongs=Array.isArray(data)?data:[];S.communityLoading=false;render();
-  }).catch(function(){
-    S.communityError="Could not connect to community server";S.communityLoading=false;render();
-  });
 }
 
 // ===== CHORD SHEET IMPORT PARSER =====
