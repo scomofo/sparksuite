@@ -5902,6 +5902,38 @@ test("completeSession with unearned completion finalizes the plan without reward
   assert.strictEqual(lastProgressEvent, null, "the orchestrator must not be credited for a skip");
 });
 
+test("completeDailyPracticePlan with zero items done is inferred as a skip", function() {
+  // The live "Skip today" button routes act('completePlan') ->
+  // completeDailyPracticePlanRequest -> core.completeDailyPracticePlan,
+  // which forces markPlanComplete without an earnedCompletion flag — the
+  // engine must infer the skip from the untouched segments.
+  var core = createDefaultSparkCore();
+  core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+
+  var result = core.completeDailyPracticePlan();
+
+  assert.strictEqual(result.planCompleted, true);
+  assert.strictEqual(result.xpAwarded, 0);
+  assert.strictEqual(S.practicePlanComplete, true);
+  assert.strictEqual(S.xp, 0, "force-completing an untouched plan must not award XP");
+  assert.strictEqual(S.practicePlanHistory[0].skipped, true);
+  assert.strictEqual(lastProgressEvent, null);
+});
+
+test("completeDailyPracticePlan after real work still awards completion", function() {
+  var core = createDefaultSparkCore();
+  var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+
+  core.completeSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE, itemId: plan.segments[0].id });
+  var result = core.completeDailyPracticePlan();
+
+  assert.strictEqual(result.planCompleted, true);
+  assert.strictEqual(result.xpAwarded, 20);
+  assert.strictEqual(S.xp, 20);
+  assert.strictEqual(S.practicePlanHistory[0].skipped, false);
+  assert.ok(lastProgressEvent, "earned completion still credits the orchestrator");
+});
+
 test("completeSession returns engine-owned rhythm learning summary while bridge syncs legacy mastery state", function() {
   var core = createDefaultSparkCore();
   var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
