@@ -648,7 +648,11 @@
       { title: "Audio & Input", rows: [
         { type: "slider", icon: "mic", label: "Microphone Sensitivity", value: micPct + "%", pct: micPct },
         { type: "range", icon: "volume_up", label: "UI Volume", value: uiVolumePct + "%", pct: uiVolumePct, action: "setUIVolume" },
-        { icon: "tune", label: "Latency Calibration", chevron: true, meta: latency + "ms", metaWarn: true, onClick: "if(S&&S.activeInstrument){act('openPerformCalibration')}else{SparkInstruments.openLauncherView('calibration')}" }
+        { icon: "tune", label: "Latency Calibration", chevron: true, meta: latency + "ms", metaWarn: true, onClick: "if(S&&S.activeInstrument){act('openPerformCalibration')}else{SparkInstruments.openLauncherView('calibration')}" },
+        // Studio entry points — the Tuner/Tools pages lost their dedicated
+        // bottom-nav slots when the suite nav was unified.
+        { icon: "graphic_eq", label: "Tuner", chevron: true, onClick: nav("tuner") },
+        { icon: "construction", label: "Tools", chevron: true, onClick: nav("tools") }
       ]},
       { title: "Appearance", rows: [
         { type: "theme", icon: "palette", label: "Theme", value: theme, options: ["dark", "light", "blue", "highcontrast", "retro"] },
@@ -1954,12 +1958,7 @@
 
     var standardLetters = tuning.split("").join(" ");
 
-    var navItems = [
-      { id:"tuner",   label:"Tuner",   icon:"tune" },
-      { id:"path",    label:"Courses", icon:"school",     onClick: nav("path") },
-      { id:"tools",   label:"Tools",   icon:"build",      onClick: nav("tools") },
-      { id:"profile", label:"Profile", icon:"person",     onClick: nav("profile") }
-    ];
+    var navItems = launcherBottomNavItems();
 
     return '<div class="showroom-root with-bg showroom-tuner-2026">'
          + '<header class="showroom-tuner-bar">'
@@ -2011,7 +2010,7 @@
              + '</div>'
             + '</div>'
          + '</div>'
-         + bottomNav(navItems, "tuner")
+         + bottomNav(navItems, "")
          + '</div>';
   }
 
@@ -2167,12 +2166,7 @@
                    + '</div>';
     }
 
-    var navItems = [
-      { id:"tuner",    label:"Tuner",   icon:"tune",       onClick: nav("tuner") },
-      { id:"curriculum",label:"Courses", icon:"school" },
-      { id:"tools",    label:"Tools",   icon:"construction",onClick: nav("tools") },
-      { id:"profile",  label:"Profile", icon:"person",     onClick: nav("profile") }
-    ];
+    var navItems = launcherBottomNavItems();
 
     return '<div class="showroom-root with-bg">'
          + '<div class="showroom-woodgrain-overlay"></div>'
@@ -2205,7 +2199,7 @@
          + timelineHtml
          + '</section>'
          + '</main>'
-         + bottomNav(navItems, "curriculum")
+         + bottomNav(navItems, "learn")
          + '</div>';
   }
 
@@ -2311,12 +2305,7 @@
                    + '</div>';
     }
 
-    var navItems = [
-      { id: "tuner",      label: "Tuner",   icon: "tune",         onClick: nav("tuner") },
-      { id: "curriculum", label: "Courses", icon: "school" },
-      { id: "tools",      label: "Tools",   icon: "construction", onClick: nav("tools") },
-      { id: "profile",    label: "Profile", icon: "person",       onClick: nav("profile") }
-    ];
+    var navItems = launcherBottomNavItems();
 
     return '<div class="showroom-root with-woodgrain showroom-syllabus">'
          +   '<header class="showroom-syllabus-appbar">'
@@ -2371,7 +2360,7 @@
          +       timelineHtml
          +     '</section>'
          +   '</main>'
-         +   bottomNav(navItems, "curriculum")
+         +   bottomNav(navItems, "learn")
          + '</div>';
   }
 
