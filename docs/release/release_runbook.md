@@ -5,7 +5,7 @@ Ship a packaged local-first SparkSuite build without regressing session correctn
 
 ## Before Building
 1. Run `npm run verify`.
-2. Review [desktop_release_checklist.md](C:\Users\Scott Morley\Dev\sparksuite\docs\release\desktop_release_checklist.md).
+2. Review [desktop_release_checklist.md](desktop_release_checklist.md).
 3. Confirm the working tree is clean.
 4. Confirm no social, leaderboard, store, or marketplace scope was added.
 

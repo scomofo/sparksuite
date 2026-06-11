@@ -72,9 +72,12 @@
       completed: {},
       skipped: {}
     };
+    // Unknown until release/manifest.json loads — must not impersonate a real
+    // release, or a failed manifest fetch shows a stale version in About,
+    // feedback exports, and debug bundles.
     S.releaseInfo = S.releaseInfo || {
-      version: "0.9.0",
-      build: 120,
+      version: "dev",
+      buildNumber: 0,
       firstInstalled: 0,
       lastUpdated: 0
     };
