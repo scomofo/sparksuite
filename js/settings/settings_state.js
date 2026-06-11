@@ -86,6 +86,7 @@
     // Build: 0 until the manifest fetch replaces the object.
     if (S.releaseInfo.buildNumber === undefined && S.releaseInfo.build !== undefined) {
       S.releaseInfo.buildNumber = S.releaseInfo.build;
+      delete S.releaseInfo.build;
     }
   }
 

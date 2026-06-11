@@ -70,6 +70,7 @@ test("initSettingsDefaults migrates persisted legacy releaseInfo.build", functio
   initSettingsDefaults();
 
   assert.strictEqual(S.releaseInfo.buildNumber, 120, "legacy build value must carry over");
+  assert.strictEqual(S.releaseInfo.build, undefined, "legacy build key is dropped so it cannot persist forever");
   assert.strictEqual(S.releaseInfo.version, "0.9.0", "persisted fields stay until the manifest fetch replaces them");
 });
 
