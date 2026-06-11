@@ -121,21 +121,28 @@
 
     pages: typeof GUITAR_PAGES !== "undefined" ? GUITAR_PAGES : {},
 
+    // Primary tab bar \u2014 the daily loop. Everything else lives in the
+    // toolbox grid inside the Practice tab (all ids stay routable via
+    // act('tab', id); the engine schedules these activities into the
+    // daily plan, so they don't need permanent navigation slots).
     tabs: [
       { id: "practice", label: "Practice", icon: "\uD83C\uDFB6" },
+      { id: "songs",    label: "Songs",    icon: "\uD83C\uDFB5" },
+      { id: "stats",    label: "Stats",    icon: "\uD83D\uDCCA" },
+      { id: "guide",    label: "Guide",    icon: "\uD83D\uDCD6" }
+    ],
+
+    toolbox: [
       { id: "drill",    label: "Drill",    icon: "\u26A1" },
       { id: "daily",    label: "Daily",    icon: "\uD83C\uDFC5" },
       { id: "quiz",     label: "Quiz",     icon: "\uD83E\uDDE0" },
       { id: "ear",      label: "Ear",      icon: "\uD83D\uDC42" },
       { id: "strum",    label: "Strum",    icon: "\uD83C\uDFBC" },
-      { id: "songs",    label: "Songs",    icon: "\uD83C\uDFB5" },
       { id: "rhythm",   label: "Rhythm",   icon: "\uD83E\uDD41" },
       { id: "runner",   label: "Runner",   icon: "\uD83C\uDFAE" },
       { id: "build",    label: "Build",    icon: "\uD83D\uDD27" },
       { id: "tuner",    label: "Tuner",    icon: "\uD83C\uDFA4" },
-      { id: "dual",     label: "Dual",     icon: "\uD83C\uDFB9" },
-      { id: "stats",    label: "Stats",    icon: "\uD83D\uDCCA" },
-      { id: "guide",    label: "Guide",    icon: "\uD83D\uDCD6" }
+      { id: "dual",     label: "Dual",     icon: "\uD83C\uDFB9" }
     ],
 
     stemMutePreset: {
