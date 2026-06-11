@@ -149,8 +149,11 @@
    hand-drawn 2px STROKE line art with open paths — not Material's filled
    glyph outlines. fill:none + stroke is the correct default for the whole
    set; switching to fill:currentColor would render zero-area paths like
-   add/menu/graphic_eq invisible. The .fill modifier mirrors FILL=1 usage. */
-.showroom-root .spark-local-icon{
+   add/menu/graphic_eq invisible. The .fill modifier mirrors FILL=1 usage.
+   Deliberately NOT scoped to .showroom-root: hydration runs on all of
+   #app, and screens outside the showroom shell (e.g. the performance
+   bar's Pause button) otherwise get an unsized 0x0 SVG. */
+.spark-local-icon{
   width:1em;
   height:1em;
   display:block;
@@ -160,7 +163,7 @@
   stroke-linecap:round;
   stroke-linejoin:round;
 }
-.showroom-root .material-symbols-outlined.fill .spark-local-icon{
+.material-symbols-outlined.fill .spark-local-icon{
   fill:currentColor;
   stroke:currentColor;
 }
