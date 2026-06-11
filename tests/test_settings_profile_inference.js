@@ -70,6 +70,7 @@ test("initSettingsDefaults migrates persisted legacy releaseInfo.build", functio
   initSettingsDefaults();
 
   assert.strictEqual(S.releaseInfo.buildNumber, 120, "legacy build value must carry over");
+  assert.strictEqual(S.releaseInfo.build, undefined, "legacy build key is dropped so it cannot persist forever");
   assert.strictEqual(S.releaseInfo.version, "0.9.0", "persisted fields stay until the manifest fetch replaces them");
 });
 
@@ -80,6 +81,18 @@ test("initSettingsDefaults leaves a modern releaseInfo alone", function() {
   initSettingsDefaults();
 
   assert.strictEqual(S.releaseInfo.buildNumber, 7);
+});
+
+test("initSettingsDefaults drops a leftover build key beside buildNumber", function() {
+  // A state saved by the copy-only migration carries BOTH keys; the cleanup
+  // must still run without clobbering the already-migrated buildNumber.
+  S.releaseInfo = { version: "1.3.0", buildNumber: 7, build: 120, firstInstalled: 1, lastUpdated: 2 };
+
+  global.eval(loadJS("js/settings/settings_state.js"));
+  initSettingsDefaults();
+
+  assert.strictEqual(S.releaseInfo.buildNumber, 7, "migrated value must not be clobbered by the legacy key");
+  assert.strictEqual(S.releaseInfo.build, undefined, "legacy key is dropped even when already migrated");
 });
 
 console.log("\n" + passed + " passed, " + failed + " failed");
