@@ -37,7 +37,7 @@
         S.songsSubTab = v;
       });
       applySongBrowserRequest("songs_subtab", { songsSubTab: v });
-      if (v === "community") fetchCommunity();
+
       render();
       return true;
     }

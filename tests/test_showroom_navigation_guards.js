@@ -267,33 +267,23 @@ test("system action family forwards showroom library filters to the showroom api
   assert.deepStrictEqual(levelCalls, ["Intermediate"]);
 });
 
-test("community search action owns rerender after updating search state", function() {
+test("community actions stay removed from the tools family", function() {
+  // The community feature was removed (single-user app): the tools family
+  // must not resurrect handlers for its retired actions.
   var handled;
-  var browserRequests = [];
-  var fetchCalls = 0;
-  var renderCalls = 0;
   global.runSparkActionFamilies = undefined;
   global.registerSparkActionFamily = function(name, handler) {
     global.runSparkActionFamilies = handler;
   };
-  global.S = { communitySearch: "" };
-  global.applySongBrowserRequest = function(type, payload) {
-    browserRequests.push({ type: type, payload: payload });
-  };
-  global.fetchCommunity = function() {
-    fetchCalls++;
-  };
-  global.render = function() {
-    renderCalls++;
-  };
+  global.S = {};
+  global.applySongBrowserRequest = function() {};
+  global.render = function() {};
   global.eval(loadJS("js/actions/tools_family.js"));
 
   handled = global.runSparkActionFamilies("communitySearch", "Midnight");
-  assert.strictEqual(handled, true);
-  assert.strictEqual(S.communitySearch, "Midnight");
-  assert.deepStrictEqual(browserRequests, [{ type: "community_search", payload: { communitySearch: "Midnight" } }]);
-  assert.strictEqual(fetchCalls, 1);
-  assert.strictEqual(renderCalls, 1);
+  assert.notStrictEqual(handled, true, "communitySearch should be unhandled");
+  handled = global.runSparkActionFamilies("submitSong", null);
+  assert.notStrictEqual(handled, true, "submitSong should be unhandled");
 });
 
 console.log("\nPassed: " + passed + "  Failed: " + failed);
