@@ -9,7 +9,10 @@ function loadJS(file) {
 function resetPracticeEnvironment() {
   global.window = global;
   global.S = {
-    practicePlanComplete: false
+    practicePlanComplete: false,
+    // Completion credit is earned-gated: at least one plan item must be
+    // done for the orchestrator outcome this test asserts on to fire.
+    practicePlan: { items: [{ id: "item_1", completed: true }] }
   };
   global.__sparkState = global.S;
   global.SparkSessionTypes = {
