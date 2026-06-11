@@ -99,6 +99,31 @@ function collectPerformancePitchValues(notes) {
   return values.sort(function(a, b) { return a - b; });
 }
 
+// Chord-arrangement events carry a chord NAME but no per-note pitch data
+// (notes: []), so the pitch-based lane derivation below has nothing to work
+// with — without this, every chord falls into lane 0 and the highway reads
+// as a single undifferentiated column. Map each distinct chord to a stable
+// lane in first-appearance order, wrapping when a chart uses more chords
+// than the skin has lanes. The order is cached on the chart so the same
+// chord always lands in the same lane for the whole performance.
+function derivePerformanceChordLaneIndex(chart, evt) {
+  var name = evt && (evt.chord || evt.laneLabel);
+  if (!name || !chart || !Array.isArray(chart.events)) return null;
+  var laneCount = resolvePerformanceLaneCount(chart);
+  var order = chart._chordLaneOrder;
+  if (!order) {
+    order = [];
+    for (var i = 0; i < chart.events.length; i++) {
+      var c = chart.events[i] && (chart.events[i].chord || chart.events[i].laneLabel);
+      if (c && order.indexOf(c) === -1) order.push(c);
+    }
+    chart._chordLaneOrder = order;
+  }
+  var idx = order.indexOf(name);
+  if (idx === -1) return null;
+  return idx % laneCount;
+}
+
 function derivePerformanceLaneMask(chart, evt) {
   var instrument = resolvePerformanceHighwayInstrument(chart);
   var laneCount = resolvePerformanceLaneCount(chart);
@@ -111,7 +136,10 @@ function derivePerformanceLaneMask(chart, evt) {
   if (evt && typeof evt.lane === "number" && isFinite(evt.lane)) {
     return 1 << clampPerformanceLaneIndex(evt.lane, laneCount);
   }
-  if (!notes.length) return 0;
+  if (!notes.length) {
+    var chordLane = derivePerformanceChordLaneIndex(chart, evt);
+    return chordLane == null ? 0 : (1 << chordLane);
+  }
   values = collectPerformancePitchValues(notes);
   if (!values.length) return 0;
   if (instrument === "bass") {

@@ -93,5 +93,52 @@ test("_updatePerformDisplay initializes the highway renderer before feeding char
   assert.strictEqual(calls[calls.length - 1].type, "update");
 });
 
+function chordChart(progression) {
+  return {
+    instrument: "guitar",
+    events: progression.map(function(name, i) {
+      return { id: i, t: i, type: "chord", chord: name, notes: [] };
+    })
+  };
+}
+
+test("chord events map distinct chords to distinct lanes in first-appearance order", function() {
+  resetEnv();
+  global.SparkHighway = function SparkHighway() {};
+  SparkHighway.GUITAR_SKIN = { id: "guitar_skin", laneCount: 6 };
+  global.eval(loadJS("js/performance/highway.js"));
+
+  var chart = chordChart(["Am", "Am", "E", "G", "D", "F", "C"]);
+  var lanes = chart.events.map(function(evt) { return derivePerformanceLaneIndex(chart, evt); });
+
+  assert.deepStrictEqual(lanes, [0, 0, 1, 2, 3, 4, 5], "each new chord takes the next lane; repeats stay put");
+});
+
+test("chord lanes stay stable across the whole chart and wrap past the lane count", function() {
+  resetEnv();
+  global.SparkHighway = function SparkHighway() {};
+  SparkHighway.GUITAR_SKIN = { id: "guitar_skin", laneCount: 6 };
+  global.eval(loadJS("js/performance/highway.js"));
+
+  // 7 unique chords on a 6-lane skin: Bm wraps to lane 0, and the reprise
+  // of Am/E later in the song must land back on their original lanes.
+  var chart = chordChart(["Am", "E", "G", "D", "F", "C", "Bm", "Am", "E"]);
+  var lanes = chart.events.map(function(evt) { return derivePerformanceLaneIndex(chart, evt); });
+
+  assert.deepStrictEqual(lanes, [0, 1, 2, 3, 4, 5, 0, 0, 1]);
+});
+
+test("explicit laneMask, lane, and pitch-bearing events bypass chord-name mapping", function() {
+  resetEnv();
+  global.SparkHighway = function SparkHighway() {};
+  SparkHighway.GUITAR_SKIN = { id: "guitar_skin", laneCount: 6 };
+  global.eval(loadJS("js/performance/highway.js"));
+
+  var chart = chordChart(["Am", "E"]);
+  assert.strictEqual(derivePerformanceLaneMask(chart, { chord: "Am", notes: [], laneMask: 12 }), 12, "explicit laneMask wins");
+  assert.strictEqual(derivePerformanceLaneMask(chart, { chord: "Am", notes: [], lane: 3 }), 8, "explicit lane wins");
+  assert.strictEqual(derivePerformanceLaneMask(chart, { type: "note", notes: [] }), 0, "no chord name and no notes still derives nothing");
+});
+
 console.log("\n" + passed + " passed, " + failed + " failed");
 if (failed > 0) process.exit(1);
