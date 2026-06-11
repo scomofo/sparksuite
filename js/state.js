@@ -518,6 +518,12 @@ function checkStreak(){
       // on cooldown and wipes the streak the freeze just protected.
       var yesterday=new Date(new Date(today)-86400000).toISOString().split("T")[0];
       S.lastSessionDate=yesterday;
+      // Mirror the virtual date into the per-instrument profiles too —
+      // otherwise the engine's updateStreak sees a 2-day gap on the next
+      // completed session, resets streakDays to 1, and undoes the freeze.
+      if(typeof SparkInstrumentProgress!=="undefined"&&typeof SparkInstrumentProgress.applyStreakFreeze==="function"){
+        SparkInstrumentProgress.applyStreakFreeze(yesterday);
+      }
       S.microToast={msg:"Streak freeze used — your "+S.streak+"-day streak is safe!",icon:"🧊",time:Date.now()};
       saveState(true);
     } else if(diff>1){

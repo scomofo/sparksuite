@@ -1479,10 +1479,22 @@ function getGuidedSessionView() {
 // Optional everywhere — no mic, no support, or a denial all degrade back
 // to the self-report button.
 
-var _guidedTryVerify = { timer: null, tracker: null, chord: null };
+var _guidedTryVerify = { timer: null, tracker: null, chord: null, verifiedKey: null };
 
 function guidedTryVerifySupported() {
   return typeof navigator !== "undefined" && !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+}
+
+// Verification is keyed to its full context — session number, activity, and
+// chord — not a bare "verified" flag. A new session that happens to open
+// with the same chord gets a different key, so nothing is pre-verified, and
+// render never has to reset state to keep things honest.
+function guidedTryVerifyContextKey(ch) {
+  return [
+    typeof S !== "undefined" ? S.guidedSession : "",
+    typeof S !== "undefined" ? (S.guidedActivityId || S.guidedStep || "") : "",
+    ch && ch.name ? ch.name : ""
+  ].join("|");
 }
 
 function guidedTryVerifyStart() {
@@ -1490,10 +1502,10 @@ function guidedTryVerifyStart() {
   // live in instrument data (D.ALL_CHORDS/D.CHORDS), not a global lookup.
   var ch = _guidedTryVerify.chord;
   if (!ch || !guidedTryVerifySupported()) return;
-  guidedTryVerifyStop(false);
+  guidedTryVerifyStop();
   S.currentChord = ch;
-  S.guidedTryVerified = false;
   S.chordDetectErr = null;
+  _guidedTryVerify.verifiedKey = null;
   _guidedTryVerify.tracker = typeof createVerificationTracker === "function"
     ? createVerificationTracker({ threshold: 75, holdMs: 1200 })
     : null;
@@ -1501,13 +1513,13 @@ function guidedTryVerifyStart() {
   _guidedTryVerify.timer = setInterval(function() {
     // Self-disarm if the user left the Try phase with the mic running.
     if (S.newMovePhase !== "try" || S.screen !== SCR.GUIDED) {
-      guidedTryVerifyStop(false);
+      guidedTryVerifyStop();
       return;
     }
     // Mic denied or failed after start — disarm instead of idling forever;
     // the card re-renders with the error and the self-report fallback.
     if (S.chordDetectErr) {
-      guidedTryVerifyStop(false);
+      guidedTryVerifyStop();
       if (typeof render === "function") render();
       return;
     }
@@ -1516,8 +1528,8 @@ function guidedTryVerifyStart() {
     var el = document.getElementById("guided-verify-status");
     if (el && !done) el.innerHTML = guidedTryVerifyStatusInner();
     if (done) {
-      S.guidedTryVerified = true;
-      guidedTryVerifyStop(true);
+      _guidedTryVerify.verifiedKey = guidedTryVerifyContextKey(ch);
+      guidedTryVerifyStop();
       if (typeof awardXP === "function") awardXP(5, "mic_verified_try");
       S.microToast = { msg: "Verified — clean " + (ch.name || "chord") + "! +5 XP", icon: "🎤", time: Date.now() };
       if (typeof render === "function") render();
@@ -1526,14 +1538,13 @@ function guidedTryVerifyStart() {
   if (typeof render === "function") render();
 }
 
-function guidedTryVerifyStop(keepVerified) {
+function guidedTryVerifyStop() {
   if (_guidedTryVerify.timer) {
     clearInterval(_guidedTryVerify.timer);
     _guidedTryVerify.timer = null;
   }
   _guidedTryVerify.tracker = null;
   if (S.chordDetectOn && typeof stopChordDetect === "function") stopChordDetect();
-  if (!keepVerified) S.guidedTryVerified = false;
 }
 
 function guidedTryVerifyStatusInner() {
@@ -1553,27 +1564,19 @@ function guidedTryVerifyStatusInner() {
 
 function renderGuidedTryVerifyCard(ch) {
   if (!ch || !guidedTryVerifySupported()) return "";
-  // New target chord (next session, different drill): clear the verified
-  // flag and any live tracking — one verified Em must not pre-verify every
-  // later chord. The mic teardown is deferred a tick because this runs
-  // inside render() and stopChordDetect() itself calls render().
-  if (!_guidedTryVerify.chord || _guidedTryVerify.chord.name !== ch.name) {
-    var hadLiveSession = !!_guidedTryVerify.timer;
-    _guidedTryVerify.chord = ch;
-    S.guidedTryVerified = false;
-    if (hadLiveSession) {
-      setTimeout(function() { guidedTryVerifyStop(false); }, 0);
-    }
-  } else {
-    _guidedTryVerify.chord = ch;
-  }
+  // Stash the chord object for the inline onclick (an event-argument cache,
+  // not UI state). All verification state lives behind the context key —
+  // render only reads it.
+  _guidedTryVerify.chord = ch;
+  var verified = _guidedTryVerify.verifiedKey !== null
+    && _guidedTryVerify.verifiedKey === guidedTryVerifyContextKey(ch);
   var h = '<div class="card" style="margin:0 0 12px;padding:12px;text-align:left">';
-  if (S.guidedTryVerified) {
+  if (verified) {
     h += '<div style="color:#6bcb77;font-weight:800;font-size:14px">&#10003; Verified by mic &mdash; clean ' + escHTML(ch.name) + '!</div>';
   } else if (S.chordDetectOn) {
     h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px">'
        + '<span style="font-weight:700;font-size:13px">&#127908; Listening for ' + escHTML(ch.name) + '</span>'
-       + '<button class="btn btn-sm" onclick="guidedTryVerifyStop(false);render()" style="background:var(--input-bg);color:var(--text-secondary)">Stop</button>'
+       + '<button class="btn btn-sm" onclick="guidedTryVerifyStop();render()" style="background:var(--input-bg);color:var(--text-secondary)">Stop</button>'
        + '</div>'
        + '<div id="guided-verify-status">' + guidedTryVerifyStatusInner() + '</div>';
   } else {
