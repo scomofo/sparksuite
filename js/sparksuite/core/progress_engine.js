@@ -259,6 +259,31 @@
     }
 
     if (progress.planCompleted) {
+      // A completion the caller flagged as unearned (zero items actually
+      // done — the "Skip today" path) still finalizes the plan so the day
+      // is closed out, but awards nothing: no XP, no toast, no orchestrator
+      // credit. History records it as a skip.
+      if (payload.earnedCompletion === false) {
+        var skipSummary = buildCompletionSummary(plan, 0, 0);
+        skipSummary.skipped = true;
+        SparkProgressBridge.finalizePlan(plan, {
+          xpAwarded: 0,
+          sessionStatePatch: {},
+          completionSummary: skipSummary
+        });
+        progress.xpAwarded = 0;
+        progress.sessionStatePatch = {};
+        progress.completionSummary = skipSummary;
+        emitProgressEvent(this, "progress.session.completed", {
+          sessionId: plan.id,
+          flow: plan.flow,
+          xpAwarded: 0,
+          skipped: true,
+          completedItems: progress.completedItems,
+          totalItems: progress.totalItems
+        });
+        return progress;
+      }
       var summary = SparkPerformanceBridge.buildPerformanceSummary(plan);
       var xpAwarded = 20;
       var sessionStatePatch = {

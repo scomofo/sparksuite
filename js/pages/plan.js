@@ -253,8 +253,8 @@ function planPage(){
     // The engine decides whether completion is earned (>=1 item done);
     // with nothing done the same action reads as the skip it really is
     // and completePracticePlan withholds the progress credit.
-    var planEarned = typeof practicePlanHasEarnedCompletion === "function"
-      ? practicePlanHasEarnedCompletion()
+    var planEarned = typeof window.practicePlanHasEarnedCompletion === "function"
+      ? window.practicePlanHasEarnedCompletion()
       : true;
     h += '<div class="card mb16"><div class="plan-actions action-row">';
     h += planEarned

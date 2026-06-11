@@ -139,14 +139,17 @@
           }
         }
       }
+      // earnedCompletion tells ProgressEngine.completeSession whether this
+      // completion deserves a reward: with zero items done it still marks
+      // the plan finished for today (so the UI stops nagging) but withholds
+      // the XP, toast, and orchestrator credit.
       core.completeSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
-        markPlanComplete: true
+        markPlanComplete: true,
+        earnedCompletion: earned
       });
       // Route through contract-based progress path — but only when at least
-      // one item was actually done. A zero-item "complete" still marks the
-      // plan finished for today (above) so the UI stops nagging; it just
-      // earns nothing.
+      // one item was actually done.
       if (earned && typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
         var practiceResult = SparkContracts.createSessionResult({
           mode: "practice",

@@ -1,10 +1,20 @@
 /* ============================================================
    Desktop layout layer — SparkSuite
    The app's base styles are a 480px phone column; this file adds
-   a wide-screen layer without touching mobile. Everything lives
-   behind one media query so narrow windows are untouched.
+   a wide-screen layer without touching mobile. Defaults first,
+   then a single media query for every desktop override, so no
+   rule depends on source-order fights to win.
    Loaded last in index.html so it wins specificity ties.
    ============================================================ */
+
+/* Default (narrow) layout: the split wrapper must be invisible —
+   display:contents makes the children lay out as if the wrappers
+   were never there. */
+.home-split,
+.home-rail,
+.home-main {
+  display: contents;
+}
 
 @media (min-width: 1100px) {
 
@@ -89,33 +99,17 @@
     align-items: start;
   }
   .home-rail {
+    display: block;
     position: sticky;
     top: 16px;
   }
   .home-main {
+    display: block;
     min-width: 0;
   }
 
   /* Focused single-task screens stay centered but get breathing room. */
   .session-screen {
     max-width: 720px;
-  }
-}
-
-/* Outside the media query: the split wrapper must be invisible to
-   narrow layouts — display:contents makes the children lay out as
-   if the wrappers were never there. */
-.home-split,
-.home-rail,
-.home-main {
-  display: contents;
-}
-@media (min-width: 1100px) {
-  .home-split {
-    display: grid;
-  }
-  .home-rail,
-  .home-main {
-    display: block;
   }
 }

@@ -5881,6 +5881,27 @@ test("completeSession finalizes the migrated daily plan and awards completion pr
   assert.strictEqual(lastProgressEvent.xpAwarded, 20);
 });
 
+test("completeSession with unearned completion finalizes the plan without reward", function() {
+  var core = createDefaultSparkCore();
+  core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
+
+  var result = core.completeSession({
+    flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
+    markPlanComplete: true,
+    earnedCompletion: false
+  });
+
+  assert.strictEqual(result.planCompleted, true, "the day should still be closed out");
+  assert.strictEqual(result.xpAwarded, 0);
+  assert.strictEqual(result.completionSummary.skipped, true);
+  assert.strictEqual(S.practicePlanComplete, true);
+  assert.strictEqual(S.xp, 0, "a skip must not award XP");
+  assert.strictEqual(S.xpToast, undefined, "a skip must not celebrate");
+  assert.strictEqual(S.practicePlanHistory.length, 1);
+  assert.strictEqual(S.practicePlanHistory[0].skipped, true);
+  assert.strictEqual(lastProgressEvent, null, "the orchestrator must not be credited for a skip");
+});
+
 test("completeSession returns engine-owned rhythm learning summary while bridge syncs legacy mastery state", function() {
   var core = createDefaultSparkCore();
   var plan = core.startSession({ flow: SparkSessionTypes.FLOW_DAILY_PRACTICE });
