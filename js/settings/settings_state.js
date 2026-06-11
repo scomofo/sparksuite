@@ -83,9 +83,14 @@
     };
     // releaseInfo is persisted, and pre-1.3.x installs saved it with `build`
     // instead of `buildNumber` — migrate so About/debug surfaces don't show
-    // Build: 0 until the manifest fetch replaces the object.
-    if (S.releaseInfo.buildNumber === undefined && S.releaseInfo.build !== undefined) {
-      S.releaseInfo.buildNumber = S.releaseInfo.build;
+    // Build: 0 until the manifest fetch replaces the object. The legacy key
+    // is dropped whenever it appears (a state saved by the copy-only
+    // migration carries BOTH keys); the value only copies when buildNumber
+    // is still missing.
+    if (S.releaseInfo.build !== undefined) {
+      if (S.releaseInfo.buildNumber === undefined) {
+        S.releaseInfo.buildNumber = S.releaseInfo.build;
+      }
       delete S.releaseInfo.build;
     }
   }
