@@ -11,23 +11,6 @@ function resolveElectronPortableArtifact(rootDir) {
   return resolveFirstExisting(candidates);
 }
 
-function resolveTauriBundleArtifact(rootDir) {
-  // Derive the installer name from the Tauri bundle version instead of
-  // hardcoding it — a stale literal here let smoke validation pass against
-  // a wrong-versioned artifact.
-  let tauriVersion = "";
-  try {
-    tauriVersion = JSON.parse(fs.readFileSync(path.join(rootDir, "src-tauri", "tauri.conf.json"), "utf8")).version || "";
-  } catch (e) {}
-  const candidates = [
-    path.join(rootDir, "src-tauri", "target", "release", "SparkSuite.exe")
-  ];
-  if (tauriVersion) {
-    candidates.push(path.join(rootDir, "src-tauri", "target", "release", "bundle", "nsis", "SparkSuite_" + tauriVersion + "_x64-setup.exe"));
-  }
-  return resolveFirstExisting(candidates);
-}
-
 function resolveFirstExisting(candidates) {
   let i;
   for (i = 0; i < candidates.length; i++) {
@@ -38,9 +21,10 @@ function resolveFirstExisting(candidates) {
   return null;
 }
 
+// Electron is the only packaging runtime — Tauri and Capacitor were removed
+// when the project committed to a single Windows desktop target.
 function buildSmokePlan(options) {
   options = options || {};
-  const runtime = options.runtime || "electron";
   const commands = [];
 
   if (!options.skipVerify) {
@@ -48,16 +32,12 @@ function buildSmokePlan(options) {
   }
 
   if (!options.skipBuild) {
-    if (runtime === "tauri") {
-      commands.push("npm run tauri:build");
-    } else {
-      commands.push("npm run build:portable");
-    }
+    commands.push("npm run build:portable");
   }
 
   return {
     rootDir: options.rootDir,
-    runtime: runtime,
+    runtime: "electron",
     commands: commands
   };
 }
@@ -72,10 +52,7 @@ function parseArgs(argv) {
   let index;
 
   for (index = 0; index < argv.length; index++) {
-    if (argv[index] === "--runtime" && argv[index + 1]) {
-      options.runtime = argv[index + 1];
-      index++;
-    } else if (argv[index] === "--skip-verify") {
+    if (argv[index] === "--skip-verify") {
       options.skipVerify = true;
     } else if (argv[index] === "--skip-build") {
       options.skipBuild = true;
@@ -159,15 +136,6 @@ function main() {
     runCommand(command, options.rootDir);
   });
 
-  if (plan.runtime === "tauri") {
-    artifactPath = resolveTauriBundleArtifact(options.rootDir);
-    if (!artifactPath) {
-      throw new Error("Unable to find built Tauri artifact");
-    }
-    console.log("PASS: Tauri packaged artifact exists at " + artifactPath);
-    return;
-  }
-
   artifactPath = resolveElectronPortableArtifact(options.rootDir);
   if (!artifactPath) {
     throw new Error("Unable to find built Electron portable artifact");
@@ -191,7 +159,6 @@ module.exports = {
   launchElectronSmoke,
   parseArgs,
   resolveElectronPortableArtifact,
-  resolveTauriBundleArtifact,
   validatePackagedSmokePayload
 };
 

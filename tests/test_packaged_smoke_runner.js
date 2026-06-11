@@ -35,19 +35,6 @@ test("resolveElectronPortableArtifact finds the packaged portable executable", f
   );
 });
 
-test("resolveTauriBundleArtifact finds the built tauri executable", function() {
-  var root = fs.mkdtempSync(path.join(os.tmpdir(), "spark-tauri-"));
-  var artifactPath = path.join(root, "src-tauri", "target", "release", "SparkSuite.exe");
-
-  fs.mkdirSync(path.dirname(artifactPath), { recursive: true });
-  fs.writeFileSync(artifactPath, "tauri");
-
-  assert.strictEqual(
-    runner.resolveTauriBundleArtifact(root),
-    artifactPath
-  );
-});
-
 test("buildSmokePlan uses verify, portable build, and electron smoke by default", function() {
   var plan = runner.buildSmokePlan({
     rootDir: "C:\\repo",
@@ -63,7 +50,7 @@ test("buildSmokePlan uses verify, portable build, and electron smoke by default"
   assert.strictEqual(plan.runtime, "electron");
 });
 
-test("buildSmokePlan can build tauri smoke artifacts", function() {
+test("buildSmokePlan is electron-only — no alternate runtimes", function() {
   var plan = runner.buildSmokePlan({
     rootDir: "C:\\repo",
     runtime: "tauri",
@@ -71,10 +58,12 @@ test("buildSmokePlan can build tauri smoke artifacts", function() {
     skipBuild: false
   });
 
+  // Tauri and Capacitor were removed when the project committed to a single
+  // Windows Electron target; a stale runtime option must not change the plan.
   assert.deepStrictEqual(plan.commands, [
-    "npm run tauri:build"
+    "npm run build:portable"
   ]);
-  assert.strictEqual(plan.runtime, "tauri");
+  assert.strictEqual(plan.runtime, "electron");
 });
 
 test("validatePackagedSmokePayload requires canonical full backup coverage", function() {
