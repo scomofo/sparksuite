@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-06-10 — v1.2.0: Engagement, pedagogy, and polish
+
+The quality-ladder batch from the full click-through review, plus all bot-review fixes.
+
+### Features
+
+- **Streak protection**: exactly one missed day consumes a weekly-regenerating streak freeze instead of zeroing the streak (🧊 toast explains it); the missed day is credited as a virtual session so same-day re-checks can't undo it
+- **Mic-verified Try step**: guided sessions can verify the new chord by ear — hold a clean match ≥75% for 1.2s for +5 XP and a verified badge; degrades to self-report without a mic; verification resets per chord
+- **Practice cue on home**: the onboarding implementation-intention now shows as a ribbon under the featured instrument ("after you finish my morning coffee → one session keeps the streak alive")
+
+### UX
+
+- **One suite nav everywhere**: Home / Learn / Library / Profile / Settings replaces five inconsistent per-screen bottom bars; Insights/Leaderboard/Instruments stay reachable from page content
+- **Instrument-aware Rhythm Highway copy**: vocals get singing instructions, piano keys, drums pads — no more "Hold frets 1-5" on a vocal drill; adapters can override via payload.instructions (honored in Loop Window too)
+
+### Fixes
+
+- DrumSpark deferred runtime scripts now execute in insertion order (could previously compose the module before its data) and repaint when the module lands
+- Tauri bundle version aligned with the release; packaged smoke derives the installer name instead of hardcoding 1.0.0
+- Intention ribbon: explicit flex layout, grammatical fallback, stale "undefined"/"null" sentinels filtered
+
 ## 2026-06-10 — v1.1.0: Master/convergence reconciliation
 
 Merged `master` into `feature/convergence`, ending six weeks of divergence (forked 2026-04-28). This brings in everything master had that releases lacked: per-instrument content packs, the action-family dispatcher (replacing the 2,269-line act() monolith), the split render pipeline with deferred instrument loading, the learning-path home, the song library, namespaced piano pages, ~60 additional test files including e2e suites, and the curriculum/content tooling.
