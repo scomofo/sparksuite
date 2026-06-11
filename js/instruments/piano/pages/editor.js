@@ -72,19 +72,19 @@ function pianoEditorPage(){
   }
   h += '</div>';
 
-  h += renderEditorObjectSummary(obj);
+  h += pianoRenderEditorObjectSummary(obj);
 
   /* Timeline toolbar + visual timeline (handoffs 8-9) */
-  h += renderEditorTimelineToolbar(obj);
+  h += pianoRenderEditorTimelineToolbar(obj);
   h += '<div class="card mb16">';
   h += renderVisualTimeline(obj);
   h += '</div>';
 
   /* Items list + inspector (handoff 7) */
-  h += renderEditorItemsList(obj);
+  h += pianoRenderEditorItemsList(obj);
   h += renderEditorInspector ? renderEditorInspector() : '';
 
-  h += renderEditorControls();
+  h += pianoRenderEditorControls();
 
   if(errors.length){
     h += '<div class="card mb16">';
@@ -98,7 +98,7 @@ function pianoEditorPage(){
   return h;
 }
 
-function renderEditorObjectSummary(obj){
+function pianoRenderEditorObjectSummary(obj){
   var h = '<div class="card mb16">';
   h += '<div class="card-section-heading mb8">Contents</div>';
   if(Array.isArray(obj.events)){
@@ -112,7 +112,7 @@ function renderEditorObjectSummary(obj){
 }
 
 /* Timeline toolbar (handoff 9) */
-function renderEditorTimelineToolbar(obj){
+function pianoRenderEditorTimelineToolbar(obj){
   var h = '<div class="card mb16">';
   var playheadSec = pianoNormalizeEditorNumber(S.editorPlayheadSec, 0);
   h += '<div class="card-section-heading mb8">Timeline</div>';
@@ -132,7 +132,7 @@ function renderEditorTimelineToolbar(obj){
 }
 
 /* Items list (handoff 7) */
-function renderEditorItemsList(obj){
+function pianoRenderEditorItemsList(obj){
   var h = '<div class="card mb16">';
   h += '<div class="card-section-heading mb8">Items</div>';
   var entries = [];
@@ -155,7 +155,7 @@ function renderEditorItemsList(obj){
       var selected = itemId && String(S.editorSelectedId)===String(itemId);
       h += '<div style="padding:8px;border-radius:10px;margin-bottom:6px;background:'+(selected?'var(--chip-bg)':'var(--input-bg)')+'"'+(itemId?' role="button" tabindex="0" onclick="act(\'editorSelect\',\''+itemId+'\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();act(\'editorSelect\',\''+itemId+'\')}"':'')+'>';
       h += '<div class="card-micro-heading">'+escHTML(entry.kind)+' \u00b7 '+escHTML(pianoFirstEditorTextToken(item.id, entry.kind))+'</div>';
-      h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(getEditorItemSummary(entry.kind, item))+'</div>';
+      h += '<div style="font-size:11px;color:var(--text-muted)">'+escHTML(pianoGetEditorItemSummary(entry.kind, item))+'</div>';
       h += '</div>';
     }
   }
@@ -163,7 +163,7 @@ function renderEditorItemsList(obj){
   return h;
 }
 
-function getEditorItemSummary(kind, item){
+function pianoGetEditorItemSummary(kind, item){
   if(kind==="event"){
     return pianoFirstEditorTextToken(item.type, "event") + " @ " + pianoNormalizeEditorNumber(item.t, 0);
   }
@@ -177,7 +177,7 @@ function getEditorItemSummary(kind, item){
 }
 
 /* Controls (handoffs 7-8) */
-function renderEditorControls(){
+function pianoRenderEditorControls(){
   var h = '<div class="card mb16 action-row">';
   h += '<button class="btn" onclick="act(\'editorAddAtPlayhead\')">Add Event @ Playhead</button> ';
   h += '<button class="btn" onclick="act(\'editorAddPhraseAtPlayhead\')">Add Phrase @ Playhead</button> ';

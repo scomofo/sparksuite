@@ -185,7 +185,7 @@ test("piano surfaces rehydrate an app-id-only active instrument shell", function
   assert.ok(pianoPracticeTab().indexOf("First Keys") >= 0);
   assert.ok(pianoSongsTab().indexOf("Moonlight") >= 0);
   assert.ok(pianoGamesTab().indexOf("Chord Drill") >= 0);
-  assert.ok(statsTab().indexOf("Starter") >= 0);
+  assert.ok(pianoStatsTab().indexOf("Starter") >= 0);
   assert.strictEqual(levelColor(1), "#3366ff");
   assert.deepStrictEqual(pianoCheckBadges(), ["starter"]);
 });

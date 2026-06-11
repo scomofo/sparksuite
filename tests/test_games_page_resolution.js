@@ -333,8 +333,13 @@ test("shared game renderers survive piano page globals for guitar tabs", functio
   S.runnerActive = false;
   global.eval(loadJS("js/instruments/piano/pages/games.js"));
 
+  // Piano's page functions are namespaced (pianoRunnerTab), so loading them
+  // no longer shadows the shared renderer — the bare global stays shared
+  // and piano's variant lives under its own name.
   assert.ok(typeof SparkSharedGameRenderers.runnerTab === "function");
-  assert.ok(runnerTab().indexOf("Start Game") >= 0);
+  assert.ok(typeof pianoRunnerTab === "function");
+  assert.ok(pianoRunnerTab().indexOf("Start Game") >= 0);
+  assert.strictEqual(runnerTab().indexOf("Start Game"), -1);
   assert.ok(SparkSharedGameRenderers.runnerTab().indexOf("STRUM!") >= 0 || SparkSharedGameRenderers.runnerTab().indexOf("Chord names scroll") >= 0);
   assert.strictEqual(SparkSharedGameRenderers.runnerTab().indexOf("Start Game"), -1);
 });

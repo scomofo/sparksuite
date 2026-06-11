@@ -90,7 +90,7 @@ test("piano selected song view ignores stale title and artist text", function() 
 });
 
 test("piano stems screens ignore stale file and error text", function() {
-  var section = stemsSection();
+  var section = pianoStemsSection();
   var player = pianoStemsPlayerPage();
   assert.ok(section.indexOf("undefined") === -1);
   assert.ok(section.indexOf("null") === -1);
