@@ -4,7 +4,7 @@
 - [ ] App builds cleanly.
 - [ ] `npm run verify` passes.
 - [ ] `npm run smoke:desktop -- --skip-verify` passes for the packaged Electron build.
-- [ ] Desktop/Tauri build completes.
+- [ ] Packaged Electron build (`npm run build`) completes.
 - [ ] App launches from packaged build, not just dev server.
 
 ## Storage and Saves

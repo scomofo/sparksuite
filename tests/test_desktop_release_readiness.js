@@ -25,8 +25,10 @@ assert.ok(checklist.indexOf("npm run smoke:desktop") >= 0, "checklist should cov
 assert.ok(checklist.indexOf("No leaderboard features added.") >= 0, "checklist should guard scope");
 
 assert.ok(runbook.indexOf("npm run verify") >= 0, "runbook should require verify");
-assert.ok(runbook.indexOf("build packaged app") >= 0 || runbook.indexOf("tauri build") >= 0, "runbook should cover packaged builds");
+assert.ok(runbook.indexOf("npm run build") >= 0, "runbook should cover packaged Electron builds");
 assert.ok(runbook.indexOf("npm run smoke:desktop") >= 0, "runbook should cover packaged smoke");
+assert.strictEqual(runbook.toLowerCase().indexOf("tauri"), -1, "runbook should not reference removed Tauri tooling");
+assert.strictEqual(checklist.toLowerCase().indexOf("tauri"), -1, "checklist should not reference removed Tauri tooling");
 assert.ok(runbook.indexOf("export a debug bundle") >= 0 || runbook.indexOf("debug bundle") >= 0, "runbook should cover debug export");
 assert.ok(electronMain.indexOf("path.relative(stemsDir, normalized)") >= 0, "stems file URLs should use path-relative containment checks");
 assert.ok(electronMain.indexOf("path.isAbsolute(relativeStemPath)") >= 0, "stems file URLs should reject absolute relative paths");

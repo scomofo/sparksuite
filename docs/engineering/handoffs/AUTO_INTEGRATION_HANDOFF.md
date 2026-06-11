@@ -35,17 +35,12 @@ SparkInstruments.register() with available: true.
 
 No changes needed to js/launcher.js. It discovers instruments dynamically.
 
-### 3. Capacitor / Mobile Build
+### 3. Electron
 
-The build:mobile script copies js/ to www/.
-New files under js/ are included automatically.
-
-### 4. Electron / Tauri
-
-Both desktop targets load index.html directly.
+The desktop target loads index.html directly.
 Script tags in index.html are the only integration point.
 
-### 5. Test Suite
+### 4. Test Suite
 
 The curriculum guardrails test auto-discovers registered instruments.
 New instruments are tested automatically if their data files are loaded.
@@ -56,13 +51,13 @@ To add explicit loading in the test:
     safeEval("js/sparksuite/instruments/NAME/NAME_skill_tree.js");
     safeEval("js/instruments/NAME/register.js");
 
-### 6. Content Manifests
+### 5. Content Manifests
 
 If the instrument has content packs, add entries to:
 - content/manifests/default.json
 - content/packs/index.json
 
-### 7. Performance Charts
+### 6. Performance Charts
 
 If the instrument supports performance mode, add chart JSON files to:
 - data/performance_charts/
@@ -79,7 +74,6 @@ Charts must match the contract in js/performance-core/chart-contract.js.
 | Guardrails pass | node tests/test_curriculum_guardrails.js |
 | Full test suite passes | npm test |
 | Electron target works | npm start |
-| Tauri target works | npm run tauri:dev |
 
 ## Common Integration Failures
 

@@ -20,7 +20,7 @@ Every port is **visual design only**. Previous bot PRs repeatedly shipped behavi
 - Add new routes to `SparkShowroomNavigate` (the route table around `js/showroom/spark-showroom.js:42`)
 - Change existing route handlers from `S.screen = SCR_.X` to `S._showroomOverride = "..."` — that puts mock Showroom pages on the live render path and reintroduces the "every instrument lands on identical mock content" regression
 - Add `SCR.*` constants or `_sharedPages` registry entries for a Showroom module
-- Insert external image URLs — `lh3.googleusercontent.com` and `images.unsplash.com` appear in the Stitch sources; replace them with inline gradients, Material Symbols glyphs, or same-origin `resources/` assets. The app CSP is `img-src 'self' data:` in both `index.html` and `src-tauri/tauri.conf.json`.
+- Insert external image URLs — `lh3.googleusercontent.com` and `images.unsplash.com` appear in the Stitch sources; replace them with inline gradients, Material Symbols glyphs, or same-origin `resources/` assets. The app CSP is `img-src 'self' data:` in `index.html`.
 
 The Showroom modules are **design references**. They are currently unreachable from the live render path. Future activation is a separate concern.
 

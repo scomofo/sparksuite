@@ -10,11 +10,9 @@ Ship a packaged local-first SparkSuite build without regressing session correctn
 4. Confirm no social, leaderboard, store, or marketplace scope was added.
 
 ## Build Packaged App
-1. For Electron builds, run the appropriate build command from `package.json`.
-2. For Tauri builds, run `npm run tauri:build` to build packaged app artifacts.
-3. Launch the packaged app, not only the dev server build.
-4. Run `npm run smoke:desktop` for the packaged Electron flow. This verifies a packaged build can import migrated user data, complete a real session, export canonical user data, and build a debug bundle before exiting.
-5. Optionally run `npm run smoke:desktop:tauri` to confirm the packaged Tauri artifact is produced.
+1. Run `npm run build` to build the packaged Windows installer (`npm run build:mac` and `npm run build:portable` cover the other Electron targets).
+2. Launch the packaged app, not only the dev server build.
+3. Run `npm run smoke:desktop` for the packaged Electron flow. This verifies a packaged build can import migrated user data, complete a real session, export canonical user data, and build a debug bundle before exiting.
 
 ## Manual Release Checks
 1. Create a fresh profile and start a baseline guitar session.
