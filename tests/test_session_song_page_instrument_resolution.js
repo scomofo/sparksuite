@@ -759,6 +759,29 @@ test("songs search inputs ignore stale sentinel strings", function() {
   assert.ok(communityHtml.indexOf('value="null"') === -1);
 });
 
+test("legacy community songsSubTab resolves to the built-in library", function() {
+  S.songsSubTab = "community";
+  var html = songsTab();
+  assert.ok(html.indexOf("Nocturne") >= 0);
+  assert.ok(html.indexOf('community-tab active" onclick="act(\'songsSubTab\',\'builtin\')"') >= 0);
+});
+
+test("songsTab normalizes unknown core runtime sub-tab values to builtin", function() {
+  global.sparkCore = {
+    getRuntimeState: function() {
+      return { songsSubTab: "community" };
+    },
+    getActiveSessionView: function() {
+      return null;
+    }
+  };
+
+  var html = songsTab();
+
+  assert.ok(html.indexOf("Nocturne") >= 0);
+  assert.ok(html.indexOf('community-tab active" onclick="act(\'songsSubTab\',\'builtin\')"') >= 0);
+});
+
 test("stems player ignores malformed stem volume values", function() {
   global.window.electron = {};
   S.stemStatus = "ready";

@@ -489,6 +489,22 @@ test('ukulele register adds a selectable launcher instrument', function() {
   assert.ok(practiceHtml.indexOf("Uke Set A") >= 0);
   assert.ok(practiceHtml.indexOf("openUkuleleMiniSession") >= 0);
 
+  // Toolbox: Drill/Daily/Quiz/etc moved out of the tab bar, so the custom
+  // practice renderer must keep them reachable via the shared toolbox card.
+  assert.ok(Array.isArray(ukulele.toolbox) && ukulele.toolbox.length >= 1);
+  var toolboxCalls = [];
+  global.getPracticePageInstrument = function() { return ukulele; };
+  global.renderPracticeToolboxCard = function(inst) {
+    toolboxCalls.push(inst);
+    return '<div data-test="toolbox-card"></div>';
+  };
+  practiceHtml = ukulele.tabRenderers.practice();
+  assert.ok(practiceHtml.indexOf('data-test="toolbox-card"') >= 0);
+  assert.strictEqual(toolboxCalls.length, 1);
+  assert.strictEqual(toolboxCalls[0], ukulele);
+  delete global.getPracticePageInstrument;
+  delete global.renderPracticeToolboxCard;
+
   assert.strictEqual(ukulele.act("quickStart"), true);
   assert.strictEqual(S.screen, "plan");
   assert.strictEqual(S.activeInstrument, "ukespark");

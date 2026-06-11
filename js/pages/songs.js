@@ -107,10 +107,18 @@ function _resolveSongsRuntimeState(){
   return runtimeState || (coreView && coreView.runtimeState ? coreView.runtimeState : null);
 }
 
+// Legacy state can carry sub-tab values the page no longer renders (e.g. the
+// retired "community" tab) — resolve anything unknown to "builtin" so every
+// consumer agrees and a sub-tab always gets the active class.
+function _normalizeSongsSubTab(value){
+  if (value === "import" || value === "stems" || value === "perform") return value;
+  return "builtin";
+}
+
 function _getSongsBrowserState(){
   var songBrowserState = _resolveSongsRuntimeState();
   return {
-    songsSubTab: songBrowserState && songBrowserState.songsSubTab ? songBrowserState.songsSubTab : S.songsSubTab,
+    songsSubTab: _normalizeSongsSubTab(songBrowserState && songBrowserState.songsSubTab ? songBrowserState.songsSubTab : S.songsSubTab),
     songFilter: songBrowserState && typeof songBrowserState.songFilter === "string" ? songBrowserState.songFilter : S.songFilter,
     songSort: songBrowserState && songBrowserState.songSort ? songBrowserState.songSort : S.songSort,
     songSortAsc: songBrowserState && typeof songBrowserState.songSortAsc === "boolean" ? songBrowserState.songSortAsc : S.songSortAsc,
