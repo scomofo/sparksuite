@@ -81,6 +81,12 @@
       firstInstalled: 0,
       lastUpdated: 0
     };
+    // releaseInfo is persisted, and pre-1.3.x installs saved it with `build`
+    // instead of `buildNumber` — migrate so About/debug surfaces don't show
+    // Build: 0 until the manifest fetch replaces the object.
+    if (S.releaseInfo.buildNumber === undefined && S.releaseInfo.build !== undefined) {
+      S.releaseInfo.buildNumber = S.releaseInfo.build;
+    }
   }
 
   function applyThemeSetting(){
