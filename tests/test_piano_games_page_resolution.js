@@ -99,17 +99,17 @@ function test(name, fn) {
 console.log("\n--- Piano Games Page Resolution ---");
 
 test("quiz and ear training ignore stale chord labels", function() {
-  var quizHtml = quizTab();
+  var quizHtml = pianoQuizTab();
   assert.ok(quizHtml.indexOf(">undefined<") === -1);
   assert.ok(quizHtml.indexOf("It was Chord") >= 0);
 
-  var earHtml = earTrainTab();
+  var earHtml = pianoEarTrainTab();
   assert.ok(earHtml.indexOf(">null<") === -1);
   assert.ok(earHtml.indexOf("It was: <strong>Chord</strong>") >= 0);
 });
 
 test("runner and chord change views ignore stale target labels", function() {
-  var runnerHtml = runnerTab();
+  var runnerHtml = pianoRunnerTab();
   assert.ok(runnerHtml.indexOf(">NaN<") === -1);
   assert.ok(runnerHtml.indexOf("Target chord") >= 0);
 
@@ -132,7 +132,7 @@ test("daily and finger exercise cards ignore stale cached labels", function() {
     }];
   };
   pianoGamesTab();
-  var dailyHtml = dailyTab();
+  var dailyHtml = pianoDailyTab();
   assert.ok(dailyHtml.indexOf("Challenge") >= 0);
   assert.ok(dailyHtml.indexOf("Practice mission") >= 0);
   assert.ok(dailyHtml.indexOf("Completed: 0") >= 0);
@@ -156,7 +156,7 @@ test("drill tab ignores stale transition tip text", function() {
   S.drillIdx = 1;
   S.drillTimer = 12;
   global.PIANO_TRANSITION_TIPS = { "C_G": "undefined" };
-  var html = drillTab();
+  var html = pianoDrillTab();
   assert.ok(html.indexOf("undefined") === -1);
   assert.ok(html.indexOf("💡") === -1 || html.indexOf("undefined") === -1);
 });
@@ -170,7 +170,7 @@ test("active timed piano game cards suppress entrance animations during timer ti
   S.drillChords = ["C", "G"];
   S.drillIdx = 0;
   S.drillTimer = 29;
-  var drillHtml = drillTab();
+  var drillHtml = pianoDrillTab();
 
   S.dailyActive = true;
   S.dailyType = "daily";
@@ -178,7 +178,7 @@ test("active timed piano game cards suppress entrance animations during timer ti
   S.dailyScore = 1;
   S.chord = "C";
   pianoGamesTab();
-  var dailyHtml = dailyTab();
+  var dailyHtml = pianoDailyTab();
   var styles = loadJS("styles.css");
 
   assert.ok(drillHtml.indexOf("live-timer-surface") >= 0);
@@ -191,7 +191,7 @@ test("rhythm tab ignores malformed BPM values", function() {
   S._gameTab = "rhythm";
   S.rhythmActive = false;
   S.bpm = "NaN";
-  var html = rhythmTab();
+  var html = pianoRhythmTab();
   assert.ok(html.indexOf("BPM: 90") >= 0);
   assert.ok(html.indexOf('value="90"') >= 0);
   assert.ok(html.indexOf("NaN") === -1);

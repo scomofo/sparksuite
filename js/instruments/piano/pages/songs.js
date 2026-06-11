@@ -90,7 +90,7 @@ function pianoSongsTab() {
     case "library": html += songLibrary(); break;
     case "styles":  html += stylesTab(); break;
     case "build":   html += pianoBuildTab(); break;
-    case "stems":   html += stemsSection(); break;
+    case "stems":   html += pianoStemsSection(); break;
   }
   return html;
 }
@@ -283,13 +283,13 @@ function pianoBuildTab() {
 }
 
 // ── Stem Separation Section ──
-function _isStemSolo(name) {
+function pianoIsStemSolo(name) {
   var onCount = 0, soloName = "";
   for (var k in S.stemToggles) { if (S.stemToggles[k]) { onCount++; soloName = k; } }
   return onCount === 1 && soloName === name;
 }
 
-function stemsSection() {
+function pianoStemsSection() {
   var stemFileName = pianoFirstSongPageTextToken(S.stemFile && S.stemFile.fileName);
   var stemError = pianoFirstSongPageTextToken(S.stemError);
   var html = '<div class="card" style="text-align:center">';
@@ -364,7 +364,7 @@ function pianoStemsPlayerPage() {
     html += '<span style="font-size:20px">' + icon + '</span>';
     html += '<span style="font-weight:700">' + name.charAt(0).toUpperCase() + name.slice(1) + '</span></div>';
     html += '<div style="display:flex;gap:6px">';
-    html += '<button onclick="act(\'stemSolo\',\'' + name + '\')" class="btn btn-sm" style="background:' + (on && _isStemSolo(name) ? '#FFE66D' : 'var(--card-bg)') + ';color:' + (on && _isStemSolo(name) ? '#333' : 'var(--text-muted)') + '">Solo</button>';
+    html += '<button onclick="act(\'stemSolo\',\'' + name + '\')" class="btn btn-sm" style="background:' + (on && pianoIsStemSolo(name) ? '#FFE66D' : 'var(--card-bg)') + ';color:' + (on && pianoIsStemSolo(name) ? '#333' : 'var(--text-muted)') + '">Solo</button>';
     html += '<button onclick="act(\'stemToggle\',\'' + name + '\')" class="btn btn-sm" style="background:' + (on ? color : 'var(--card-bg)') + ';color:' + (on ? '#fff' : 'var(--text-muted)') + ';min-width:52px">' + (on ? 'ON' : 'OFF') + '</button>';
     html += '</div></div>';
   }

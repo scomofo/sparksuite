@@ -44,15 +44,15 @@ function pianoAnalyticsPage(){
     return h;
   }
 
-  h += renderAnalyticsWeaknesses(summary);
-  h += renderAnalyticsStrengths(summary);
-  h += renderAnalyticsImprovement(summary);
-  h += renderAnalyticsConsistency(summary);
-  h += renderAnalyticsRecommendations(summary);
+  h += pianoRenderAnalyticsWeaknesses(summary);
+  h += pianoRenderAnalyticsStrengths(summary);
+  h += pianoRenderAnalyticsImprovement(summary);
+  h += pianoRenderAnalyticsConsistency(summary);
+  h += pianoRenderAnalyticsRecommendations(summary);
   return h;
 }
 
-function renderAnalyticsWeaknesses(summary){
+function pianoRenderAnalyticsWeaknesses(summary){
   var h = '<div class="card mb16">';
   h += '<div class="card-section-heading mb8">Weakest Skills</div>';
   var hasAny = false;
@@ -91,7 +91,7 @@ function renderAnalyticsWeaknesses(summary){
   return h;
 }
 
-function renderAnalyticsStrengths(summary){
+function pianoRenderAnalyticsStrengths(summary){
   var h = '<div class="card mb16">';
   h += '<div class="card-section-heading mb8">Strongest Areas</div>';
   if(!summary.strongestSkills || !summary.strongestSkills.length){
@@ -106,7 +106,7 @@ function renderAnalyticsStrengths(summary){
   return h;
 }
 
-function renderAnalyticsImprovement(summary){
+function pianoRenderAnalyticsImprovement(summary){
   var h = '<div class="card mb16">';
   h += '<div class="card-section-heading mb8">Recent Improvement</div>';
   if(!summary.recentImprovement || !summary.recentImprovement.length){
@@ -121,7 +121,7 @@ function renderAnalyticsImprovement(summary){
   return h;
 }
 
-function renderAnalyticsConsistency(summary){
+function pianoRenderAnalyticsConsistency(summary){
   var c = summary.practiceConsistency || {};
   var h = '<div class="card mb16">';
   h += '<div class="card-section-heading mb8">Practice Consistency</div>';
@@ -132,7 +132,7 @@ function renderAnalyticsConsistency(summary){
   return h;
 }
 
-function renderAnalyticsRecommendations(summary){
+function pianoRenderAnalyticsRecommendations(summary){
   var h = '<div class="card mb16">';
   h += '<div class="card-section-heading mb8">Recommended Next</div>';
   if(!summary.recommendations || !summary.recommendations.length){

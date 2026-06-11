@@ -70,19 +70,19 @@ function pianoGamesTab() {
   html += '</div>';
 
   switch (S._gameTab) {
-    case "drill":   html += drillTab(); break;
+    case "drill":   html += pianoDrillTab(); break;
     case "fingers": html += fingersTab(); break;
-    case "daily":   html += dailyTab(); break;
-    case "quiz":    html += quizTab(); break;
-    case "ear":     html += earTrainTab(); break;
-    case "rhythm":  html += rhythmTab(); break;
-    case "runner":  html += runnerTab(); break;
+    case "daily":   html += pianoDailyTab(); break;
+    case "quiz":    html += pianoQuizTab(); break;
+    case "ear":     html += pianoEarTrainTab(); break;
+    case "rhythm":  html += pianoRhythmTab(); break;
+    case "runner":  html += pianoRunnerTab(); break;
   }
   return html;
 }
 
 // ── Drill ──
-function drillTab() {
+function pianoDrillTab() {
   var html = '<div class="card' + (pianoShouldSuppressGameAnimation({ mode: "drill", active: S.drillActive }) ? ' live-timer-surface' : '') + '">';
   if (S.drillActive) {
     var c = S.drillChords[S.drillIdx];
@@ -121,7 +121,7 @@ function drillTab() {
 }
 
 // ── Daily ──
-function dailyTab() {
+function pianoDailyTab() {
   var DAILY_TYPES = _pianoDailyTypes || [];
   var html = '<div class="card' + (pianoShouldSuppressGameAnimation({ mode: "daily", active: S.dailyActive, type: S.dailyType }) ? ' live-timer-surface' : '') + '">';
   if (S.dailyActive && S.dailyType) {
@@ -151,7 +151,7 @@ function dailyTab() {
 }
 
 // ── Quiz (with delayed feedback - stickiness #5) ──
-function quizTab() {
+function pianoQuizTab() {
   var html = '<div class="card"><h2 class="card-section-heading">Chord Quiz</h2>';
   if (S.quizQ) {
     var quizAnswerLabel = pianoFirstGameTextToken(S.quizQ.answer, "Chord");
@@ -184,7 +184,7 @@ function quizTab() {
 }
 
 // ── Ear Training ──
-function earTrainTab() {
+function pianoEarTrainTab() {
   var html = '<div class="card"><h2 class="card-section-heading">Ear Training</h2>';
   if (S.earChord) {
     var earChordLabel = pianoFirstGameTextToken(S.earChord, "Chord");
@@ -212,7 +212,7 @@ function earTrainTab() {
 }
 
 // ── Rhythm Game ──
-function rhythmTab() {
+function pianoRhythmTab() {
   var rhythmBpm = pianoNormalizeGameBpm(S.bpm, 90);
   var html = '<div class="card"><h2 class="card-section-heading">Rhythm Game</h2>';
   if (S.rhythmActive) {
@@ -237,7 +237,7 @@ function rhythmTab() {
 }
 
 // ── Runner Game ──
-function runnerTab() {
+function pianoRunnerTab() {
   var html = '<div class="card"><h2 class="card-section-heading">Chord Runner</h2>';
   if (S.runnerActive) {
     var runnerTargetLabel = pianoFirstGameTextToken(S.runnerTarget, "Target chord");
