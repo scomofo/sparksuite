@@ -6,8 +6,8 @@
 | Chrome | Yes | Browser dev baseline |
 | Edge | Yes | Windows browser sanity |
 | Safari | Optional | Only if browser support is claimed |
-| Windows desktop | Yes | Tauri packaged build |
-| macOS desktop | If available | Tauri packaged build |
+| Windows desktop | Yes | Electron packaged build |
+| macOS desktop | If available | Electron packaged build |
 | Linux desktop | Optional | Only if supported |
 
 ## Instruments

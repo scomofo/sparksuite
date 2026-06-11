@@ -92,7 +92,7 @@ After generation, the new instrument should pass:
 4. Add exercises for each skill in the skill tree
 5. Implement ui.chord() with real rendering
 6. Run test suite to verify contract compliance
-7. Test in Electron, Tauri, and browser targets
+7. Test in Electron and browser targets
 
 ## Reference Implementations
 

@@ -100,6 +100,37 @@ for (var lv = 1; lv <= 6; lv++) {
   BASS_ALL_CHORDS = BASS_ALL_CHORDS.concat(BASS_CHORDS[lv] || []);
 }
 
+// ── Target notes per shape (MIDI/mic verification) ──
+// Derived from the tablature itself so verification needs no separate map:
+// open-string pitch classes (E A D G) offset by each fretted position, from
+// both the static frets array and the fingers sequence — walks and arpeggios
+// visit notes the static shape alone doesn't hold.
+var BASS_NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+var BASS_OPEN_PCS = [4, 9, 2, 7]; // E A D G
+var BASS_CHORD_NOTES = {};
+(function() {
+  function addNote(name, stringIdx, fret) {
+    if (typeof stringIdx !== "number" || stringIdx < 0 || stringIdx >= BASS_OPEN_PCS.length) return;
+    if (typeof fret !== "number" || fret < 0) return;
+    var note = BASS_NOTE_NAMES[(BASS_OPEN_PCS[stringIdx] + fret) % 12];
+    if (!BASS_CHORD_NOTES[name]) BASS_CHORD_NOTES[name] = [];
+    if (BASS_CHORD_NOTES[name].indexOf(note) === -1) BASS_CHORD_NOTES[name].push(note);
+  }
+  for (var i = 0; i < BASS_ALL_CHORDS.length; i++) {
+    var shape = BASS_ALL_CHORDS[i];
+    if (!shape || !shape.name) continue;
+    var f;
+    if (Array.isArray(shape.frets)) {
+      for (f = 0; f < shape.frets.length; f++) addNote(shape.name, f, shape.frets[f]);
+    }
+    if (Array.isArray(shape.fingers)) {
+      for (f = 0; f < shape.fingers.length; f++) {
+        if (Array.isArray(shape.fingers[f])) addNote(shape.name, shape.fingers[f][0], shape.fingers[f][1]);
+      }
+    }
+  }
+})();
+
 // ── Sessions (guided, 30 total) ──
 var BASS_SESSIONS = [
   // Level 1: First Groove
@@ -298,6 +329,7 @@ window.BASS_LN = BASS_LN;
 window.BASS_CURRICULUM = BASS_CURRICULUM;
 window.BASS_CHORDS = BASS_CHORDS;
 window.BASS_ALL_CHORDS = BASS_ALL_CHORDS;
+window.BASS_CHORD_NOTES = BASS_CHORD_NOTES;
 window.BASS_SESSIONS = BASS_SESSIONS;
 window.BASS_SONGS = BASS_SONGS;
 window.BASS_SKILL_TREE = BASS_SKILL_TREE;

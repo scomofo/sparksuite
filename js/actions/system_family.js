@@ -671,6 +671,18 @@
       return true;
     }
 
+    // The community feature is gone, but the showroom Song Library kept
+    // S.communitySearch as its local search query (the engine song-browser
+    // state shape was intentionally left intact) — only this handler was
+    // lost in the removal, which orphaned the library search input.
+    if (a === "communitySearch") {
+      var nextLibrarySearch = v || "";
+      setLegacyFields({ communitySearch: nextLibrarySearch }, false);
+      applySongBrowserRequest("community_search", { communitySearch: nextLibrarySearch });
+      render();
+      return true;
+    }
+
     if (a === "stemSolo") {
       var stemKey;
       for (stemKey in S.stemToggles) S.stemToggles[stemKey] = (stemKey === v);

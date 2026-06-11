@@ -127,6 +127,27 @@ test("loadReleaseNotes clears stale data when fetch response is not ok", async f
   };
 });
 
+test("release/manifest.json version matches package.json version", function() {
+  var pkg = JSON.parse(loadJS("package.json"));
+  var manifest = JSON.parse(loadJS(path.join("release", "manifest.json")));
+  assert.strictEqual(
+    manifest.version,
+    pkg.version,
+    "release/manifest.json version (" + manifest.version + ") must match package.json version (" + pkg.version + ") — bump both in the release commit"
+  );
+});
+
+test("release/changelog.json has an entry for the current release", function() {
+  var pkg = JSON.parse(loadJS("package.json"));
+  var changelog = JSON.parse(loadJS(path.join("release", "changelog.json")));
+  assert.ok(Array.isArray(changelog) && changelog.length > 0, "release/changelog.json should be a non-empty array");
+  assert.strictEqual(
+    changelog[0].version,
+    pkg.version,
+    "release/changelog.json newest entry (" + changelog[0].version + ") must match package.json version (" + pkg.version + ") — add a changelog entry in the release commit"
+  );
+});
+
 test("exportFeedbackDesktopAware returns false when desktop bridge is unavailable", async function() {
   global.isDesktopBuild = function() {
     return true;

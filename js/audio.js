@@ -398,7 +398,15 @@ function smoothTunerResult(freq){
 }
 
 // ===== CHORD DETECTION =====
-function getExpectedNotes(chordName){return CHORD_NOTES[chordName]||[];}
+// Expected pitch classes for a chord/target name. Resolves through the
+// active instrument's data first (bass and ukulele carry their own target
+// maps — the global CHORD_NOTES map only knows guitar names), falling back
+// to the global map so guitar behavior is unchanged.
+function getExpectedNotes(chordName){
+  var notes=resolveStrumChordNotes(chordName);
+  if(notes&&notes.length)return notes;
+  return CHORD_NOTES[chordName]||[];
+}
 
 // Stable chord detection state
 var _chordNoteHistory=[];
@@ -827,13 +835,18 @@ function _handleMIDIMessage(event){
     _midiInputNotes[note]=true;
     _processMIDIChord();
   }else if(cmd===0x80||(cmd===0x90&&vel===0)){
-    // Note Off
+    // Note Off — re-sync so released notes drop out of S.detectedNotes
     delete _midiInputNotes[note];
+    _processMIDIChord();
   }
 }
 
 function _processMIDIChord(){
-  // Convert held MIDI notes to note names for chord detection
+  if (typeof S === "undefined") return;
+  // Convert held MIDI notes to note names for chord detection.
+  // S.detectedNotes mirrors the currently-held set — note-offs re-run this
+  // so released notes drop out instead of lingering as a stale chord
+  // (piano's _handleMidiMessage rebuilds from held keys the same way).
   var noteNames=[];
   for(var n in _midiInputNotes){
     var idx=parseInt(n)%12;
@@ -844,30 +857,27 @@ function _processMIDIChord(){
   for(var i=0;i<noteNames.length;i++){
     if(unique.indexOf(noteNames[i])===-1)unique.push(noteNames[i]);
   }
-  if(unique.length>=2){
-    // Feed into chord detection
-    S.detectedNotes=unique;
-    // Forward to performance input in mic mode
-    if(S.screen===SCR.PERFORM&&S.performMode==="mic"&&typeof PerformanceInput!=="undefined"){PerformanceInput.onMicUpdate(unique);}
-    var expected=getExpectedNotes(S.currentChord?S.currentChord.name:"");
-    if(expected.length>0){
-      var hits=0;for(var i=0;i<expected.length;i++)if(unique.indexOf(expected[i])!==-1)hits++;
-      var wrong=0;for(var i=0;i<unique.length;i++)if(expected.indexOf(unique[i])===-1)wrong++;
-      var accuracy=hits/expected.length;
-      var penalty=wrong>0?wrong/(unique.length+expected.length):0;
-      S.chordMatch=Math.max(0,Math.round((accuracy-penalty)*100));
-    }
-    var core=getAudioCore();
-    if(core&&typeof core.syncChordDetectRuntimeState==="function"){
-      core.syncChordDetectRuntimeState({
-        active:!!S.chordDetectOn,
-        notes:unique,
-        match:S.chordMatch,
-        error:null
-      });
-    }
-    updateChordCheckUI();
+  S.detectedNotes=unique;
+  // Forward to performance input in mic mode
+  if(S.screen===SCR.PERFORM&&S.performMode==="mic"&&typeof PerformanceInput!=="undefined"){PerformanceInput.onMicUpdate(unique);}
+  var expected=getExpectedNotes(S.currentChord?S.currentChord.name:"");
+  if(expected.length>0&&unique.length>0){
+    var hits=0;for(var i=0;i<expected.length;i++)if(unique.indexOf(expected[i])!==-1)hits++;
+    var wrong=0;for(var i=0;i<unique.length;i++)if(expected.indexOf(unique[i])===-1)wrong++;
+    var accuracy=hits/expected.length;
+    var penalty=wrong>0?wrong/(unique.length+expected.length):0;
+    S.chordMatch=Math.max(0,Math.round((accuracy-penalty)*100));
+  }else{S.chordMatch=-1;}
+  var core=getAudioCore();
+  if(core&&typeof core.syncChordDetectRuntimeState==="function"){
+    core.syncChordDetectRuntimeState({
+      active:!!S.chordDetectOn,
+      notes:unique,
+      match:S.chordMatch,
+      error:null
+    });
   }
+  updateChordCheckUI();
 }
 
 function updateMIDIDevices(){

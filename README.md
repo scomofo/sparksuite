@@ -83,10 +83,13 @@ when the project committed to a single Windows desktop install. Releases
 are built by CI on `v*` tags (NSIS + `latest.yml` to GitHub Releases) and
 the app self-updates with a restart prompt.
 
-> **Code signing is intentionally deferred.** The installer is unsigned,
-> which trips SmartScreen for *other* people downloading it — with a single
-> known user updating in-app, a certificate buys nothing. Revisit when
-> distributing to anyone else.
+> **Code signing is intentionally deferred.** The installer is unsigned, so
+> electron-updater's only integrity check is the sha512 in `latest.yml`,
+> fetched over HTTPS from the same GitHub Releases channel — the GitHub
+> account that publishes releases *is* the trust root, and its security
+> (2FA, protected releases) is the compensating control. Revisit signing
+> before distributing to anyone else, or if that channel can no longer be
+> trusted.
 
 ## 📁 Structure
 
@@ -109,7 +112,6 @@ sparksuite/
 │   ├── runtime/             Session runtime orchestration
 │   └── timing/              Timeline → notes, bar/beat conversion
 ├── guitar_chords/           Real WAV chord samples
-├── src-tauri/               Tauri shell
 ├── desktop/                 Electron/desktop config
 ├── tests/                   ~30 test suites across core, runtime, curriculum
 ├── index.html               Web entry point

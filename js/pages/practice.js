@@ -1246,7 +1246,7 @@ function renderPracticeToolboxCard(inst){
   for (var i = 0; i < toolbox.length; i++) {
     var tool = toolbox[i];
     if (!tool || !tool.id) continue;
-    h += '<button class="btn" onclick="act(\'tab\',\'' + escHTML(tool.id) + '\')"'
+    h += '<button class="btn" data-tool-id="' + escHTML(tool.id) + '" onclick="act(\'tab\', this.getAttribute(\'data-tool-id\'))"'
        + ' style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;background:var(--input-bg);color:var(--text-secondary);font-size:12px;font-weight:700">'
        + '<span style="font-size:18px" aria-hidden="true">' + (tool.icon || "&#127925;") + '</span>'
        + '<span>' + escHTML(tool.label || tool.id) + '</span>'

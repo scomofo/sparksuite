@@ -1493,10 +1493,27 @@ function guidedTryVerifySupported() {
 // but S.chordMatch is only computed inside the mic FFT loop — score the
 // held notes against the target ourselves, same hits-minus-penalty formula
 // as audio.js.
+// Both sides normalize to pitch classes (0-11) before comparing: chord maps
+// can carry flats (Bb) while MIDI detection emits sharps (A#), and a plain
+// string compare fails every enharmonic pair.
+var GUIDED_PC_SHARPS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+var GUIDED_PC_FLATS = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+
+function guidedNotePitchClasses(notes) {
+  if (!Array.isArray(notes)) return [];
+  var pcs = [];
+  for (var i = 0; i < notes.length; i++) {
+    var pc = GUIDED_PC_SHARPS.indexOf(notes[i]);
+    if (pc === -1) pc = GUIDED_PC_FLATS.indexOf(notes[i]);
+    if (pc !== -1 && pcs.indexOf(pc) === -1) pcs.push(pc);
+  }
+  return pcs;
+}
+
 function guidedMidiChordMatch(ch) {
   if (typeof getExpectedNotes !== "function") return -1;
-  var expected = getExpectedNotes(ch && ch.name ? ch.name : "");
-  var found = typeof S !== "undefined" && Array.isArray(S.detectedNotes) ? S.detectedNotes : [];
+  var expected = guidedNotePitchClasses(getExpectedNotes(ch && ch.name ? ch.name : ""));
+  var found = guidedNotePitchClasses(typeof S !== "undefined" && Array.isArray(S.detectedNotes) ? S.detectedNotes : []);
   if (!expected.length || !found.length) return -1;
   var hits = 0;
   for (var i = 0; i < expected.length; i++) if (found.indexOf(expected[i]) !== -1) hits++;
@@ -1625,6 +1642,7 @@ function renderGuidedTryVerifyCard(ch) {
 // daily ring is still open, say exactly how close it is. The "Next Session"
 // button directly below is the action — this line gives it a reason.
 function renderGuidedDoneGoalNudge() {
+  if (typeof S === "undefined") return "";
   var goalMinutes = typeof S.dailyGoalMinutes === "number" && S.dailyGoalMinutes > 0 ? S.dailyGoalMinutes : 0;
   if (!goalMinutes) return "";
   var doneSeconds = typeof S.todayPracticeSeconds === "number" && S.todayPracticeSeconds > 0 ? S.todayPracticeSeconds : 0;

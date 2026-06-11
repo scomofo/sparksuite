@@ -372,6 +372,45 @@ test("practice instrument switcher rows expose keyboard handlers", function() {
   assert.ok(loadJS("js/pages/plan.js").indexOf('onclick="act(\\\'practiceStartItem\\\', this.getAttribute(\\\'data-item-id\\\'))"') >= 0);
 });
 
+test("renderPracticeToolboxCard routes tools through data-tool-id attributes", function() {
+  var html = renderPracticeToolboxCard({
+    toolbox: [
+      { id: "drill", label: "Drill", icon: "&#9889;" },
+      { id: "tuner", label: "Tuner", icon: "&#127908;" }
+    ]
+  });
+  assert.ok(html.indexOf('data-tool-id="drill"') >= 0);
+  assert.ok(html.indexOf('data-tool-id="tuner"') >= 0);
+  assert.ok(html.indexOf("act('tab', this.getAttribute('data-tool-id'))") >= 0);
+  // escHTML leaves single quotes intact, so ids must never be concatenated
+  // into the inline handler string itself.
+  assert.strictEqual(html.indexOf("act('tab','drill')"), -1);
+});
+
+test("instrument toolbox ids all resolve through the shared tab renderer map", function() {
+  var rendererIds = Object.keys(getSharedHomeTabRenderers());
+  var registers = [
+    "js/instruments/guitar/register.js",
+    "js/instruments/ukulele/register.js"
+  ];
+  for (var r = 0; r < registers.length; r++) {
+    var source = loadJS(registers[r]);
+    var toolboxMatch = source.match(/toolbox:\s*\[([\s\S]*?)\]/);
+    assert.ok(toolboxMatch, registers[r] + " declares a toolbox");
+    var idPattern = /id:\s*"([^"]+)"/g;
+    var idMatch;
+    var idCount = 0;
+    while ((idMatch = idPattern.exec(toolboxMatch[1]))) {
+      idCount++;
+      assert.ok(
+        rendererIds.indexOf(idMatch[1]) >= 0,
+        registers[r] + " toolbox id '" + idMatch[1] + "' lacks a shared tab renderer"
+      );
+    }
+    assert.ok(idCount > 0, registers[r] + " toolbox lists at least one tool");
+  }
+});
+
 test("practicePage renders human plan labels from a core-backed daily practice plan", function() {
   global.getPracticeStats = function() {
     return { streak: 3, todayMinutes: 5, totalMinutes: 42 };

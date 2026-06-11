@@ -292,6 +292,13 @@
       }
     }
     h += '</div></div>';
+
+    // Toolbox grid — Drill/Daily/Quiz/etc moved out of the tab bar, so this
+    // custom practice renderer must keep their navigation home visible
+    // (shared practiceTab renders the same card; see js/pages/practice.js).
+    if (typeof renderPracticeToolboxCard === "function" && typeof getPracticePageInstrument === "function") {
+      h += renderPracticeToolboxCard(getPracticePageInstrument());
+    }
     return h;
   }
 

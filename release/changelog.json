@@ -1,5 +1,17 @@
 [
   {
+    "version": "1.3.0",
+    "date": "2026-06-11",
+    "channel": "stable",
+    "notes": [
+      "Added a multi-pane desktop layout at wide widths with a banner showroom and collection grid",
+      "Collapsed guitar and ukulele tab sprawl into a Practice-tab toolbox",
+      "Added MIDI-aware guided verify for the Try step with mic fallback",
+      "Added a streak rescue nudge on home and a daily-goal cross-link at session end",
+      "Committed to Electron-only packaging and removed the community feature"
+    ]
+  },
+  {
     "version": "0.9.1",
     "date": "2026-04-02",
     "channel": "beta",

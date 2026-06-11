@@ -206,8 +206,6 @@ All low-severity cosmetic / refactor suggestions:
 ```bash
 cd sparksuite
 npm start           # Electron launch; opens http://localhost at the app
-# OR
-npm run tauri:dev   # Tauri alternative
 npm test            # Should all pass (~12 suites, 200+ tests)
 ```
 
