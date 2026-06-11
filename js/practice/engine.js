@@ -109,7 +109,22 @@
     return "Well-rounded practice";
   }
 
+  // True when at least one plan item was actually completed. Marking a
+  // plan complete with zero items done is a skip, not an accomplishment —
+  // unearned completion credit corrodes the reward loop, so the page
+  // renders "Skip today" and completePracticePlan withholds the credit.
+  function practicePlanHasEarnedCompletion(){
+    var items = S.practicePlan && Array.isArray(S.practicePlan.items) ? S.practicePlan.items : [];
+    for(var i=0;i<items.length;i++){
+      var value = items[i] ? items[i].completed : null;
+      if(value === true || value === 1 || value === "1" ||
+         (typeof value === "string" && value.trim().toLowerCase() === "true")) return true;
+    }
+    return false;
+  }
+
   function completePracticePlan(){
+    var earned = practicePlanHasEarnedCompletion();
     var core = getPracticeCore();
     if(core && typeof core.completeSession === "function"){
       var activeInstrument = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
@@ -128,8 +143,11 @@
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         markPlanComplete: true
       });
-      // Route through contract-based progress path
-      if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+      // Route through contract-based progress path — but only when at least
+      // one item was actually done. A zero-item "complete" still marks the
+      // plan finished for today (above) so the UI stops nagging; it just
+      // earns nothing.
+      if (earned && typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
         var practiceResult = SparkContracts.createSessionResult({
           mode: "practice",
           instrumentId: activeInstrument ? (activeInstrument.id || activeInstrument.appId || null) : null,
@@ -147,6 +165,7 @@
       date: S.practicePlanDate,
       focus: S.practicePlanFocus,
       itemCount: S.practicePlan && S.practicePlan.items ? S.practicePlan.items.length : 0,
+      skipped: !earned,
       completedAt: Date.now()
     });
     if(S.practicePlanHistory.length > 30) S.practicePlanHistory.shift();
@@ -156,5 +175,6 @@
   window.ensurePracticePlan = ensurePracticePlan;
   window.buildPracticePlan = buildPracticePlan;
   window.completePracticePlan = completePracticePlan;
+  window.practicePlanHasEarnedCompletion = practicePlanHasEarnedCompletion;
 
 })();
