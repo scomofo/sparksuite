@@ -61,5 +61,26 @@ test("initSettingsDefaults falls back to APP_NAME for non-guitar shells", functi
   assert.strictEqual(S.profile.instrumentPrimary, "bass");
 });
 
+test("initSettingsDefaults migrates persisted legacy releaseInfo.build", function() {
+  // releaseInfo is persisted; pre-1.3.x installs saved {build} not
+  // {buildNumber}, and the || init leaves an existing object untouched.
+  S.releaseInfo = { version: "0.9.0", build: 120, firstInstalled: 1, lastUpdated: 2 };
+
+  global.eval(loadJS("js/settings/settings_state.js"));
+  initSettingsDefaults();
+
+  assert.strictEqual(S.releaseInfo.buildNumber, 120, "legacy build value must carry over");
+  assert.strictEqual(S.releaseInfo.version, "0.9.0", "persisted fields stay until the manifest fetch replaces them");
+});
+
+test("initSettingsDefaults leaves a modern releaseInfo alone", function() {
+  S.releaseInfo = { version: "1.3.0", buildNumber: 7, firstInstalled: 1, lastUpdated: 2 };
+
+  global.eval(loadJS("js/settings/settings_state.js"));
+  initSettingsDefaults();
+
+  assert.strictEqual(S.releaseInfo.buildNumber, 7);
+});
+
 console.log("\n" + passed + " passed, " + failed + " failed");
 if (failed > 0) process.exit(1);
