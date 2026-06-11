@@ -55,7 +55,7 @@
         SONGS: typeof BASS_SONGS !== "undefined" ? BASS_SONGS : [],
         LC: typeof BASS_LC !== "undefined" ? BASS_LC : {},
         LN: typeof BASS_LN !== "undefined" ? BASS_LN : {},
-        CHORD_NOTES: {},
+        CHORD_NOTES: typeof BASS_CHORD_NOTES !== "undefined" ? BASS_CHORD_NOTES : {},
         STRINGS: typeof BASS_STRINGS !== "undefined" ? BASS_STRINGS : [],
         STRUM_PATTERNS: [
           { name: "Root Pulse", level: 1, bpm: 70, pattern: ["D", ".", "D", "."] },

@@ -49,5 +49,39 @@ test("Bass session 1 has review defined",function(){assert.ok(BASS_SESSIONS[0].h
 test("Uke lesson 1 has title and objectives",function(){var p=window.SparkUkuleleLessons[0];assert.ok(typeof p.title==="string"&&p.title.length>0);assert.ok(Array.isArray(p.objectives)&&p.objectives.length>0)});
 test("Every bass spark.text non-empty",function(){BASS_SESSIONS.forEach(function(s){assert.ok(s.spark.text.length>0)})});
 
+console.log("\n=== Phase 4: MIDI verification targets ===");
+test("Bass target notes derive from the tablature data",function(){
+  assert.deepStrictEqual(BASS_CHORD_NOTES["E Open"],["E"]);
+  assert.deepStrictEqual(BASS_CHORD_NOTES["C (A string)"],["C"]);
+  assert.deepStrictEqual(BASS_CHORD_NOTES["Root-Fifth E-B"],["E","B"]);
+  ["C","E","G"].forEach(function(n){assert.ok(BASS_CHORD_NOTES["Walk C-E-G"].indexOf(n)!==-1,"walk should visit "+n)});
+});
+test("Every bass guided newMove chord has derived target notes",function(){
+  BASS_SESSIONS.forEach(function(s){
+    if(s.newMove&&s.newMove.chord){
+      var notes=BASS_CHORD_NOTES[s.newMove.chord];
+      assert.ok(Array.isArray(notes)&&notes.length>0,"no target notes for '"+s.newMove.chord+"'");
+    }
+  });
+});
+eval(loadJS("js/pages/guided.js"));
+test("guidedMidiChordMatch scores enharmonic spellings as equal",function(){
+  global.getExpectedNotes=function(){return ["Bb","D","F"]};
+  S.detectedNotes=["A#","D","F"];
+  assert.strictEqual(guidedMidiChordMatch({name:"Bb"}),100,"A# must satisfy a Bb target");
+  S.detectedNotes=["A#","D"];
+  var partial=guidedMidiChordMatch({name:"Bb"});
+  assert.ok(partial>0&&partial<100,"partial hold scores between 0 and 100, got "+partial);
+  S.detectedNotes=[];
+  assert.strictEqual(guidedMidiChordMatch({name:"Bb"}),-1,"no held notes cannot score");
+  delete global.getExpectedNotes;
+});
+test("renderGuidedDoneGoalNudge survives an undefined S",function(){
+  var savedS=global.S;
+  delete global.S;
+  assert.strictEqual(renderGuidedDoneGoalNudge(),"");
+  global.S=savedS;
+});
+
 console.log("\n"+passed+" passed, "+failed+" failed");
 if(failed>0)process.exit(1);
