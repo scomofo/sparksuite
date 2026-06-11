@@ -67,9 +67,6 @@ Core architecture references:
 ```bash
 npm install
 npm start              # 🖥️  Electron desktop
-npm run tauri:dev      # ⚡  Tauri (lightweight native)
-npm run cap:android    # 📱  Android via Capacitor
-npm run cap:ios        # 📱  iOS via Capacitor
 ```
 
 Or just open `index.html` in any browser.
@@ -78,10 +75,18 @@ Or just open `index.html` in any browser.
 
 | Platform                    | Command              | Engine        |
 | --------------------------- | -------------------- | ------------- |
-| 🖥️  Windows / Mac / Linux   | `npm start`          | Electron 34   |
-| ⚡  Lightweight native       | `npm run tauri:dev`  | Tauri (Rust)  |
-| 📱  iOS / Android           | `npm run cap:*`      | Capacitor     |
+| 🖥️  Windows / Mac / Linux   | `npm start`          | Electron      |
 | 🌐  Web browser             | open `index.html`    | —             |
+
+Electron is the only packaging target — Tauri and Capacitor were removed
+when the project committed to a single Windows desktop install. Releases
+are built by CI on `v*` tags (NSIS + `latest.yml` to GitHub Releases) and
+the app self-updates with a restart prompt.
+
+> **Code signing is intentionally deferred.** The installer is unsigned,
+> which trips SmartScreen for *other* people downloading it — with a single
+> known user updating in-app, a certificate buys nothing. Revisit when
+> distributing to anyone else.
 
 ## 📁 Structure
 
