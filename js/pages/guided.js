@@ -1500,6 +1500,7 @@ var GUIDED_PC_SHARPS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A
 var GUIDED_PC_FLATS = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
 
 function guidedNotePitchClasses(notes) {
+  if (!Array.isArray(notes)) return [];
   var pcs = [];
   for (var i = 0; i < notes.length; i++) {
     var pc = GUIDED_PC_SHARPS.indexOf(notes[i]);

@@ -842,6 +842,7 @@ function _handleMIDIMessage(event){
 }
 
 function _processMIDIChord(){
+  if (typeof S === "undefined") return;
   // Convert held MIDI notes to note names for chord detection.
   // S.detectedNotes mirrors the currently-held set — note-offs re-run this
   // so released notes drop out instead of lingering as a stale chord
