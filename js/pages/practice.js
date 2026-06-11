@@ -453,6 +453,11 @@ function homePage(){
   // Route to tab content — check instrument-specific renderer first, then shared
   var _renderer = resolveHomeTabRenderer(inst, S.tab);
   if (_renderer) h += _renderer();
+  // Desktop two-pane: dashboard rail left, tab content right (desktop.css).
+  // Below 1100px the wrappers are display:contents — layout is unchanged.
+  if (v2Home) {
+    return '<div class="home-split"><div class="home-rail">' + v2Home + '</div><div class="home-main">' + h + '</div></div>';
+  }
   return v2Home + h;
 }
 

@@ -93,6 +93,7 @@
       "spark-showroom.css",
       "spark-visual.css",
       "spark-visual-v2.css",
+      "desktop.css",
       "js/**/*",
       "sounds/**/*",
       "assets/audio/**/*",
