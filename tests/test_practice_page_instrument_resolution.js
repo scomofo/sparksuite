@@ -271,17 +271,22 @@ test("shared practice tab renderers survive piano page globals for guitar tabs",
 
   var renderers = getSharedHomeTabRenderers();
 
+  // Piano page functions are namespaced (pianoDrillTab etc.), so loading
+  // them no longer shadows the shared renderers — bare globals stay shared
+  // and the piano variants live under their own names.
   assert.ok(typeof SparkSharedPracticeRenderers.drillTab === "function");
-  assert.ok(drillTab().indexOf("Chord Drill") >= 0);
+  assert.ok(pianoDrillTab().indexOf("Chord Drill") >= 0);
+  assert.strictEqual(drillTab().indexOf("Chord Drill"), -1);
   assert.ok(renderers.drill().indexOf("Chord Switching") >= 0);
   assert.strictEqual(renderers.drill().indexOf("Chord Drill"), -1);
-  assert.ok(dailyTab().indexOf("Daily Challenges") >= 0);
+  assert.ok(pianoDailyTab().indexOf("Daily Challenges") >= 0);
   assert.ok(renderers.daily().indexOf("Daily Challenge") >= 0);
   assert.strictEqual(renderers.daily().indexOf("Daily Challenges"), -1);
-  assert.ok(quizTab().indexOf("start_quiz") >= 0);
+  assert.ok(pianoQuizTab().indexOf("start_quiz") >= 0);
+  assert.strictEqual(quizTab().indexOf("start_quiz"), -1);
   assert.ok(renderers.quiz().indexOf("startQuiz") >= 0);
   assert.strictEqual(renderers.quiz().indexOf("start_quiz"), -1);
-  assert.ok(earTrainTab().indexOf("start_ear") >= 0);
+  assert.ok(pianoEarTrainTab().indexOf("start_ear") >= 0);
   assert.ok(renderers.ear().indexOf("startEarTrain") >= 0);
   assert.strictEqual(renderers.ear().indexOf("start_ear"), -1);
 });

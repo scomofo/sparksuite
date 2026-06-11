@@ -153,7 +153,7 @@ function pianoPlanPage(){
       : (canLaunch
         ? '<button class="btn btn-sm" data-item-id="'+escHTML(itemId)+'" onclick="act(\'practiceStartItem\', this.getAttribute(\'data-item-id\'))" style="background:var(--accent);color:#fff">Go</button>'
         : '<span class="text-muted">Unavailable</span>');
-    h += '<div class="card mb16" style="border-left:4px solid '+planItemColor(getPianoPlanDisplayType(item))+'">';
+    h += '<div class="card mb16" style="border-left:4px solid '+pianoPlanItemColor(getPianoPlanDisplayType(item))+'">';
     h += '<div class="plan-item-row">';
     h += '<div class="plan-item-copy">';
     h += '<div style="font-weight:700;font-size:14px"'+done+'>'+escHTML(getPianoPlanItemLabel(item))+'</div>';
@@ -273,7 +273,7 @@ function getPianoPlanFocusLabel(plan){
   return focus ? focus : "No practice focus yet.";
 }
 
-function planItemColor(type){
+function pianoPlanItemColor(type){
   if(type==="warmup" || type==="finger") return "var(--warning)";
   if(type==="transition") return "var(--chord-major)";
   if(type==="rhythm_highway") return "#ec4899";

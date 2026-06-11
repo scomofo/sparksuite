@@ -74,16 +74,16 @@ function pianoToolsTab() {
   html += '</div>';
 
   switch (S._toolTab) {
-    case "stats":    html += statsTab(); break;
+    case "stats":    html += pianoStatsTab(); break;
     case "settings": html += settingsTab(); break;
     case "clips":    html += clipsTab(); break;
-    case "guide":    html += guideTab(); break;
+    case "guide":    html += pianoGuideTab(); break;
   }
   return html;
 }
 
 // ── Stats ──
-function statsTab() {
+function pianoStatsTab() {
   var html = '<div class="card"><h2>Statistics</h2>';
   var xp = pianoToolsDisplayCount(S.xp, 0);
   var streak = pianoToolsDisplayCount(S.streak, 0);
@@ -322,7 +322,7 @@ function clipsTab() {
 }
 
 // ── Guide ──
-function guideTab() {
+function pianoGuideTab() {
   var html = '<div class="card"><h2>Learning Guide</h2>';
 
   var lessons = [
