@@ -126,7 +126,6 @@ function _getSongsBrowserState(){
 function _renderSongsSubTabs(songsSubTab){
   var h = '<div class="community-tabs">';
   h += '<button class="community-tab'+(songsSubTab==="builtin"?" active":"")+'" onclick="act(\'songsSubTab\',\'builtin\')">&#127925; Built-in</button>';
-  h += '<button class="community-tab'+(songsSubTab==="community"?" active":"")+'" onclick="act(\'songsSubTab\',\'community\')">&#127760; Community</button>';
   h += '<button class="community-tab'+(songsSubTab==="import"?" active":"")+'" onclick="act(\'songsSubTab\',\'import\')">&#128196; Import</button>';
   h += '<button class="community-tab'+(songsSubTab==="stems"?" active":"")+'" onclick="act(\'songsSubTab\',\'stems\')">&#127911; Stems</button>';
   h += '<button class="community-tab'+(songsSubTab==="perform"?" active":"")+'" onclick="act(\'songsSubTab\',\'perform\')">&#127918; Perform</button>';
@@ -461,71 +460,12 @@ function _renderSongsList(filtered, D, safeSongFilter){
   return h;
 }
 
-function _renderCommunityTabs(communityTab){
-  var h='<div class="community-tabs" style="margin-bottom:12px">';
-  h+='<button class="community-tab'+(communityTab==="browse"?" active":"")+'" onclick="act(\'communityTab\',\'browse\')">Browse</button>';
-  h+='<button class="community-tab'+(communityTab==="submit"?" active":"")+'" onclick="act(\'communityTab\',\'submit\')">Submit</button>';
-  h+='</div>';
-  return h;
-}
-
-function _renderCommunityBrowseControls(communitySearch, communitySort){
-  var safeCommunitySearch = _normalizeSongsInputValue(communitySearch);
-  var h='<div style="display:flex;gap:8px;margin-bottom:12px"><input class="set-input" style="flex:1" type="text" placeholder="Search songs..." value="'+escHTML(safeCommunitySearch)+'" oninput="act(\'communitySearch\',this.value)" aria-label="Search community songs"/>';
-  h+='<button onclick="act(\'communitySort\',\''+(communitySort==="votes"?"newest":"votes")+'\')" style="padding:8px 12px;border-radius:10px;font-size:12px;font-weight:700;background:var(--input-bg);color:var(--text-muted)">'+(communitySort==="votes"?"&#11088; Top":"&#128337; New")+'</button></div>';
-  return h;
-}
-
-function _getCommunityBrowserState(){
-  var songBrowserState = _resolveSongsRuntimeState();
-  return {
-    communityTab: songBrowserState && songBrowserState.communityTab ? songBrowserState.communityTab : S.communityTab,
-    communitySearch: songBrowserState && typeof songBrowserState.communitySearch === "string" ? songBrowserState.communitySearch : S.communitySearch,
-    communitySort: songBrowserState && songBrowserState.communitySort ? songBrowserState.communitySort : S.communitySort
-  };
-}
-
-function _renderCommunityBrowseContent(){
-  var h = "";
-  if(S.communityLoading){
-    h+='<div class="text-center" style="padding:30px;color:var(--text-muted)">Loading...</div>';
-  } else if(S.communityError){
-    h+='<div class="card text-center"><p style="color:#FF6B6B;font-size:13px">'+escHTML(S.communityError)+'</p><p style="color:var(--text-muted);font-size:12px;margin-top:8px">Make sure the community server is running:<br><code>cd server && npm start</code></p></div>';
-  } else if(S.communitySongs.length===0){
-    h+='<div class="card text-center"><p style="color:var(--text-muted);font-size:13px">No community songs yet. Be the first to submit!</p></div>';
-  } else {
-    h+='<div class="flex-col">';
-    for(var i=0;i<S.communitySongs.length;i++){
-      h+=_renderCommunitySongCard(S.communitySongs[i]);
-    }
-    h+='</div>';
-  }
-  return h;
-}
-
 function _renderPerformIntro(){
   return '<div style="font-size:48px;margin-bottom:12px">&#127928;</div><h3 class="card-section-heading" style="font-size:18px;margin-bottom:8px">Performance Mode</h3><p style="font-size:13px;color:var(--text-muted);margin:0 0 16px">Play along with a scrolling chord highway. MIDI guitar or mic input.</p>';
 }
 
 function _renderPerformFooter(){
   return '<p style="font-size:11px;color:var(--text-muted)">More charts coming soon! MIDI input: '+(S.midiEnabled?'<span style="color:#4ECDC4;font-weight:700">Connected</span>':'<span style="color:#FF6B6B">Off &mdash; enable in Tools</span>')+'</p></div><div style="text-align:center;margin-top:12px"><button class="btn btn-sm" onclick="act(\'openPerfStats\')" style="background:var(--input-bg);color:var(--text-secondary)">&#128202; View Stats</button></div>';
-}
-
-function _renderCommunitySongCard(cs){
-  var chords=[];
-  var communityTitle = _firstSongsTextToken(cs.title, cs.songTitle, cs.id, "Community song");
-  var communityArtist = _firstSongsTextToken(cs.artist, "Unknown Artist");
-  var communityIdArg = escHTML(JSON.stringify(cs && cs.id != null ? String(cs.id) : ""));
-  var h='<div class="card"><div class="split-row" style="gap:12px"><div><h3 class="card-section-heading">'+escHTML(communityTitle)+'</h3><p class="metric-label" style="margin:2px 0 0">'+escHTML(communityArtist)+' | '+escHTML(_formatSongsBpm(cs.bpm, "--"))+' BPM</p></div><div style="display:flex;gap:8px;align-items:center"><button class="vote-btn" onclick="act(\'voteSong\','+communityIdArg+')">&#9650; '+escHTML(String(cs.votes))+'</button></div></div>';
-  try{chords=JSON.parse(cs.chords);}catch(e){console.error("ChordSpark: failed to parse community song chords",e);}
-  if(chords.length){
-    h+='<div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap">';
-    for(var j=0;j<chords.length;j++)h+='<span style="background:var(--chip-bg);padding:3px 10px;border-radius:10px;font-size:12px;font-weight:700;color:var(--chip-color)">'+escHTML(chords[j])+'</span>';
-    h+='</div>';
-  }
-  h+='<div style="margin-top:8px"><button class="btn" onclick="act(\'playCommunity\',\''+escHTML(cs.id)+'\')" style="padding:8px 16px;font-size:13px;background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff">&#9654; Play</button></div>';
-  h+='</div>';
-  return h;
 }
 
 function _renderPerformChartCard(chart){
@@ -543,16 +483,6 @@ function _renderPerformChartCard(chart){
   if(chartDescription)h+='<p style="margin:4px 0 0;font-size:11px;color:var(--text-dim)">'+escHTML(chartDescription)+'</p>';
   h+='</div>';
   h+='<div style="font-size:24px">'+icon+'</div></div></div>';
-  return h;
-}
-
-function _renderCommunitySubmitProgression(progression){
-  var h='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;min-height:36px;background:var(--input-bg);border-radius:12px;padding:8px">';
-  for(var i=0;i<progression.length;i++){
-    h+='<span style="background:var(--card-bg);padding:4px 10px;border-radius:8px;font-size:13px;font-weight:700;color:var(--text-primary)">'+escHTML(progression[i])+'</span>';
-  }
-  if(progression.length===0)h+='<span style="color:var(--text-muted);font-size:12px">Click chords above to build progression...</span>';
-  h+='</div>';
   return h;
 }
 
@@ -744,7 +674,6 @@ function songsTab(){
   var h=_renderSongsLibraryHeader();
   h += _renderSongsSubTabs(songsSubTab);
 
-  if(songsSubTab==="community") return h+communitySection();
   if(songsSubTab==="import") return h+importSection();
   if(songsSubTab==="stems") return h+stemsSection();
   if(songsSubTab==="perform") return h+performSubTab();
@@ -756,51 +685,6 @@ function songsTab(){
   filtered = _getFilteredSongs(songList, songFilter, songSort, songSortAsc);
   h += searchAndSort.html;
   h += _renderSongsList(filtered, D, searchAndSort.safeSongFilter);
-  return h;
-}
-
-// ===== COMMUNITY SECTION =====
-function communitySection(){
-  var communityState = _getCommunityBrowserState();
-  var communityTab = communityState.communityTab;
-  var communitySearch = communityState.communitySearch;
-  var communitySort = communityState.communitySort;
-  var h=_renderCommunityTabs(communityTab);
-
-  if(communityTab==="submit") return h+communitySubmitForm();
-
-  // Browse
-  h+=_renderCommunityBrowseControls(communitySearch, communitySort);
-  h+=_renderCommunityBrowseContent();
-  return h;
-}
-
-function communitySubmitForm(){
-  var inst = getSongsPageInstrument();
-  var D = inst && inst.getData ? inst.getData() : {};
-  var ss=S.submitSong;
-  var submitBpm = _normalizeSongsTempoInput(ss.bpm, 90);
-  var submitTitle = _firstSongsTextToken(ss.title);
-  var submitArtist = _firstSongsTextToken(ss.artist);
-  var submitterName = _firstSongsTextToken(ss.submittedBy);
-  var h='<div class="card"><h3 class="card-section-heading" style="margin-bottom:12px">Submit a Song</h3>';
-  h+='<input class="set-input mb12" type="text" placeholder="Song title" value="'+escHTML(submitTitle)+'" oninput="act(\'submitField\',\'title:\'+this.value)" aria-label="Song title"/>';
-  h+='<input class="set-input mb12" type="text" placeholder="Artist" value="'+escHTML(submitArtist)+'" oninput="act(\'submitField\',\'artist:\'+this.value)" aria-label="Artist name"/>';
-  h+='<input class="set-input mb12" type="text" placeholder="Your name (optional)" value="'+escHTML(submitterName)+'" oninput="act(\'submitField\',\'submittedBy:\'+this.value)" aria-label="Your name"/>';
-  h+='<div style="display:flex;gap:8px;margin-bottom:12px"><label style="font-size:12px;color:var(--text-muted);font-weight:600;display:flex;align-items:center;gap:4px">BPM:</label><input class="set-input" type="number" style="width:80px" value="'+submitBpm+'" oninput="act(\'submitField\',\'bpm:\'+this.value)" aria-label="BPM" min="40" max="200"/></div>';
-  h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600">Chords used:</div>';
-  h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">';
-  for(var i=0;i<D.ALL_CHORDS.length;i++){
-    var c=D.ALL_CHORDS[i],sel=ss.chords.indexOf(c.short)!==-1;
-    h+='<span class="chord-chip'+(sel?" selected":"")+'"'+clickableDiv("act(\'submitToggleChord\',\'"+c.short+"\')")+'>'+c.short+'</span>';
-  }
-  h+='</div>';
-  h+='<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:600">Progression (click chords in order):</div>';
-  h+=_renderCommunitySubmitProgression(ss.progression);
-  if(ss.progression.length>0)h+='<button onclick="act(\'submitClearProg\')" style="font-size:11px;color:var(--text-muted);background:none;margin-bottom:12px">Clear progression</button>';
-  var canSubmit=ss.title.trim()&&ss.artist.trim()&&ss.chords.length>=2&&ss.progression.length>=2;
-  h+='<button class="btn" onclick="act(\'submitSong\')" style="width:100%;padding:12px;font-size:14px;background:linear-gradient(135deg,#4ECDC4,#45B7D1);color:#fff;opacity:'+(canSubmit?1:0.5)+'">Submit Song</button>';
-  h+='</div>';
   return h;
 }
 

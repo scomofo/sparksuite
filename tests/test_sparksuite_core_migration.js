@@ -3166,12 +3166,6 @@ test("tools action family routes imported song and rhythm starts through the sha
   assert.strictEqual(__actionFamilies.tools("importArtist", "Core User"), true);
   assert.strictEqual(__actionFamilies.tools("importBpm", "104"), true);
   assert.strictEqual(__actionFamilies.tools("saveImport"), true);
-  assert.strictEqual(__actionFamilies.tools("communityTab", "latest"), true);
-  assert.strictEqual(__actionFamilies.tools("communitySearch", "groove"), true);
-  assert.strictEqual(__actionFamilies.tools("communitySort", "newest"), true);
-  assert.strictEqual(__actionFamilies.tools("submitField", "title:Shared Song Updated"), true);
-  assert.strictEqual(__actionFamilies.tools("submitToggleChord", "A Minor"), true);
-  assert.strictEqual(__actionFamilies.tools("submitSong"), true);
   assert.strictEqual(__actionFamilies.tools("playImport", "0"), true);
   assert.strictEqual(__actionFamilies.tools("deleteImport", "1"), true);
   assert.strictEqual(__actionFamilies.tools("runnerResultsBack"), true);
@@ -3300,34 +3294,13 @@ test("tools action family routes imported song and rhythm starts through the sha
     return update && update.setFields && Array.isArray(update.setFields.importedSongs) && update.setFields.importedSongs.length === 1;
   }));
   assert.ok(runtimeUpdates.some(function(update) {
-    return update && update.setFields && update.setFields.communityTab === "latest";
-  }));
-  assert.ok(runtimeUpdates.some(function(update) {
-    return update && update.setFields && update.setFields.communitySearch === "groove";
-  }));
-  assert.ok(runtimeUpdates.some(function(update) {
-    return update && update.setFields && update.setFields.communitySort === "newest";
-  }));
-  assert.ok(runtimeUpdates.some(function(update) {
     return update && update.setFields && Object.prototype.hasOwnProperty.call(update.setFields, "runnerResults") && update.setFields.runnerResults === null;
   }));
-  assert.deepStrictEqual(songBrowserRequests, [
-    { action: "community_tab", payload: { communityTab: "latest" } },
-    { action: "community_search", payload: { communitySearch: "groove" } },
-    { action: "community_sort", payload: { communitySort: "newest" } }
-  ]);
-  assert.strictEqual(communityFetches, 3);
-  assert.strictEqual(fetchCalls.length, 1);
-  assert.strictEqual(fetchCalls[0].url, "https://community.example/api/songs");
-  assert.ok(runtimeUpdates.some(function(update) {
-    return update && update.setFields && update.setFields.submitSong && update.setFields.submitSong.title === "" && update.setFields.communityTab === "browse";
-  }));
-  assert.ok(runtimeUpdates.some(function(update) {
-    return update && update.setFields && update.setFields.submitSong && update.setFields.submitSong.title === "Shared Song Updated";
-  }));
-  assert.ok(runtimeUpdates.some(function(update) {
-    return update && update.setFields && update.setFields.submitSong && Array.isArray(update.setFields.submitSong.chords) && update.setFields.submitSong.chords.indexOf("A Minor") >= 0;
-  }));
+  // The community feature was removed (single-user app): the tools family
+  // routes no community/submit state through the bridge anymore.
+  assert.deepStrictEqual(songBrowserRequests, []);
+  assert.strictEqual(communityFetches, 0);
+  assert.strictEqual(fetchCalls.length, 0);
   assert.strictEqual(S.dualChord, "G Major");
   assert.strictEqual(S.dualAnchorOn, true);
   assert.strictEqual(S.dailyGoalMinutes, 25);
@@ -3340,10 +3313,8 @@ test("tools action family routes imported song and rhythm starts through the sha
   assert.strictEqual(S.importedSong, null);
   assert.strictEqual(S.importText, "");
   assert.strictEqual(S.importError, null);
-  assert.strictEqual(S.communityTab, "browse");
-  assert.strictEqual(S.communitySearch, "groove");
-  assert.strictEqual(S.communitySort, "newest");
-  assert.strictEqual(S.submitSong.title, "");
+  // Community state is untouched now that the feature is removed.
+  assert.strictEqual(S.communitySearch, "");
   assert.strictEqual(S.runnerResults, null);
 });
 
@@ -4294,7 +4265,9 @@ test("song family routes browser, playback, and completion state through the sha
     action: "songs_subtab",
     payload: { songsSubTab: "community" }
   });
-  assert.strictEqual(communityFetches, 1);
+  // songsSubTab "community" no longer triggers a network fetch — the
+  // community feature is removed and the value is just inert state.
+  assert.strictEqual(communityFetches, 0);
   assert.deepStrictEqual(strumHits, ["C", "G"]);
   assert.strictEqual(S.screen, "home");
   assert.strictEqual(S.tab, "songs");
