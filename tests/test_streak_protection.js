@@ -79,6 +79,21 @@ test('one missed day consumes the freeze and keeps the streak', function() {
   assert.strictEqual(ctx.S.streak, 9, 'streak should survive');
   assert.ok(ctx.S.streakFreezeUsedAt, 'freeze should be marked used');
   assert.ok(ctx.S.microToast && /freeze/i.test(ctx.S.microToast.msg), 'should announce the freeze');
+  assert.strictEqual(ctx.S.lastSessionDate, isoDaysAgo(1), 'missed day should be credited as a virtual session');
+});
+
+test('re-running checkStreak the same day does not undo the freeze', function() {
+  var ctx = makeContext();
+  ctx.S.streak = 9;
+  ctx.S.lastSessionDate = isoDaysAgo(2);
+  ctx.S.streakFreezeUsedAt = null;
+  ctx.checkStreak();
+  assert.strictEqual(ctx.S.streak, 9);
+  // App reopened / state reloaded later the same day — the freeze is on
+  // cooldown now, but the protected streak must not be wiped.
+  ctx.checkStreak();
+  ctx.checkStreak();
+  assert.strictEqual(ctx.S.streak, 9, 'streak must survive same-day re-checks');
 });
 
 test('one missed day with freeze on cooldown resets the streak', function() {

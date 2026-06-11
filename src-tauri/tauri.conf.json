@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/nicedoc/tauri-docs/main/tooling/bundler/schema.json",
   "productName": "SparkSuite",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "identifier": "com.sparksuite.app",
   "build": {
     "frontendDist": "../",
