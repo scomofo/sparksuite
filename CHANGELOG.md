@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-06-11 — v1.3.0: The desktop release
+
+The full eight-item roadmap in one release (PRs #75–#81).
+
+### Desktop
+
+- **Multi-pane desktop layout** (new desktop.css layer, ≥1100px): instrument home becomes a two-pane workspace (sticky identity/goal rail + tab content), the showroom hero becomes a banner with a 4-up collection grid, suite screens get real widths. Mobile layouts are bit-identical.
+- **Tab sprawl collapsed**: guitar and ukulele show the daily loop only (Practice / Songs / Stats / Guide); the other ten activities live in a Toolbox grid inside Practice — every surface stays routable.
+
+### Verification & engagement
+
+- **MIDI-aware guided verify**: a connected keyboard verifies the Try step directly (held notes scored against the target); mic fallback unchanged. Bass confirmed covered by the shared flow; vocals already objectively scored by Rhythm Highway.
+- **Streak rescue**: when yesterday was your last session and today is empty, home shows "your N-day streak is on the line" with a one-tap 2-minute save.
+- **Daily-ring cross-link**: the session-complete screen states exactly how many minutes close today's ring, right above Next Session.
+
+### Single-user housekeeping
+
+- **Electron-only**: Tauri and Capacitor removed; code signing deliberately deferred (documented in README — it only matters for other people's downloads).
+- **Community feature removed**: server, UI, network code, handlers, CSP entries — community sharing for an audience of one was dead weight. Superseded PR #36 closed.
+- **Piano page namespacing finished**: the last 21 colliding globals renamed; loading piano pages can no longer shadow shared renderers.
+- **Git history rewritten**: the 53MB of vendored binaries and nested duplicate assets are gone from every ref — clones drop from ~72MB to ~17MB.
+
 ## 2026-06-10 — v1.2.0: Engagement, pedagogy, and polish
 
 The quality-ladder batch from the full click-through review, plus all bot-review fixes.
