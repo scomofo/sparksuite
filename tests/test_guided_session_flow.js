@@ -48,6 +48,13 @@ test("Phase order: spark first, victoryLap last",function(){var o=["spark","revi
 test("Bass session 1 has review defined",function(){assert.ok(BASS_SESSIONS[0].hasOwnProperty("review"))});
 test("Uke lesson 1 has title and objectives",function(){var p=window.SparkUkuleleLessons[0];assert.ok(typeof p.title==="string"&&p.title.length>0);assert.ok(Array.isArray(p.objectives)&&p.objectives.length>0)});
 test("Every bass spark.text non-empty",function(){BASS_SESSIONS.forEach(function(s){assert.ok(s.spark.text.length>0)})});
+test("Bass song catalog has no duplicate titles",function(){
+  var seen={};
+  BASS_SONGS.forEach(function(s){
+    assert.ok(!seen[s.title],"duplicate bass song: "+s.title);
+    seen[s.title]=true;
+  });
+});
 
 console.log("\n=== Phase 4: MIDI verification targets ===");
 test("Bass target notes derive from the tablature data",function(){
