@@ -118,7 +118,9 @@ function derivePerformanceChordLaneIndex(chart, evt) {
   var order = chart._chordLaneOrder;
   if (!order) {
     order = [];
-    var seen = {};
+    // Null-prototype map: a label like "__proto__" on a plain object would
+    // hit the prototype setter and never become an own property.
+    var seen = Object.create(null);
     for (var i = 0; i < chart.events.length; i++) {
       var e = chart.events[i];
       var c = e && e.type === "chord" ? (e.chord || e.laneLabel) : null;
