@@ -106,16 +106,26 @@ function collectPerformancePitchValues(notes) {
 // lane in first-appearance order, wrapping when a chart uses more chords
 // than the skin has lanes. The order is cached on the chart so the same
 // chord always lands in the same lane for the whole performance.
+// ONLY type:"chord" events qualify: imported charts mark open techniques
+// as type:"open" with notes:[] and laneMask 0, where the zero mask is the
+// meaning — stamping those with a chord-order lane would render opens as
+// arbitrary fretted lanes.
 function derivePerformanceChordLaneIndex(chart, evt) {
-  var name = evt && (evt.chord || evt.laneLabel);
+  if (!evt || evt.type !== "chord") return null;
+  var name = evt.chord || evt.laneLabel;
   if (!name || !chart || !Array.isArray(chart.events)) return null;
   var laneCount = resolvePerformanceLaneCount(chart);
   var order = chart._chordLaneOrder;
   if (!order) {
     order = [];
+    var seen = {};
     for (var i = 0; i < chart.events.length; i++) {
-      var c = chart.events[i] && (chart.events[i].chord || chart.events[i].laneLabel);
-      if (c && order.indexOf(c) === -1) order.push(c);
+      var e = chart.events[i];
+      var c = e && e.type === "chord" ? (e.chord || e.laneLabel) : null;
+      if (c && !Object.prototype.hasOwnProperty.call(seen, c)) {
+        seen[c] = true;
+        order.push(c);
+      }
     }
     chart._chordLaneOrder = order;
   }
