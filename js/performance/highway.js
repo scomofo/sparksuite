@@ -124,7 +124,7 @@ function derivePerformanceChordLaneIndex(chart, evt) {
     for (var i = 0; i < chart.events.length; i++) {
       var e = chart.events[i];
       var c = e && e.type === "chord" ? (e.chord || e.laneLabel) : null;
-      if (c && !Object.prototype.hasOwnProperty.call(seen, c)) {
+      if (c && !seen[c]) {
         seen[c] = true;
         order.push(c);
       }
