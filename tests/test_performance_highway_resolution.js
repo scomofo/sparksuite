@@ -135,9 +135,34 @@ test("explicit laneMask, lane, and pitch-bearing events bypass chord-name mappin
   global.eval(loadJS("js/performance/highway.js"));
 
   var chart = chordChart(["Am", "E"]);
-  assert.strictEqual(derivePerformanceLaneMask(chart, { chord: "Am", notes: [], laneMask: 12 }), 12, "explicit laneMask wins");
-  assert.strictEqual(derivePerformanceLaneMask(chart, { chord: "Am", notes: [], lane: 3 }), 8, "explicit lane wins");
+  assert.strictEqual(derivePerformanceLaneMask(chart, { type: "chord", chord: "Am", notes: [], laneMask: 12 }), 12, "explicit laneMask wins");
+  assert.strictEqual(derivePerformanceLaneMask(chart, { type: "chord", chord: "Am", notes: [], lane: 3 }), 8, "explicit lane wins");
   assert.strictEqual(derivePerformanceLaneMask(chart, { type: "note", notes: [] }), 0, "no chord name and no notes still derives nothing");
+});
+
+test("imported open/technique events keep their zero mask and stay out of the chord order", function() {
+  resetEnv();
+  global.SparkHighway = function SparkHighway() {};
+  SparkHighway.GUITAR_SKIN = { id: "guitar_skin", laneCount: 6 };
+  global.eval(loadJS("js/performance/highway.js"));
+
+  // Imported Spark charts mark open techniques as type:"open" with
+  // notes:[] and laneMask 0 — the zero mask IS the meaning. Chord-name
+  // lane mapping must not stamp them onto a fretted lane, and their
+  // laneLabel must not occupy a slot in the chord lane order.
+  var chart = {
+    instrument: "guitar",
+    events: [
+      { id: 0, t: 0, type: "open",  laneLabel: "Open", notes: [], laneMask: 0 },
+      { id: 1, t: 1, type: "chord", chord: "Am", notes: [] },
+      { id: 2, t: 2, type: "chord", chord: "E",  notes: [] }
+    ]
+  };
+
+  assert.strictEqual(derivePerformanceLaneMask(chart, chart.events[0]), 0, "open event keeps its zero mask");
+  assert.strictEqual(derivePerformanceLaneIndex(chart, chart.events[1]), 0, "first chord takes lane 0, not displaced by the open label");
+  assert.strictEqual(derivePerformanceLaneIndex(chart, chart.events[2]), 1);
+  assert.deepStrictEqual(chart._chordLaneOrder, ["Am", "E"], "only chord-type events enter the lane order");
 });
 
 console.log("\n" + passed + " passed, " + failed + " failed");
