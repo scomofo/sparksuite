@@ -284,12 +284,11 @@ var BASS_SONGS = [
   { title: "Higher Ground", artist: "RHCP", level: 5, bpm: 100, chords: ["Sl-EG", "HO-A"], difficulty: 5, midi: "content/songs/midi/higher_ground.mid" },
   { title: "Superstition", artist: "Stevie Wonder", level: 5, bpm: 100, chords: ["Ghost", "Mute", "Funk"], difficulty: 5 },
   { title: "Come As You Are", artist: "Nirvana", level: 4, bpm: 60, chords: ["Sl-EG", "E5"], difficulty: 3, midi: "content/songs/midi/come_as_you_are.mid" },
-  { title: "Under Pressure", artist: "Queen & David Bowie", level: 3, bpm: 110, chords: ["D", "A", "G"], difficulty: 3 },
-  { title: "Money", artist: "Pink Floyd", level: 4, bpm: 126, chords: ["Bm", "F#m", "Em"], difficulty: 4 },
+  // Longview, Under Pressure, and Money already appear above with shape-based
+  // chords and MIDI paths — this later plain-letter batch duplicated them.
   { title: "Schism", artist: "Tool", level: 5, bpm: 87, chords: ["E", "A", "D", "G"], difficulty: 4 },
   { title: "YYZ", artist: "Rush", level: 5, bpm: 105, chords: ["A", "E", "B", "F#"], difficulty: 5 },
-  { title: "My Generation", artist: "The Who", level: 2, bpm: 96, chords: ["G", "F", "E"], difficulty: 2 },
-  { title: "Longview", artist: "Green Day", level: 3, bpm: 142, chords: ["E", "A", "B", "G#"], difficulty: 3 }
+  { title: "My Generation", artist: "The Who", level: 2, bpm: 96, chords: ["G", "F", "E"], difficulty: 2 }
 ];
 
 // ── Skill Tree ──
