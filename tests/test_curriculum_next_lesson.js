@@ -8,17 +8,19 @@ var path = require("path");
 
 function loadJS(file) { global.eval(fs.readFileSync(path.join(__dirname, "..", file), "utf8")); }
 
+// The engine file only defines the constructor (no global state captured at load
+// time), so load it ONCE; setup() just resets the mock state per test.
+global.window = global;
+global.S = { completedLessons: [], mastery: { lessons: {} }, curriculumV2CompletedSessions: {} };
+global.SparkMastery = { category: function(name) { return (global.S.mastery && global.S.mastery[name]) || {}; } };
+global.SparkCurriculumBridge = { getNextLesson: function() { return null; }, isLessonUnlocked: function() { return true; } };
+global.SparkCurriculumService = { getReviewTargets: function() { return []; }, buildLearningQueue: function() { return []; }, getLessonById: function() { return null; } };
+loadJS("js/sparksuite/core/curriculum_engine.js");
+
 function setup(completedLessons) {
-  global.window = global;
-  global.S = {
-    completedLessons: completedLessons || [],
-    mastery: { lessons: {} },
-    curriculumV2CompletedSessions: {}
-  };
-  global.SparkMastery = { category: function(name) { return (global.S.mastery && global.S.mastery[name]) || {}; } };
-  global.SparkCurriculumBridge = { getNextLesson: function() { return null; }, isLessonUnlocked: function() { return true; } };
-  global.SparkCurriculumService = { getReviewTargets: function() { return []; }, buildLearningQueue: function() { return []; }, getLessonById: function() { return null; } };
-  loadJS("js/sparksuite/core/curriculum_engine.js");
+  global.S.completedLessons = completedLessons || [];
+  global.S.mastery = { lessons: {} };
+  global.S.curriculumV2CompletedSessions = {};
   return new global.SparkSuiteCurriculumEngine();
 }
 

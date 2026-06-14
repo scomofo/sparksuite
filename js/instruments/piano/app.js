@@ -435,7 +435,14 @@ function spawnRunnerTarget() {
 
 // ── Rhythm game ──
 function rhythmTick() {
-  if (!S.rhythmActive) return;
+  // Self-terminate if the rhythm game is no longer active OR the user left the
+  // Games tab (S.rhythmActive isn't reset on a tab switch), so the interval
+  // can't keep playing the tick sound + re-rendering on an unrelated screen.
+  if (!S.rhythmActive || S.tab !== TAB.GAMES) {
+    if (T.rhythm) { clearInterval(T.rhythm); T.rhythm = null; }
+    S.rhythmActive = false;
+    return;
+  }
   S.rhythmBeat++;
   playSound("tick");
   render();
@@ -1772,7 +1779,7 @@ function act(action, param) {
         // Self-terminate if the game is no longer active (tab change, instrument
         // switch, etc.) so the interval can't keep re-rendering an unrelated
         // screen and mutating shared S.runner* every 4s for the app's lifetime.
-        if (!S.runnerActive) { clearInterval(T.runner); T.runner = null; return; }
+        if (!S.runnerActive || S.tab !== TAB.GAMES) { clearInterval(T.runner); T.runner = null; S.runnerActive = false; return; }
         S.runnerScore = Math.max(0, S.runnerScore - 1);
         spawnRunnerTarget();
         render();

@@ -374,6 +374,7 @@
   // ---------------------------------------------------------------
 
   SparkCore.prototype.startMicDetection = function () {
+    if (this._micActive) return; // guard against spawning duplicate rAF loops on re-entry
     var self = this;
     this._micActive = true;
 
@@ -454,7 +455,7 @@
           break;
         case "restart":
           if (self.audioEngine && typeof self.audioEngine.play === "function") self.audioEngine.play(0);
-          if (self.stemMixer && typeof self.stemMixer.seek === "function") self.stemMixer.seek(0);
+          if (self.stemMixer && typeof self.stemMixer.play === "function") self.stemMixer.play(0);
           break;
         case "loop":
           if (self._activeChart && self._activeChart.sections && self._activeChart.sections.length > 0) {

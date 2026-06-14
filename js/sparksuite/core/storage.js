@@ -62,6 +62,9 @@
       // a newer build then opened by an older one). Degrade to a fresh default —
       // mirroring the sibling load paths (SparkStorage.load, getPracticeJournal)
       // — instead of throwing through every caller (progress writes, exports, boot).
+      if (typeof console !== "undefined" && console.error) {
+        console.error("SparkSuiteStorage: failed to load/migrate user profile; using a fresh default", error);
+      }
       return createDefaultProfile(resolvedUserId);
     }
   };

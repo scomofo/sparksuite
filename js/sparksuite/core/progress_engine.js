@@ -367,6 +367,9 @@
     // For an incomplete (mid-block) completion, segment progress is already
     // persisted by completePlanItem; return without rewards.
     if (!progress.planCompleted) {
+      // Persist the segment progress completePlanItem just recorded — the old
+      // unconditional code saved at the end of this function on every call.
+      if (typeof saveState === "function") saveState();
       return progress;
     }
 

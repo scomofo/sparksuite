@@ -133,7 +133,8 @@
    * @param {number} rate
    */
   AudioEngine.prototype.setSpeed = function(rate) {
-    rate = rate || 1;
+    // Only default invalid/non-numeric rates — a valid 0 (freeze) must pass through.
+    if (typeof rate !== "number" || isNaN(rate)) rate = 1;
     if (this._playing) {
       this.offset = this.getTimeSec();
       this.startTime = this.ctx.currentTime;
