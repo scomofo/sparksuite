@@ -390,8 +390,19 @@ function saveState(immediate){
 function _doSave(){
   try{
     var data=buildPersistedStateSnapshot(S,PERSIST_FIELDS);
-    // Cap history at 500 entries
+    // Cap append-only arrays so the single persisted blob can't grow until it
+    // exceeds the localStorage quota (which would throw below, get swallowed,
+    // and silently stop ALL future saves). Mirrors the history cap.
     if(data.history) data.history=capArray(data.history,500);
+    if(Array.isArray(data.xpLog)) data.xpLog=capArray(data.xpLog,500);
+    if(data.analytics){
+      var _histKeys=["performanceHistory","accuracyHistory","practiceHistory","xpHistory","streakHistory"];
+      for(var _hi=0;_hi<_histKeys.length;_hi++){
+        if(Array.isArray(data.analytics[_histKeys[_hi]])){
+          data.analytics[_histKeys[_hi]]=capArray(data.analytics[_histKeys[_hi]],500);
+        }
+      }
+    }
     localStorage.setItem(SAVE_KEY,JSON.stringify(data));
   }catch(e){console.error("ChordSpark: saveState failed",e);}
 }
