@@ -191,15 +191,10 @@ function pianoPracticeTab() {
     html += pianoIfThenCard("When I " + practiceIntention + ", I will open PianoSpark.");
   }
 
-  // Daily goal progress
-  var goalMin = S.dailyGoal;
-  var pracMin = Math.floor(S.dailyPracticed / 60);
-  var goalPct = Math.min(100, (pracMin / goalMin) * 100);
-  html += '<div class="card"><div class="daily-goal">';
-  html += '<div class="goal-header"><span>Daily Goal: ' + pracMin + '/' + goalMin + ' min</span>';
-  html += (goalPct >= 100 ? '<span class="goal-done">\u2705 Done!</span>' : '') + '</div>';
-  html += '<div class="progress-bar"><div class="progress-fill" style="width:' + goalPct + '%"></div></div>';
-  html += '</div>';
+  // Daily-goal progress is shown in the persistent home glance above the tabs
+  // (renderSv2DailyGoal); rendering it again here duplicated the same
+  // "Daily Goal: x/y min" on the Practice tab. (The goal is set from the Tools tab.)
+  html += '<div class="card">';
 
   // Practice Plan CTA
   html += '<div style="text-align:center;margin:8px 0">';
