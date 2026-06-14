@@ -113,29 +113,51 @@
       tracks.push(events);
     }
 
-    // Convert to absolute time in seconds
+    // Convert ticks to seconds using a GLOBAL tempo map. In SMF format 1 the
+    // Set-Tempo events live only in track 0 while notes live in tracks 1+, so the
+    // old per-track tempo left every note track stuck at the 120 BPM default
+    // (and drifting). Collect all tempo changes by absolute tick across every
+    // track, then integrate the active tempo for each note's absolute tick.
+    var tempoChanges = []; // {tick, usPerBeat}
+    for(var tt=0; tt<tracks.length; tt++){
+      var ttAbs = 0;
+      for(var te=0; te<tracks[tt].length; te++){
+        var tevt = tracks[tt][te];
+        ttAbs += tevt.delta;
+        if(tevt.type === "tempo") tempoChanges.push({tick: ttAbs, usPerBeat: tevt.usPerBeat});
+      }
+    }
+    tempoChanges.sort(function(a,b){ return a.tick - b.tick; });
+    var initialUsPerBeat = tempoChanges.length ? tempoChanges[0].usPerBeat : 500000;
+    if(!tempoChanges.length || tempoChanges[0].tick > 0){
+      tempoChanges.unshift({tick: 0, usPerBeat: 500000});
+    }
+
+    function tickToSec(targetTick){
+      var sec = 0;
+      var prevTick = 0;
+      var curUs = tempoChanges[0].usPerBeat;
+      for(var i=1; i<tempoChanges.length; i++){
+        var tc = tempoChanges[i];
+        if(tc.tick >= targetTick) break;
+        sec += ((tc.tick - prevTick) / ticksPerBeat) * (curUs / 1000000);
+        prevTick = tc.tick;
+        curUs = tc.usPerBeat;
+      }
+      sec += ((targetTick - prevTick) / ticksPerBeat) * (curUs / 1000000);
+      return sec;
+    }
+
     var notes = [];
-    var usPerBeat = 500000; // default 120 BPM
-
     for(var t=0;t<tracks.length;t++){
-      var tickTime = 0;
-      var secTime = 0;
-      var lastTick = 0;
-      var localTempo = usPerBeat;
+      var absTick = 0;
       var activeNotes = {}; // key: ch_note -> {startSec, vel}
-
       for(var e=0;e<tracks[t].length;e++){
         var evt = tracks[t][e];
-        tickTime += evt.delta;
-        var deltaTicks = tickTime - lastTick;
-        secTime += (deltaTicks / ticksPerBeat) * (localTempo / 1000000);
-        lastTick = tickTime;
-
-        if(evt.type === "tempo"){
-          localTempo = evt.usPerBeat;
-        } else if(evt.type === "noteOn" && evt.vel > 0){
-          var key = evt.ch + "_" + evt.note;
-          activeNotes[key] = {startSec: secTime, vel: evt.vel, ch: evt.ch, midi: evt.note};
+        absTick += evt.delta;
+        var secTime = tickToSec(absTick);
+        if(evt.type === "noteOn" && evt.vel > 0){
+          activeNotes[evt.ch + "_" + evt.note] = {startSec: secTime, vel: evt.vel, ch: evt.ch, midi: evt.note};
         } else if(evt.type === "noteOff" || (evt.type === "noteOn" && evt.vel === 0)){
           var key = evt.ch + "_" + evt.note;
           if(activeNotes[key]){
@@ -154,7 +176,7 @@
     }
 
     notes.sort(function(a,b){ return a.t - b.t; });
-    return {notes: notes, bpm: Math.round(60000000 / usPerBeat)};
+    return {notes: notes, bpm: Math.round(60000000 / initialUsPerBeat)};
   }
 
   /* ---- MIDI note -> frequency ---- */
@@ -282,6 +304,7 @@
   function isMidiBackingPlaying(){ return _midiPlaying; }
 
   // Expose
+  window.parseMidiBuffer = parseMidiBuffer; // pure SMF parser (exposed for reuse/testing)
   window.loadMidiBacking = loadMidiBacking;
   window.playMidiBacking = playMidiBacking;
   window.stopMidiBacking = stopMidiBacking;
