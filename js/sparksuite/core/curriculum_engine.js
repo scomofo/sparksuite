@@ -115,6 +115,12 @@
       if (lessonNeedsReview(unlocked[i])) return unlocked[i];
     }
     for (i = 0; i < unlocked.length; i++) {
+      // A lesson already in completedIds (S.completedLessons, lesson-mastery
+      // keys, or v2 completed sessions) is done even when the mastery map holds
+      // no numeric value for it. The live completion path only appends the id to
+      // S.completedLessons (no mastery write), so without this skip the first
+      // lesson stays "incomplete" forever and daily practice never advances.
+      if (completedIds.indexOf(unlocked[i].id) !== -1) continue;
       if (lessonIsIncomplete(unlocked[i])) return unlocked[i];
     }
     return unlocked.length ? unlocked[0] : null;
