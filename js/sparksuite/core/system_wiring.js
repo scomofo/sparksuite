@@ -377,24 +377,28 @@
     var self = this;
     this._micActive = true;
 
-    this.micInput.init().then(function () {
+    this.micInput.start().then(function () {
       function loop() {
         if (!self._micActive) return;
 
         var samples = self.micInput.getSamples();
         if (samples && samples.length > 0) {
-          var detection = self.pitchDetector.detect(samples);
-          if (detection && detection.frequency > 0) {
-            var note = self.pitchDetector.frequencyToNote
-              ? self.pitchDetector.frequencyToNote(detection.frequency)
-              : detection.note;
-
-            self.processPlayAlongInput({
-              time: self.getInputTimeMs(),
-              note: note,
-              confidence: detection.confidence || 0,
-              detectedNotes: detection.notes || [note]
-            });
+          // detect() returns a frequency Number (or null), not an object, and
+          // takes the sample rate as its 2nd arg. Note mapping lives on
+          // SparkInputNoteMapper, not the detector.
+          var freq = self.pitchDetector.detect(samples, self.micInput.getSampleRate());
+          if (freq && freq > 0) {
+            var note = (typeof window !== "undefined" && window.SparkInputNoteMapper)
+              ? window.SparkInputNoteMapper.frequencyToNoteName(freq)
+              : null;
+            if (note) {
+              self.processPlayAlongInput({
+                time: self.getInputTimeMs(),
+                note: note,
+                confidence: 1,
+                detectedNotes: [note]
+              });
+            }
           }
         }
 
@@ -402,7 +406,7 @@
       }
 
       requestAnimationFrame(loop);
-    });
+    }).catch(function () { /* mic permission denied or unavailable */ });
   };
 
   // ---------------------------------------------------------------
@@ -427,26 +431,30 @@
       var command = self.voiceCommandRouter.route(transcript);
       if (!command) return;
 
+      // Each handler is typeof-guarded and routed to a method that actually
+      // exists on the target (audioEngine: setSpeed/play/stop; stemMixer:
+      // play/stop/seek). The previous code called setPlaybackRate/pause/seek
+      // on audioEngine — none of which exist — throwing a TypeError per command.
       switch (command.action) {
         case "slow":
-          if (self.audioEngine) self.audioEngine.setPlaybackRate(0.75);
-          if (self.stemMixer) self.stemMixer.setPlaybackRate(0.75);
+          if (self.audioEngine && typeof self.audioEngine.setSpeed === "function") self.audioEngine.setSpeed(0.75);
+          if (self.stemMixer && typeof self.stemMixer.setSpeed === "function") self.stemMixer.setSpeed(0.75);
           break;
         case "fast":
-          if (self.audioEngine) self.audioEngine.setPlaybackRate(1.0);
-          if (self.stemMixer) self.stemMixer.setPlaybackRate(1.0);
+          if (self.audioEngine && typeof self.audioEngine.setSpeed === "function") self.audioEngine.setSpeed(1.0);
+          if (self.stemMixer && typeof self.stemMixer.setSpeed === "function") self.stemMixer.setSpeed(1.0);
           break;
         case "pause":
-          if (self.audioEngine) self.audioEngine.pause();
-          if (self.stemMixer) self.stemMixer.pause();
+          if (self.audioEngine && typeof self.audioEngine.stop === "function") self.audioEngine.stop();
+          if (self.stemMixer && typeof self.stemMixer.stop === "function") self.stemMixer.stop();
           break;
         case "play":
-          if (self.audioEngine) self.audioEngine.play();
-          if (self.stemMixer) self.stemMixer.play();
+          if (self.audioEngine && typeof self.audioEngine.play === "function") self.audioEngine.play();
+          if (self.stemMixer && typeof self.stemMixer.play === "function") self.stemMixer.play();
           break;
         case "restart":
-          if (self.audioEngine) self.audioEngine.seek(0);
-          if (self.stemMixer) self.stemMixer.seek(0);
+          if (self.audioEngine && typeof self.audioEngine.play === "function") self.audioEngine.play(0);
+          if (self.stemMixer && typeof self.stemMixer.seek === "function") self.stemMixer.seek(0);
           break;
         case "loop":
           if (self._activeChart && self._activeChart.sections && self._activeChart.sections.length > 0) {
@@ -491,7 +499,9 @@
       this.audioEngine.play();
     } else if (params.stems) {
       this.stemMixer.loadStems(params.stems);
-      this.stemController.attach(this.stemMixer);
+      // (stemController already holds the mixer from its constructor — the
+      // former stemController.attach(mixer) call referenced a method that does
+      // not exist and threw a TypeError, aborting the stems playback path.)
       SparkTimeSource.bind(this.stemMixer);
       this.stemMixer.play();
     } else if (params.trackUri && this.playbackEngine) {

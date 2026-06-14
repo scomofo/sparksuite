@@ -87,6 +87,15 @@
    */
   AudioEngine.prototype.stop = function() {
     if (this.source) {
+      // Detach the ended handler BEFORE stopping. source.stop() schedules the
+      // 'ended' event on a LATER task; play() then creates a new source and
+      // sets _playing=true synchronously. Without nulling this, the old (now
+      // replaced) source's ended fires a tick later and flips _playing=false
+      // on the live source — freezing the master clock (getTimeSec returns the
+      // frozen offset) and firing a spurious track-ended callback after any
+      // replay/seek. A natural end-of-buffer still fires onended (we only null
+      // it here, on an explicit stop), so legitimate track-end is unaffected.
+      this.source.onended = null;
       try { this.source.stop(); } catch (e) { /* already stopped */ }
       this.source.disconnect();
       this.source = null;
@@ -116,6 +125,23 @@
 
   AudioEngine.prototype.getDurationSec = function() {
     return this.buffer ? this.buffer.duration : 0;
+  };
+
+  /**
+   * Set playback speed (1.0 = normal). Re-anchors the master clock so the
+   * current position does not jump when the rate changes mid-playback.
+   * @param {number} rate
+   */
+  AudioEngine.prototype.setSpeed = function(rate) {
+    rate = rate || 1;
+    if (this._playing) {
+      this.offset = this.getTimeSec();
+      this.startTime = this.ctx.currentTime;
+    }
+    this._speed = rate;
+    if (this.source && this.source.playbackRate) {
+      this.source.playbackRate.value = rate;
+    }
   };
 
   /**
