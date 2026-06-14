@@ -30,6 +30,7 @@
       opts = opts || {};
       var mode       = opts.mode || "quickStart";
       var level      = opts.level || (typeof S !== "undefined" ? S.level : 1);
+      var explicitSessionNum = opts.sessionNum != null;
       var sessionNum = opts.sessionNum || 1;
       var chordName  = opts.chordName || null;
 
@@ -107,6 +108,21 @@
       if (mode === "guided") {
         var sessions = D.SESSIONS || [];
         var plan     = sessions[sessionNum - 1] || null;
+
+        // Engine-owned lesson choice (Phase 5): when the caller did not pin a
+        // specific session, ask the CurriculumEngine which guided session is
+        // next from the player's completion state instead of always starting
+        // at session 1. Falls back to the index default when unavailable.
+        if (!explicitSessionNum &&
+            sessions.length > 0 &&
+            typeof SparkCurriculumService !== "undefined" &&
+            typeof SparkCurriculumService.getNextGuidedSession === "function") {
+          var nextGuided = SparkCurriculumService.getNextGuidedSession(sessions);
+          if (nextGuided && nextGuided.session) {
+            plan       = nextGuided.session;
+            sessionNum = nextGuided.sessionNum;
+          }
+        }
 
         // Use CurriculumService for lesson resolution when available (Phase 5)
         var lessonRef = null;
