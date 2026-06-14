@@ -2782,8 +2782,12 @@ test("practiceTab and practicePage treat boolean-only meta shells as missing ite
   assert.strictEqual(practiceHtml.indexOf(">Unavailable<"), -1);
   assert.strictEqual(fullHtml.indexOf(">Unavailable<"), -1);
   assert.strictEqual(planHtml.indexOf(">Unavailable<"), -1);
-  assert.strictEqual(practiceHtml.indexOf("false"), -1);
-  assert.strictEqual(planHtml.indexOf("true"), -1);
+  // Guard against the boolean meta leaking into rendered text CONTENT. Strip all
+  // tags first so legitimate attribute VALUES (e.g. the goal selector's
+  // aria-pressed="false"/"true") are ignored, while still catching a boolean that
+  // leaks anywhere in the visible text (incl. concatenated, e.g. "Focus: false").
+  assert.strictEqual(practiceHtml.replace(/<[^>]*>/g, " ").indexOf("false"), -1);
+  assert.strictEqual(planHtml.replace(/<[^>]*>/g, " ").indexOf("true"), -1);
 });
 
 test("practiceTab and practicePage treat array-shaped meta shells as missing items", function() {
