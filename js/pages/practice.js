@@ -528,14 +528,13 @@ function resolvePracticeSummaryPlan() {
 }
 
 function renderPracticeGoalCard(practiceGoalMetrics) {
-  var goalPct = practiceGoalMetrics.goalPct;
-  var goalMins = practiceGoalMetrics.goalMins;
+  // The daily-goal ring + progress already shows in the persistent home glance
+  // (renderSv2DailyGoal) above the tabs, so this card is just the goal SELECTOR
+  // — repeating the ring/progress here duplicated it on the Practice tab.
   var goals = [5, 10, 15, 20, 30];
-  var h = '<div class="card mb12"><div style="display:flex;align-items:center;gap:12px"><div class="flex-center">';
-  h += ringHTML(goalPct,56,5,practiceGoalMetrics.goalReachedToday?"#4ECDC4":"#FF6B6B",'<div style="font-size:12px;font-weight:900;color:var(--text-primary)">'+goalMins+'m</div>',"Daily goal progress");
-  h += '</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text-primary)">'+(practiceGoalMetrics.goalReachedToday?"&#9989; Goal reached!":"Daily Goal: "+practiceGoalMetrics.dailyGoalMinutes+" min")+'</div><div style="font-size:11px;color:var(--text-muted)">'+goalMins+'/'+practiceGoalMetrics.dailyGoalMinutes+' min today'+(practiceGoalMetrics.goalStreak>0?" | &#128293; "+practiceGoalMetrics.goalStreak+" day streak":"")+'</div></div><div style="display:flex;gap:4px">';
+  var h = '<div class="card mb12"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div style="font-size:13px;font-weight:700;color:var(--text-primary)">Adjust daily goal</div><div style="display:flex;gap:4px;margin-left:auto">';
   for(var i=0;i<goals.length;i++){
-    h += '<button onclick="act(\'setGoal\',\''+goals[i]+'\')" style="width:28px;height:28px;border-radius:8px;font-size:11px;font-weight:700;background:'+(practiceGoalMetrics.dailyGoalMinutes===goals[i]?"#4ECDC4":"var(--input-bg)")+';color:'+(practiceGoalMetrics.dailyGoalMinutes===goals[i]?"#fff":"var(--text-muted)")+'">'+goals[i]+'</button>';
+    h += '<button onclick="act(\'setGoal\',\''+goals[i]+'\')" aria-label="Set daily goal to '+goals[i]+' minutes" style="width:28px;height:28px;border-radius:8px;font-size:11px;font-weight:700;background:'+(practiceGoalMetrics.dailyGoalMinutes===goals[i]?"#4ECDC4":"var(--input-bg)")+';color:'+(practiceGoalMetrics.dailyGoalMinutes===goals[i]?"#fff":"var(--text-muted)")+'">'+goals[i]+'</button>';
   }
   h += '</div></div></div>';
   return h;
