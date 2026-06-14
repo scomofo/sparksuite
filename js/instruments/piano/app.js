@@ -1769,6 +1769,10 @@ function act(action, param) {
       spawnRunnerTarget();
       if (T.runner) clearInterval(T.runner);
       T.runner = setInterval(function() {
+        // Self-terminate if the game is no longer active (tab change, instrument
+        // switch, etc.) so the interval can't keep re-rendering an unrelated
+        // screen and mutating shared S.runner* every 4s for the app's lifetime.
+        if (!S.runnerActive) { clearInterval(T.runner); T.runner = null; return; }
         S.runnerScore = Math.max(0, S.runnerScore - 1);
         spawnRunnerTarget();
         render();
