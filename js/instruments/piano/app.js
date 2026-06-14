@@ -441,6 +441,9 @@ function rhythmTick() {
   if (!S.rhythmActive || S.tab !== TAB.GAMES) {
     if (T.rhythm) { clearInterval(T.rhythm); T.rhythm = null; }
     S.rhythmActive = false;
+    // start_rhythm started the metronome; stop it so it doesn't keep ticking
+    // (background audio leak) after the user leaves the Games tab.
+    if (typeof stopMetronome === "function") stopMetronome();
     return;
   }
   S.rhythmBeat++;
