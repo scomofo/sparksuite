@@ -2782,8 +2782,11 @@ test("practiceTab and practicePage treat boolean-only meta shells as missing ite
   assert.strictEqual(practiceHtml.indexOf(">Unavailable<"), -1);
   assert.strictEqual(fullHtml.indexOf(">Unavailable<"), -1);
   assert.strictEqual(planHtml.indexOf(">Unavailable<"), -1);
-  assert.strictEqual(practiceHtml.indexOf("false"), -1);
-  assert.strictEqual(planHtml.indexOf("true"), -1);
+  // Guard against the boolean meta leaking into rendered CONTENT (text between
+  // tags) — not against legitimate aria attribute VALUES like the goal selector's
+  // aria-pressed="false"/"true".
+  assert.strictEqual(practiceHtml.indexOf(">false<"), -1);
+  assert.strictEqual(planHtml.indexOf(">true<"), -1);
 });
 
 test("practiceTab and practicePage treat array-shaped meta shells as missing items", function() {

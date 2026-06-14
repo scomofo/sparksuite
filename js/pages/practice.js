@@ -534,7 +534,7 @@ function renderPracticeGoalCard(practiceGoalMetrics) {
   var goals = [5, 10, 15, 20, 30];
   var h = '<div class="card mb12"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div style="font-size:13px;font-weight:700;color:var(--text-primary)">Adjust daily goal</div><div style="display:flex;gap:4px;margin-left:auto">';
   for(var i=0;i<goals.length;i++){
-    h += '<button onclick="act(\'setGoal\',\''+goals[i]+'\')" aria-label="Set daily goal to '+goals[i]+' minutes" style="width:28px;height:28px;border-radius:8px;font-size:11px;font-weight:700;background:'+(practiceGoalMetrics.dailyGoalMinutes===goals[i]?"#4ECDC4":"var(--input-bg)")+';color:'+(practiceGoalMetrics.dailyGoalMinutes===goals[i]?"#fff":"var(--text-muted)")+'">'+goals[i]+'</button>';
+    h += '<button onclick="act(\'setGoal\',\''+goals[i]+'\')" aria-label="Set daily goal to '+goals[i]+' minutes" aria-pressed="'+(practiceGoalMetrics.dailyGoalMinutes===goals[i]?"true":"false")+'" style="width:28px;height:28px;border-radius:8px;font-size:11px;font-weight:700;background:'+(practiceGoalMetrics.dailyGoalMinutes===goals[i]?"#4ECDC4":"var(--input-bg)")+';color:'+(practiceGoalMetrics.dailyGoalMinutes===goals[i]?"#fff":"var(--text-muted)")+'">'+goals[i]+'</button>';
   }
   h += '</div></div></div>';
   return h;
