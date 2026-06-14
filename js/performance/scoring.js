@@ -204,9 +204,14 @@ function finalizePerformanceResults(chart, phraseStats, options) {
   var importedTechniqueSummary = summarizeImportedTechniqueResults(chart);
 
   return {
+    // Use the live combo-multiplied running score (what the HUD showed climbing)
+    // when the caller provides it, so the results "Score" matches the in-play
+    // "Score" under the same label. Falls back to the combo-less sum otherwise.
     title: chart.title,
     artist: chart.artist,
-    score: Math.round(totalScore * 100),
+    score: typeof options.liveScore === "number" && isFinite(options.liveScore)
+      ? Math.round(options.liveScore)
+      : Math.round(totalScore * 100),
     accuracy: accuracy,
     maxCombo: maxCombo,
     stars: stars,
