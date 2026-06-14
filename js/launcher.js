@@ -229,6 +229,12 @@
 
   function selectInstrument(appId) {
     if (ensureDeferredAssets(function() { selectInstrument(appId); })) return;
+    // Tear down the outgoing instrument's timers/mini-games before activating
+    // the new one. The launcher-card path doesn't otherwise call deactivate(),
+    // so a running piano rhythm/runner/build game would leak into the next
+    // instrument (notably in the desktop multi-pane layout, where you can
+    // switch instruments without returning to the launcher home).
+    SparkInstruments.deactivate();
     SparkInstruments.activate(appId);
     if (typeof S !== "undefined") {
       S.activeInstrument = appId;
@@ -244,6 +250,8 @@
 
   function launchInstrumentPerformance(appId) {
     if (ensureDeferredAssets(function() { launchInstrumentPerformance(appId); })) return;
+    // Tear down the outgoing instrument's timers/mini-games before activating.
+    SparkInstruments.deactivate();
     SparkInstruments.activate(appId);
     if (typeof S !== "undefined") {
       S.activeInstrument = appId;
@@ -687,6 +695,13 @@
         clearInterval(T.metro);clearInterval(T.prog);clearInterval(T.undo);
         if(T.sessionStep){clearInterval(T.sessionStep);T.sessionStep=null;}
         if(T.chordChange){clearInterval(T.chordChange);T.chordChange=null;}
+        // Piano mini-game / build-playback intervals (own setInterval handles,
+        // js/instruments/piano/app.js). Without clearing these, a running
+        // rhythm/runner/build game keeps ticking — playing sound and forcing
+        // re-renders — on the NEXT instrument after a switch.
+        if(T.rhythm){clearInterval(T.rhythm);T.rhythm=null;}
+        if(T.runner){clearInterval(T.runner);T.runner=null;}
+        if(T.build){clearInterval(T.build);T.build=null;}
       }
       if(typeof stopMetronome==="function")try{stopMetronome();}catch(e){}
       // Clear Showroom dispatch state too so a stale override (e.g. user was
@@ -697,6 +712,11 @@
         S.launcherView = null;
         S.screen = "home";
         S.tab = "practice";
+        // Reset the mini-game active flags so a torn-down game doesn't read as
+        // still-running on the next instrument.
+        S.rhythmActive = false;
+        S.runnerActive = false;
+        S.buildPlaying = false;
       }
       _active = null;
     },
