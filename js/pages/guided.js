@@ -658,7 +658,10 @@ function renderGuidedBlockProgress(blockProgress, guidedView) {
       var progressBarFill = block.extensionCount >= 2
         ? "linear-gradient(135deg,#6E56B3,#FF8A5C)"
         : stateColor;
-      var stateText = block.state ? block.state : "&nbsp;";
+      // Inactive blocks show no status badge. (A literal "&nbsp;" here was
+      // HTML-escaped to "&amp;nbsp;" and then uppercased by the pill's
+      // text-transform, rendering as the visible text "&NBSP;".)
+      var stateText = block.state ? block.state : "";
       return '<div style="padding:10px 12px;border-radius:12px;background:' + cardBackground + ';border:' + cardBorder + ';text-align:left">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px">' +
           '<span class="guided-block-title">' + escHTML(block.label) + '</span>' +

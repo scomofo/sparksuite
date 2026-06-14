@@ -130,8 +130,10 @@ test("sv2HomeDashboard and practiceTab ignore malformed goal metrics", function(
   assert.ok(dashboardHtml.indexOf("0 / 10 min today") >= 0);
   assert.ok(dashboardHtml.indexOf("Goal reached!") === -1);
   assert.ok(dashboardHtml.indexOf("NaN") === -1);
-  assert.ok(practiceHtml.indexOf("Daily Goal: 10 min") >= 0);
-  assert.ok(practiceHtml.indexOf("0/10 min today") >= 0);
+  // The practice-tab goal card is now the goal SELECTOR; the ring + progress
+  // text live in the persistent home glance (asserted above) to avoid showing
+  // the same "Daily Goal" twice on the Practice tab.
+  assert.ok(practiceHtml.indexOf("Adjust daily goal") >= 0);
   assert.ok(practiceHtml.indexOf("Goal reached!") === -1);
   assert.ok(practiceHtml.indexOf("NaN") === -1);
 });
