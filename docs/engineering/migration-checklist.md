@@ -46,7 +46,10 @@ Tracks which flows use the new engine contracts vs legacy direct-call paths.
 | isLessonUnlocked | SparkCurriculumService.isLessonUnlocked | Available |
 | getLessonById | SparkCurriculumService.getLessonById | Available |
 | getReviewTargets | SparkCurriculumService.getReviewTargets | Implemented |
-| SessionEngine guided mode | Uses CurriculumService | Dual-path |
+| buildLearningQueue | SparkCurriculumService.buildLearningQueue | Implemented |
+| getNextGuidedSession | SparkCurriculumService.getNextGuidedSession | Implemented |
+| Legacy SparkSession guided mode | Asks getNextGuidedSession for next session + lock check | Done (groundwork — see note) |
+| Live v2 guided flow (session_engine.js buildGuidedSession) | Still defaults to session 1; not yet wired | Pending |
 
 ## Performance Integration (Phase 6)
 
@@ -82,9 +85,17 @@ No legacy paths have been retired yet. All migrated flows run dual-path for safe
 
 ## Remaining Work
 
-1. Add `buildLearningQueue(userContext)` to CurriculumService
-2. Refactor SessionEngine to ask CurriculumEngine for lesson choices (not just lock check)
-3. Add InstrumentAdapter normalized methods to spark-core (proxy getExercisesForLesson, getPerformanceConfig)
-4. Wire recommendation engine through SparkCore services
-5. Begin retiring legacy paths once dual-path validation passes
-6. Add scriptable smoke checks (automated boot + flow tests)
+_Audited against source 2026-06-13. Several items previously listed here were
+already implemented; the list below reflects current reality._
+
+### Done
+
+1. ✅ `buildLearningQueue(userContext)` on CurriculumService — `js/curriculum/curriculum_engine.js`; covered by `test_curriculum_service_instrument_resolution.js` and the curriculum guardrails.
+3. ✅ InstrumentAdapter normalized methods proxied through spark-core (`getExercisesForLesson`, `getPerformanceConfig`) — `js/spark-core/instrument-adapter.js` + `practice-engine.js`; Phase 4 table is Complete for all four instruments.
+4. ✅ Recommendation engine wired through SparkCore — `SparkCore.getServices().recommendations` and `SparkCore.recommendNextAction()` in `js/spark-core/index.js` (curriculum queue first, recommendation fallback).
+6. ✅ Scriptable smoke checks — packaged desktop smoke (`scripts/desktop_packaged_smoke.js`, `test_packaged_smoke_*`) and the browser clickthrough smoke run in CI.
+
+### Remaining
+
+2. SessionEngine ⇆ CurriculumEngine lesson choice — **groundwork done; live wiring pending.** The engine-owned choice API `SparkCurriculumService.getNextGuidedSession()` exists and is wired into the legacy `SparkSession.buildSession` guided branch (advances by completion, honors a caller-pinned `sessionNum`, flags `allComplete`). Verified caveat: that legacy guided branch has **no live callers** today — every in-app guided session routes through the v2 core's `js/sparksuite/core/session_engine.js::buildGuidedSession`, which still defaults to session 1 and is **not yet wired**. Before wiring the live v2 path, two completion vocabularies must be reconciled: `getNextGuidedSession` reads only num-based completion (`completedGuidedSessions`/`completedSessions`) and ignores `S.curriculumV2CompletedSessions` (string ids) and lesson mastery, which the rest of the engine treats as authoritative — so naïve live wiring could pick a session the UI already shows complete. Tracked as a follow-up design task.
+5. Begin retiring legacy paths once dual-path validation passes (see Phase 7 retirement criteria — process-gated, not a code task).

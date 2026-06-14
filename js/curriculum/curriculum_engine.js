@@ -256,6 +256,45 @@
       }
 
       return queue;
+    },
+
+    // Engine-owned guided lesson choice (Phase 5). Given the active
+    // instrument's authored guided sessions (num-indexed), return the first
+    // one the player has not completed yet so the SessionEngine can advance
+    // the learner instead of always restarting at session 1. Completion is
+    // tracked by session num across the shared guided-progress structures
+    // (S.completedGuidedSessions, the legacy S.completedSessions) and may be
+    // supplemented by userContext.completedSessionNums for testing/headless use.
+    // Returns { session, sessionNum, index } or null when no sessions exist.
+    getNextGuidedSession: function(sessions, userContext) {
+      if (!Array.isArray(sessions) || sessions.length === 0) return null;
+      userContext = userContext || {};
+
+      var completed = {};
+      var sources = [];
+      if (Array.isArray(userContext.completedSessionNums)) sources.push(userContext.completedSessionNums);
+      if (typeof S !== "undefined" && S) {
+        if (Array.isArray(S.completedGuidedSessions)) sources.push(S.completedGuidedSessions);
+        if (Array.isArray(S.completedSessions)) sources.push(S.completedSessions);
+      }
+      for (var s = 0; s < sources.length; s++) {
+        for (var k = 0; k < sources[s].length; k++) completed[sources[s][k]] = true;
+      }
+
+      for (var i = 0; i < sessions.length; i++) {
+        if (!sessions[i]) continue;
+        var num = sessions[i].num != null ? sessions[i].num : (i + 1);
+        if (!completed[num]) {
+          return { session: sessions[i], sessionNum: num, index: i, allComplete: false };
+        }
+      }
+
+      // Every authored session is complete — offer the last one for replay, but
+      // flag allComplete so callers can route to a "course complete" state
+      // instead of silently trapping a finished learner on the final session.
+      var lastIdx = sessions.length - 1;
+      var lastNum = sessions[lastIdx] && sessions[lastIdx].num != null ? sessions[lastIdx].num : sessions.length;
+      return { session: sessions[lastIdx], sessionNum: lastNum, index: lastIdx, allComplete: true };
     }
   };
 
