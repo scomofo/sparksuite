@@ -50,12 +50,20 @@
       raw = null;
     }
     if (!raw) return createDefaultProfile(resolvedUserId);
-    parsed = JSON.parse(raw);
-    migrated = this.measureMigration(parsed);
-    if (migrated.schemaVersion !== parsed.schemaVersion || JSON.stringify(migrated) !== JSON.stringify(parsed)) {
-      this.saveUserProfile(migrated);
+    try {
+      parsed = JSON.parse(raw);
+      migrated = this.measureMigration(parsed);
+      if (migrated.schemaVersion !== parsed.schemaVersion || JSON.stringify(migrated) !== JSON.stringify(parsed)) {
+        this.saveUserProfile(migrated);
+      }
+      return migrated;
+    } catch (error) {
+      // Corrupt/truncated JSON, or an unmigratable profile (e.g. one written by
+      // a newer build then opened by an older one). Degrade to a fresh default —
+      // mirroring the sibling load paths (SparkStorage.load, getPracticeJournal)
+      // — instead of throwing through every caller (progress writes, exports, boot).
+      return createDefaultProfile(resolvedUserId);
     }
-    return migrated;
   };
 
   SparkSuiteStorage.prototype.saveUserProfile = function(profile) {
