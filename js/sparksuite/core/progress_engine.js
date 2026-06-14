@@ -347,6 +347,29 @@
       totalItems: plan.segments.length,
       planCompleted: true
     };
+
+    // markPlanComplete forces full completion (used by the final-completion
+    // path). Evaluate it BEFORE the reward gate so planCompleted reflects it.
+    if (payload.markPlanComplete && Array.isArray(plan.segments)) {
+      for (var i = 0; i < plan.segments.length; i++) plan.segments[i].completed = true;
+      progress.completedItems = plan.segments.length;
+      progress.totalItems = plan.segments.length;
+      progress.planCompleted = true;
+      SparkProgressBridge.syncPlanToState(plan);
+    }
+
+    // advanceGuidedSession calls completeSession({itemId}) on EVERY block-type
+    // transition, not just at the end. Reward/progression side-effects (XP,
+    // session count, chord progress, advancing S.guidedSession) must fire ONCE —
+    // only when the guided session is actually finished. Without this gate a
+    // multi-block session inflated XP/sessions/chord-progress ~Nx and advanced
+    // S.guidedSession on the first block transition (before the user finished).
+    // For an incomplete (mid-block) completion, segment progress is already
+    // persisted by completePlanItem; return without rewards.
+    if (!progress.planCompleted) {
+      return progress;
+    }
+
     var guidedPlan = plan.context ? plan.context.guidedPlan : null;
     var totalGuidedSessions = plan.context && plan.context.totalGuidedSessions ? plan.context.totalGuidedSessions : 1;
     var outcome = null;
@@ -371,14 +394,6 @@
           duration: 300
         });
       }
-    }
-
-    if (payload.markPlanComplete && Array.isArray(plan.segments)) {
-      for (var i = 0; i < plan.segments.length; i++) plan.segments[i].completed = true;
-      progress.completedItems = plan.segments.length;
-      progress.totalItems = plan.segments.length;
-      progress.planCompleted = true;
-      SparkProgressBridge.syncPlanToState(plan);
     }
 
     if (outcome) {

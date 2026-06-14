@@ -6349,6 +6349,45 @@ test("advanceGuidedSession completes V2 blocks only when the step leaves them", 
   assert.strictEqual(plan.segments[2].completed, true);
 });
 
+test("advanceGuidedSession does not award or advance the guided pointer until the session completes", function() {
+  SparkInstruments = {
+    getActive: function() {
+      return {
+        appId: "chordspark",
+        instrument: "guitar",
+        getCurriculumMapV2: function() { return SparkCurriculumV2LegacyAdapter.toLegacyLessons("guitar"); }
+      };
+    },
+    getAll: function() { return [{ id: "chordspark", appId: "chordspark", instrument: "guitar" }]; }
+  };
+  SparkInstrumentAdapter = {
+    getAppId: function() { return "chordspark"; },
+    getInstrumentType: function() { return "guitar"; },
+    getCurriculumMap: function() { return []; },
+    getCurriculum: function() { return { SESSIONS: [] }; },
+    getSongs: function() { return []; }
+  };
+
+  var core = createDefaultSparkCore();
+  core.openGuidedSession({ sessionNum: 1 });
+  assert.strictEqual(S.guidedSession, 1);
+
+  // Step through every block-type transition (warm_engine -> drill -> song ->
+  // cooldown). None is the final completion, so the reward path must NOT fire:
+  // the guided pointer must stay put (it used to jump to 2 on the FIRST
+  // transition, and XP/session-credit multiplied per block).
+  core.advanceGuidedSession({});                            // spark -> review (warm -> drill)
+  core.advanceGuidedSession({});                            // review -> newMove (within drill)
+  core.advanceGuidedSession({ guidedNewMovePhase: null });  // newMove -> songSlice (drill -> song)
+  core.advanceGuidedSession({});                            // songSlice -> victoryLap (song -> cooldown)
+  assert.strictEqual(S.guidedSession, 1, "guided pointer must not advance mid-session");
+
+  // Final step (victoryLap -> done) triggers the real completion exactly once.
+  var result = core.advanceGuidedSession({});
+  assert.ok(result.completion && result.completion.planCompleted, "final step completes the session");
+  assert.strictEqual(S.guidedSession, 2, "guided pointer advances once, only on completion");
+});
+
 test("SparkCore can sync the shared session runtime and expose active segment/exercise in the session view", function() {
   var originalWindow = global.window;
   var attachCalls = [];
