@@ -731,7 +731,10 @@ function applyPerformanceStemPreset(preset) {
 function finishPerformance() {
   stopPerformance();
   var results = finalizePerformanceResults(S.performChart, S.performPhraseStats, {
-    focusedTechnique: S.performTargetTechnique || null
+    focusedTechnique: S.performTargetTechnique || null,
+    // The live HUD score is combo-multiplied; report the same value on the
+    // results screen so the two "Score" displays agree.
+    liveScore: S.performScore
   });
   if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
     SparkPerformanceBridge.syncPerformanceRuntimeState("finish", {
