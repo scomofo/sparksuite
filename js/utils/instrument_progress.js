@@ -71,6 +71,19 @@
     if (typeof stats.sessionsCompleted === "number") S.sessions = stats.sessionsCompleted;
   }
 
+  // Mirror the active app's guided-session pointer + completed list into the
+  // legacy S.* fields. Kept SEPARATE from mirrorStatsToLegacy (which runs on
+  // every xp/streak write): mirroring the guided fields there would clobber a
+  // mid-session S.guidedSession update on the next unrelated stat write. This
+  // is called only on instrument switch (syncFromActive) and by the guided
+  // setters below, which update the profile and S together. S holds a COPY of
+  // the array so the per-app profile stays the single source of truth.
+  function mirrorGuidedToLegacy(app) {
+    if (!app || typeof S === "undefined") return;
+    if (app.stats && typeof app.stats.guidedSession === "number") S.guidedSession = app.stats.guidedSession;
+    S.completedGuidedSessions = Array.isArray(app.completedGuidedSessions) ? app.completedGuidedSessions.slice() : [];
+  }
+
   function todayIsoDate() {
     return new Date().toISOString().slice(0, 10);
   }
@@ -164,6 +177,35 @@
       }
     },
 
+    // Engine-routed guided-session pointer. Updates the active app's
+    // SparkProfile.apps[appId].stats.guidedSession and mirrors into
+    // S.guidedSession. Legacy fallback: just set S.guidedSession.
+    setGuidedSession: function(num) {
+      if (typeof num !== "number" || !isFinite(num)) return;
+      withProfile(function(profile, appId) {
+        profile.apps[appId].stats.guidedSession = num;
+        return profile.apps[appId];
+      });
+      if (typeof S !== "undefined") S.guidedSession = num;
+    },
+
+    // Engine-routed guided-session completion. Appends the (numeric) session
+    // number to the active app's completedGuidedSessions and mirrors into
+    // S.completedGuidedSessions. Both are deduped. Legacy fallback: push to S.
+    markGuidedSessionComplete: function(num) {
+      if (typeof num !== "number" || !isFinite(num)) return;
+      withProfile(function(profile, appId) {
+        var app = profile.apps[appId];
+        if (!Array.isArray(app.completedGuidedSessions)) app.completedGuidedSessions = [];
+        if (app.completedGuidedSessions.indexOf(num) < 0) app.completedGuidedSessions.push(num);
+        return app;
+      });
+      if (typeof S !== "undefined") {
+        if (!Array.isArray(S.completedGuidedSessions)) S.completedGuidedSessions = [];
+        if (S.completedGuidedSessions.indexOf(num) < 0) S.completedGuidedSessions.push(num);
+      }
+    },
+
     // Refresh S.xp / S.streak / S.level / S.sessions from the active
     // instrument's app profile. Call on SparkInstruments.activate().
     syncFromActive: function() {
@@ -173,6 +215,7 @@
       var type = activeInstrumentType();
       SparkProfile.ensureApp(profile, appId, type);
       mirrorStatsToLegacy(profile.apps[appId].stats);
+      mirrorGuidedToLegacy(profile.apps[appId]);
     },
 
     // One-time backfill: when a user upgrades from a pre-namespacing build,
@@ -192,7 +235,8 @@
       var appId = activeAppId();
       var type = activeInstrumentType();
       SparkProfile.ensureApp(profile, appId, type);
-      var stats = profile.apps[appId].stats;
+      var app = profile.apps[appId];
+      var stats = app.stats;
       var hadLegacyData = (S.xp || 0) > 0 || (S.streak || 0) > 0 || (S.sessions || 0) > 0;
       if (hadLegacyData) {
         stats.xp = S.xp || 0;
@@ -200,10 +244,26 @@
         stats.level = S.level || 1;
         stats.sessionsCompleted = S.sessions || 0;
       }
+      // Drain the legacy global guided-session pointer + completed list into
+      // the first instrument activated after upgrade (same one-shot flag as
+      // the stats above). The pre-namespacing globals conflated every
+      // instrument's guided progress; attributing it to the active instrument
+      // is the best single-user recovery and self-corrects as other
+      // instruments are played. Only copy when there's real data so a fresh
+      // install doesn't pin guidedSession to a stale 1.
+      if (typeof S.guidedSession === "number" && S.guidedSession > 1) {
+        stats.guidedSession = S.guidedSession;
+      }
+      if (Array.isArray(S.completedGuidedSessions) && S.completedGuidedSessions.length) {
+        app.completedGuidedSessions = S.completedGuidedSessions.slice();
+      }
       // Mark migrated even if there was nothing to copy — this flag's
       // only job is "legacy pool has already been drained."
       profile._legacyProgressMigrated = true;
       SparkStorage.save(profile);
+      // Reflect the just-backfilled guided values back into S so the first
+      // render after upgrade matches the now-authoritative per-app profile.
+      mirrorGuidedToLegacy(app);
     }
   };
 

@@ -22,7 +22,12 @@
     var guidedPlan = plan && plan.context ? plan.context.guidedPlan : null;
     if (!guidedPlan) return null;
     S.guidedPlan = guidedPlan;
-    S.guidedSession = plan.context.guidedSession || guidedPlan.num || S.guidedSession || 1;
+    var nextGuidedNum = plan.context.guidedSession || guidedPlan.num || S.guidedSession || 1;
+    if (typeof SparkInstrumentProgress !== "undefined" && SparkInstrumentProgress.setGuidedSession) {
+      SparkInstrumentProgress.setGuidedSession(nextGuidedNum);
+    } else {
+      S.guidedSession = nextGuidedNum;
+    }
     S.guidedStep = "spark";
     S.newMovePhase = null;
     S.guidedPaused = false;
@@ -92,11 +97,13 @@
     patch = patch || {};
 
     if (patch.guided) {
-      if (!Array.isArray(S.completedGuidedSessions)) S.completedGuidedSessions = [];
       var completedSessionNums = Array.isArray(patch.guided.completedSessionNums) ? patch.guided.completedSessionNums : [];
       for (var i = 0; i < completedSessionNums.length; i++) {
-        if (S.completedGuidedSessions.indexOf(completedSessionNums[i]) < 0) {
-          S.completedGuidedSessions.push(completedSessionNums[i]);
+        if (typeof SparkInstrumentProgress !== "undefined" && SparkInstrumentProgress.markGuidedSessionComplete) {
+          SparkInstrumentProgress.markGuidedSessionComplete(completedSessionNums[i]);
+        } else {
+          if (!Array.isArray(S.completedGuidedSessions)) S.completedGuidedSessions = [];
+          if (S.completedGuidedSessions.indexOf(completedSessionNums[i]) < 0) S.completedGuidedSessions.push(completedSessionNums[i]);
         }
       }
 
@@ -113,7 +120,13 @@
         }
       }
 
-      if (patch.guided.nextGuidedSession != null) S.guidedSession = patch.guided.nextGuidedSession;
+      if (patch.guided.nextGuidedSession != null) {
+        if (typeof SparkInstrumentProgress !== "undefined" && SparkInstrumentProgress.setGuidedSession) {
+          SparkInstrumentProgress.setGuidedSession(patch.guided.nextGuidedSession);
+        } else {
+          S.guidedSession = patch.guided.nextGuidedSession;
+        }
+      }
     }
 
     if (patch.mastery && patch.mastery.rhythm) {
