@@ -396,6 +396,14 @@ function _doSave(){
     if(data.history) data.history=capArray(data.history,500);
     if(Array.isArray(data.xpLog)) data.xpLog=capArray(data.xpLog,500);
     if(data.analytics){
+      // Shallow-copy analytics first: `data` is a shallow snapshot of S, so
+      // data.analytics IS the live S.analytics — capping its arrays in place
+      // would truncate the user's in-memory history mid-session.
+      var _analytics={};
+      for(var _ak in data.analytics){
+        if(Object.prototype.hasOwnProperty.call(data.analytics,_ak)) _analytics[_ak]=data.analytics[_ak];
+      }
+      data.analytics=_analytics;
       var _histKeys=["performanceHistory","accuracyHistory","practiceHistory","xpHistory","streakHistory"];
       for(var _hi=0;_hi<_histKeys.length;_hi++){
         if(Array.isArray(data.analytics[_histKeys[_hi]])){

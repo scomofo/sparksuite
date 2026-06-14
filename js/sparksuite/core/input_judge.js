@@ -2,6 +2,9 @@
   function InputJudge() {}
 
   InputJudge.prototype.resolve = function(noteStates, inputEvent, preset) {
+    if (!inputEvent || typeof inputEvent.atSec !== "number") {
+      return { matched: false, reason: "no_target", judgement: "miss", note: null };
+    }
     preset = preset || SparkEnginePresetRegistry.get("spark_learning");
     var missMs = preset.hitWindowMs.miss;
     var inputMask = inputEvent.laneMask || 0;

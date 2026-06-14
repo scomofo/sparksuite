@@ -133,29 +133,28 @@
       tempoChanges.unshift({tick: 0, usPerBeat: 500000});
     }
 
-    function tickToSec(targetTick){
-      var sec = 0;
-      var prevTick = 0;
-      var curUs = tempoChanges[0].usPerBeat;
-      for(var i=1; i<tempoChanges.length; i++){
-        var tc = tempoChanges[i];
-        if(tc.tick >= targetTick) break;
-        sec += ((tc.tick - prevTick) / ticksPerBeat) * (curUs / 1000000);
-        prevTick = tc.tick;
-        curUs = tc.usPerBeat;
-      }
-      sec += ((targetTick - prevTick) / ticksPerBeat) * (curUs / 1000000);
-      return sec;
-    }
-
+    // Convert ticks -> seconds in a single linear pass per track. Events are in
+    // chronological tick order, so we keep a pointer into the global tempo map
+    // and integrate elapsed time incrementally across any tempo boundaries a
+    // delta spans — O(events + tempoChanges) instead of O(events * tempoChanges).
     var notes = [];
     for(var t=0;t<tracks.length;t++){
       var absTick = 0;
+      var secTime = 0;
+      var tcIdx = 0;
       var activeNotes = {}; // key: ch_note -> {startSec, vel}
       for(var e=0;e<tracks[t].length;e++){
         var evt = tracks[t][e];
-        absTick += evt.delta;
-        var secTime = tickToSec(absTick);
+        var delta = evt.delta;
+        while(tcIdx + 1 < tempoChanges.length && absTick + delta >= tempoChanges[tcIdx + 1].tick){
+          var ticksToNext = tempoChanges[tcIdx + 1].tick - absTick;
+          secTime += (ticksToNext / ticksPerBeat) * (tempoChanges[tcIdx].usPerBeat / 1000000);
+          delta -= ticksToNext;
+          absTick = tempoChanges[tcIdx + 1].tick;
+          tcIdx++;
+        }
+        secTime += (delta / ticksPerBeat) * (tempoChanges[tcIdx].usPerBeat / 1000000);
+        absTick += delta;
         if(evt.type === "noteOn" && evt.vel > 0){
           activeNotes[evt.ch + "_" + evt.note] = {startSec: secTime, vel: evt.vel, ch: evt.ch, midi: evt.note};
         } else if(evt.type === "noteOff" || (evt.type === "noteOn" && evt.vel === 0)){

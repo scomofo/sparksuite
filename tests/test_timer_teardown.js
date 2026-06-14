@@ -36,14 +36,18 @@ console.log('\n--- Timer teardown on deactivate ---');
 test('deactivate() clears piano game intervals and resets their active flags', function() {
   var cleared = [];
   var origClear = global.clearInterval;
-  global.clearInterval = function(id) { cleared.push(id); };
+  try {
+    global.clearInterval = function(id) { cleared.push(id); };
 
-  global.T.rhythm = 101; global.T.runner = 102; global.T.build = 103;
-  global.S.rhythmActive = true; global.S.runnerActive = true; global.S.buildPlaying = true;
+    global.T.rhythm = 101; global.T.runner = 102; global.T.build = 103;
+    global.S.rhythmActive = true; global.S.runnerActive = true; global.S.buildPlaying = true;
 
-  SparkInstruments.deactivate();
-
-  global.clearInterval = origClear;
+    SparkInstruments.deactivate();
+  } finally {
+    // Always restore the global mock, even if an assertion throws, so it can't
+    // pollute later tests.
+    global.clearInterval = origClear;
+  }
 
   assert.ok(cleared.indexOf(101) !== -1, 'T.rhythm interval should be cleared');
   assert.ok(cleared.indexOf(102) !== -1, 'T.runner interval should be cleared');

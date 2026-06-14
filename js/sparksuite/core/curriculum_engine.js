@@ -120,7 +120,7 @@
       // no numeric value for it. The live completion path only appends the id to
       // S.completedLessons (no mastery write), so without this skip the first
       // lesson stays "incomplete" forever and daily practice never advances.
-      if (completedIds.indexOf(unlocked[i].id) !== -1) continue;
+      if (unlocked[i].id && completedIds.indexOf(unlocked[i].id) !== -1) continue;
       if (lessonIsIncomplete(unlocked[i])) return unlocked[i];
     }
     return unlocked.length ? unlocked[0] : null;
