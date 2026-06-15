@@ -1,12 +1,16 @@
 (function() {
   var runtime = {
     engine: null,
-    clock: null,
-    raf: null,
     segmentId: null,
     sourcePayload: null,
     activePayload: null
   };
+
+  var pageAdapter = typeof SparkRhythmHighwayPageAdapter !== "undefined"
+    ? new SparkRhythmHighwayPageAdapter()
+    : null;
+
+  var currentSongTimeSec = 0;
 
   var ASSIST_PRESETS = [
     { id: "spark_learning", label: "Guided", hint: "Wider timing windows and extra forgiveness" },
@@ -146,7 +150,6 @@
     var instrumentType = normalizeRhythmInstrumentType(
       launchContext.instrument || activePayload.adapterType || payload.adapterType || null
     );
-    runtime.clock = new SparkTimingEngine(new SparkCalibrationEngine()).createClock(instrumentType);
     runtime.engine = new SparkRhythmGameplayEngine({
       chart: activePayload.songChart,
       adapter: createRhythmHighwayAdapter(instrumentType),
@@ -169,29 +172,51 @@
     S.rhythmHighwayFeedback = "";
     S.screen = SCR.RHYTHM_HIGHWAY;
 
-    tickRhythmHighway();
+    if (pageAdapter) {
+      pageAdapter.createController({
+        onRender: function(state) {
+          if (!runtime.engine) return;
+          var positionSec = state && state.transport ? (state.transport.positionSec || 0) : 0;
+          currentSongTimeSec = positionSec;
+          S.rhythmHighwaySnapshot = runtime.engine.update(positionSec);
+          if (S.rhythmHighwaySnapshot.finished && !S.rhythmHighwayResult) {
+            finalizeRhythmHighway();
+            return;
+          }
+          render();
+        },
+        onFinalize: function() {
+          if (runtime.engine && !S.rhythmHighwayResult) {
+            finalizeRhythmHighway();
+          }
+        }
+      });
+      var chart = activePayload.songChart;
+      pageAdapter.start({ songChart: chart, chartId: activePayload.chartId || null }, { autoPlay: true });
+    } else {
+      tickRhythmHighway();
+    }
+
     render();
     return true;
   }
 
   function stopSparkRhythmHighway() {
-    if (runtime.raf) cancelAnimationFrame(runtime.raf);
-    runtime.raf = null;
-    if (runtime.clock && typeof runtime.clock.close === "function") runtime.clock.close();
-    runtime.clock = null;
+    if (pageAdapter) pageAdapter.destroy();
     runtime.engine = null;
+    currentSongTimeSec = 0;
   }
 
   function tickRhythmHighway() {
-    if (!runtime.engine || !runtime.clock) return;
-    var songTimeSec = runtime.clock.getSongTime();
-    S.rhythmHighwaySnapshot = runtime.engine.update(songTimeSec);
+    // Legacy fallback path when SparkRhythmHighwayPageAdapter is unavailable.
+    // In normal operation the adapter's onRender callback drives the loop.
+    if (!runtime.engine) return;
+    S.rhythmHighwaySnapshot = runtime.engine.update(currentSongTimeSec);
     if (S.rhythmHighwaySnapshot.finished && !S.rhythmHighwayResult) {
       finalizeRhythmHighway();
       return;
     }
     render();
-    runtime.raf = requestAnimationFrame(tickRhythmHighway);
   }
 
   function finalizeRhythmHighway() {
@@ -209,16 +234,19 @@
         gameplayContext: cloneRhythmHighwayLaunchContext()
       });
     }
-    stopSparkRhythmHighway();
+    if (pageAdapter) {
+      pageAdapter.stop();
+    }
+    runtime.engine = null;
     render();
   }
 
   function sparkRhythmHighwayStrum() {
-    if (!runtime.engine || !runtime.clock) return;
+    if (!runtime.engine) return;
     var outcome = runtime.engine.handleInput({
       kind: "strum",
       laneMask: S.rhythmHighwayHeldMask || 0,
-      atSec: runtime.clock.getSongTime()
+      atSec: currentSongTimeSec
     });
     if (outcome && outcome.resolution) {
       S.rhythmHighwayFeedback = feedbackForResolution(outcome.resolution);

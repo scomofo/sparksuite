@@ -1,24 +1,15 @@
 (function() {
-  /**
-   * SparkTransportEngine
-   *
-   * Engine-owned transport lifecycle for lesson playback, rhythm gameplay,
-   * captions, metronome, and future sync subscribers.
-   *
-   * UI should render snapshots from this engine; UI should not own transport math.
-   */
-
-  function _num(value, fallback) {
+  function num(value, fallback) {
     var n = Number(value);
     return Number.isFinite(n) ? n : fallback;
   }
 
-  function _clone(value) {
+  function clone(value) {
     if (value == null) return value;
     return JSON.parse(JSON.stringify(value));
   }
 
-  function _nowMs(clock) {
+  function nowMs(clock) {
     if (clock && typeof clock.nowMs === "function") return clock.nowMs();
     if (typeof performance !== "undefined" && performance && typeof performance.now === "function") return performance.now();
     return Date.now();
@@ -30,14 +21,14 @@
     this.clock = options.clock || null;
     this.subscribers = [];
     this.cues = [];
-    this._lastTickMs = null;
-    this._snapshot = this._createSnapshot({ status: "idle", positionSec: 0, durationSec: 0 });
+    this.lastTickMs = null;
+    this.snapshot = this.createSnapshot({ status: "idle", positionSec: 0, durationSec: 0 });
   }
 
-  SparkTransportEngine.prototype._createSnapshot = function(options) {
+  SparkTransportEngine.prototype.createSnapshot = function(options) {
     options = options || {};
-    var durationSec = Math.max(0, _num(options.durationSec, 0));
-    var positionSec = Math.max(0, _num(options.positionSec, 0));
+    var durationSec = Math.max(0, num(options.durationSec, 0));
+    var positionSec = Math.max(0, num(options.positionSec, 0));
     if (durationSec > 0) positionSec = Math.min(positionSec, durationSec);
 
     var base = this.timingCore && typeof this.timingCore.createTransport === "function"
@@ -45,7 +36,7 @@
         status: options.status || "idle",
         durationSec: durationSec,
         positionSec: positionSec,
-        beatGrid: options.beatGrid || (this._snapshot && this._snapshot.beatGrid) || null
+        beatGrid: options.beatGrid || (this.snapshot && this.snapshot.beatGrid) || null
       })
       : {
         status: options.status || "idle",
@@ -54,19 +45,17 @@
         positionMs: Math.round(positionSec * 1000)
       };
 
-    base.sourceId = options.sourceId || (this._snapshot && this._snapshot.sourceId) || null;
+    base.sourceId = options.sourceId || (this.snapshot && this.snapshot.sourceId) || null;
     base.reason = options.reason || null;
-    base.updatedAtMs = _nowMs(this.clock);
+    base.updatedAtMs = nowMs(this.clock);
     return base;
   };
 
-  SparkTransportEngine.prototype._emit = function(reason) {
+  SparkTransportEngine.prototype.emit = function(reason) {
     var snapshot = this.getSnapshot();
     snapshot.reason = reason || snapshot.reason || null;
     for (var i = 0; i < this.subscribers.length; i++) {
-      try {
-        this.subscribers[i](snapshot);
-      } catch (err) {}
+      try { this.subscribers[i](snapshot); } catch (err) {}
     }
     return snapshot;
   };
@@ -87,125 +76,112 @@
       lessonTiming = this.timingCore.createLessonTiming(source.manifest);
     }
 
-    var beatGrid = source.beatGrid || (lessonTiming && lessonTiming.beatGrid) || null;
-    var durationSec = _num(source.durationSec, lessonTiming ? lessonTiming.durationSec : 0);
-
     this.cues = Array.isArray(source.cues) ? source.cues.slice() : [];
-    this._lastTickMs = null;
-    this._snapshot = this._createSnapshot({
+    this.lastTickMs = null;
+    this.snapshot = this.createSnapshot({
       status: "ready",
       sourceId: source.id || source.sourceId || (lessonTiming && lessonTiming.lessonId) || null,
-      durationSec: durationSec,
-      positionSec: _num(source.positionSec, 0),
-      beatGrid: beatGrid,
+      durationSec: num(source.durationSec, lessonTiming ? lessonTiming.durationSec : 0),
+      positionSec: num(source.positionSec, 0),
+      beatGrid: source.beatGrid || (lessonTiming && lessonTiming.beatGrid) || null,
       reason: "load"
     });
 
-    return this._emit("load");
+    return this.emit("load");
   };
 
   SparkTransportEngine.prototype.play = function(options) {
     options = options || {};
-    this._lastTickMs = _nowMs(this.clock);
-    this._snapshot = this._createSnapshot({
+    this.lastTickMs = nowMs(this.clock);
+    this.snapshot = this.createSnapshot({
       status: "running",
-      sourceId: this._snapshot.sourceId,
-      durationSec: this._snapshot.durationSec,
-      positionSec: Object.prototype.hasOwnProperty.call(options, "positionSec") ? options.positionSec : this._snapshot.positionSec,
-      beatGrid: this._snapshot.beatGrid,
+      sourceId: this.snapshot.sourceId,
+      durationSec: this.snapshot.durationSec,
+      positionSec: Object.prototype.hasOwnProperty.call(options, "positionSec") ? options.positionSec : this.snapshot.positionSec,
+      beatGrid: this.snapshot.beatGrid,
       reason: "play"
     });
-    return this._emit("play");
+    return this.emit("play");
   };
 
   SparkTransportEngine.prototype.pause = function() {
-    this._advance();
-    this._lastTickMs = null;
-    this._snapshot = this._createSnapshot({
+    this.tick();
+    this.lastTickMs = null;
+    this.snapshot = this.createSnapshot({
       status: "paused",
-      sourceId: this._snapshot.sourceId,
-      durationSec: this._snapshot.durationSec,
-      positionSec: this._snapshot.positionSec,
-      beatGrid: this._snapshot.beatGrid,
+      sourceId: this.snapshot.sourceId,
+      durationSec: this.snapshot.durationSec,
+      positionSec: this.snapshot.positionSec,
+      beatGrid: this.snapshot.beatGrid,
       reason: "pause"
     });
-    return this._emit("pause");
+    return this.emit("pause");
   };
 
   SparkTransportEngine.prototype.stop = function() {
-    this._lastTickMs = null;
-    this._snapshot = this._createSnapshot({
+    this.lastTickMs = null;
+    this.snapshot = this.createSnapshot({
       status: "stopped",
-      sourceId: this._snapshot.sourceId,
-      durationSec: this._snapshot.durationSec,
+      sourceId: this.snapshot.sourceId,
+      durationSec: this.snapshot.durationSec,
       positionSec: 0,
-      beatGrid: this._snapshot.beatGrid,
+      beatGrid: this.snapshot.beatGrid,
       reason: "stop"
     });
-    return this._emit("stop");
+    return this.emit("stop");
   };
 
   SparkTransportEngine.prototype.seek = function(positionSec) {
-    this._snapshot = this._createSnapshot({
-      status: this._snapshot.status,
-      sourceId: this._snapshot.sourceId,
-      durationSec: this._snapshot.durationSec,
+    this.snapshot = this.createSnapshot({
+      status: this.snapshot.status,
+      sourceId: this.snapshot.sourceId,
+      durationSec: this.snapshot.durationSec,
       positionSec: positionSec,
-      beatGrid: this._snapshot.beatGrid,
+      beatGrid: this.snapshot.beatGrid,
       reason: "seek"
     });
-    this._lastTickMs = this._snapshot.status === "running" ? _nowMs(this.clock) : null;
-    return this._emit("seek");
+    this.lastTickMs = this.snapshot.status === "running" ? nowMs(this.clock) : null;
+    return this.emit("seek");
   };
 
-  SparkTransportEngine.prototype._advance = function(nowMs) {
-    nowMs = _num(nowMs, _nowMs(this.clock));
-    if (this._snapshot.status !== "running") return false;
-
-    if (this._lastTickMs == null) {
-      this._lastTickMs = nowMs;
-      return false;
+  SparkTransportEngine.prototype.tick = function(tickMs) {
+    tickMs = num(tickMs, nowMs(this.clock));
+    if (this.snapshot.status !== "running") return this.getSnapshot();
+    if (this.lastTickMs == null) {
+      this.lastTickMs = tickMs;
+      return this.getSnapshot();
     }
 
-    var deltaSec = Math.max(0, (nowMs - this._lastTickMs) / 1000);
-    this._lastTickMs = nowMs;
+    var deltaSec = Math.max(0, (tickMs - this.lastTickMs) / 1000);
+    this.lastTickMs = tickMs;
 
-    var newPositionSec = this._snapshot.positionSec + deltaSec;
-    var durationSec = this._snapshot.durationSec;
-    var fallbackDone = durationSec > 0 && newPositionSec >= durationSec;
     var next = this.timingCore && typeof this.timingCore.advanceTransport === "function"
-      ? this.timingCore.advanceTransport(this._snapshot, deltaSec)
-      : this._createSnapshot({
-        status: fallbackDone ? "completed" : "running",
-        sourceId: this._snapshot.sourceId,
-        durationSec: durationSec,
-        positionSec: fallbackDone ? durationSec : newPositionSec,
-        beatGrid: this._snapshot.beatGrid
+      ? this.timingCore.advanceTransport(this.snapshot, deltaSec)
+      : this.createSnapshot({
+        status: "running",
+        sourceId: this.snapshot.sourceId,
+        durationSec: this.snapshot.durationSec,
+        positionSec: this.snapshot.positionSec + deltaSec,
+        beatGrid: this.snapshot.beatGrid
       });
 
-    next.sourceId = this._snapshot.sourceId;
-    this._snapshot = next;
-    return true;
-  };
-
-  SparkTransportEngine.prototype.tick = function(nowMs) {
-    if (this._advance(nowMs)) {
-      this._emit(this._snapshot.status === "completed" ? "complete" : "tick");
-    }
+    next.sourceId = this.snapshot.sourceId;
+    this.snapshot = next;
+    this.emit(this.snapshot.status === "completed" ? "complete" : "tick");
     return this.getSnapshot();
   };
 
   SparkTransportEngine.prototype.getDueCues = function(options) {
     if (!this.timingCore || typeof this.timingCore.scheduleCues !== "function") return [];
-    return this.timingCore.scheduleCues(this.cues, this._snapshot, options || {});
+    return this.timingCore.scheduleCues(this.cues, this.snapshot, options || {});
   };
 
   SparkTransportEngine.prototype.getSnapshot = function() {
-    return _clone(this._snapshot);
+    return clone(this.snapshot);
   };
 
   SparkTransportEngine.prototype.isRunning = function() {
-    return this._snapshot.status === "running";
+    return this.snapshot.status === "running";
   };
 
   if (typeof window !== "undefined") window.SparkTransportEngine = SparkTransportEngine;
