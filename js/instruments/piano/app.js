@@ -815,7 +815,7 @@ function syncPianoGuidedCompletionFromCore(result, plan) {
       }
       completedNums.push(guidedPatch.completedSessionNums[i]);
     }
-  } else if (plan) {
+  } else if (plan && plan.num != null) {
     if (S.completedSessions.indexOf(plan.num) < 0) {
       S.completedSessions.push(plan.num);
     }

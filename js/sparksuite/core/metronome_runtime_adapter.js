@@ -40,6 +40,7 @@
     var absoluteBeat = num(barBeat.absoluteBeat, positionSec / secondsPerBeat);
     if (this.lastBeat !== null && absoluteBeat < this.lastBeat) {
       this.lastBeat = null;
+      this.events = this.events.filter(function(e) { return e.beat < absoluteBeat; });
     }
     var step = 1 / this.subdivision;
     var startStep = Math.floor(absoluteBeat / step);
