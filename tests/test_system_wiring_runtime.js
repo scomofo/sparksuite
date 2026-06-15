@@ -206,7 +206,7 @@ console.log("=== System Wiring Runtime Tests ===");
     core.stemMixer = { stop: function () {} };
     core.playbackEngine = { stop: function () {} };
     core.performanceTracker = {
-      getSummary: function () { return { weakAreas: ["timing"] }; },
+      computeSummary: function () { return { accuracy: 0.8, timing: 0.9, consistency: 0.7, weakAreas: [] }; },
       getEvents: function () { return [{ error: 10 }]; }
     };
     core.heatmapGenerator = {
@@ -222,7 +222,7 @@ console.log("=== System Wiring Runtime Tests ===");
     core.policyEngine = {
       update: function (model, performance) {
         assert.deepStrictEqual(model, { current: "model" });
-        assert.deepStrictEqual(performance, { weakAreas: ["timing"] });
+        assert.deepStrictEqual(performance, { accuracy: 0.8, timing: 0.9, consistency: 0.7, weakAreas: [] });
         return updatedModel;
       }
     };

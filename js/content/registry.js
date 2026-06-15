@@ -143,6 +143,7 @@
     items = Array.isArray(items) ? items : [];
     SparkContent[type] = {};
     for(var i=0;i<items.length;i++){
+      if(!items[i].id){ console.error(type + " item at index " + i + " is missing an id, skipping"); continue; }
       SparkContent[type][items[i].id] = type === "songs" ? normalizeSongCatalogItem(items[i]) : items[i];
     }
     if(type === "songs") rebuildSongFamilyIndex();

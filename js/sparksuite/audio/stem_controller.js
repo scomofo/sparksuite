@@ -16,11 +16,23 @@
 
   StemController.prototype.fadeOut = function(stem, dur) {
     dur = dur || 2; var steps = 20, iv = (dur * 1000) / steps, vol = 1, self = this;
-    var timer = setInterval(function() { vol -= 1/steps; if (vol <= 0) { vol = 0; clearInterval(timer); } self.mixer.setVolume(stem, vol); }, iv);
+    if (!this._fadeTimers) this._fadeTimers = {};
+    if (this._fadeTimers[stem]) { clearInterval(this._fadeTimers[stem]); }
+    this._fadeTimers[stem] = setInterval(function() {
+      vol -= 1/steps;
+      if (vol <= 0) { vol = 0; clearInterval(self._fadeTimers[stem]); delete self._fadeTimers[stem]; }
+      self.mixer.setVolume(stem, vol);
+    }, iv);
   };
   StemController.prototype.fadeIn = function(stem, dur) {
     dur = dur || 2; var steps = 20, iv = (dur * 1000) / steps, vol = 0, self = this;
-    var timer = setInterval(function() { vol += 1/steps; if (vol >= 1) { vol = 1; clearInterval(timer); } self.mixer.setVolume(stem, vol); }, iv);
+    if (!this._fadeTimers) this._fadeTimers = {};
+    if (this._fadeTimers[stem]) { clearInterval(this._fadeTimers[stem]); }
+    this._fadeTimers[stem] = setInterval(function() {
+      vol += 1/steps;
+      if (vol >= 1) { vol = 1; clearInterval(self._fadeTimers[stem]); delete self._fadeTimers[stem]; }
+      self.mixer.setVolume(stem, vol);
+    }, iv);
   };
 
   StemController.prototype.getMode = function() { return this._mode; };

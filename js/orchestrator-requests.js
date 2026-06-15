@@ -855,7 +855,7 @@ function buildMidiImportRuntimePayload(options) {
     ? options.seedChart
     : S.importedMidiSeedPreview;
   var tracks = normalizedMidi && Array.isArray(normalizedMidi.tracks) ? normalizedMidi.tracks : [];
-  return {
+  var midiPayload = {
     summary: normalizedMidi ? {
       sourceName: normalizedMidi.sourceName || null,
       trackCount: tracks.length,
@@ -868,9 +868,12 @@ function buildMidiImportRuntimePayload(options) {
       })
     } : null,
     assignments: assignments || {},
-    seedMode: (options && Object.prototype.hasOwnProperty.call(options, "seedMode")) ? options.seedMode : null,
     seedTitle: seedChart && seedChart.title ? seedChart.title : null
   };
+  if (options && Object.prototype.hasOwnProperty.call(options, "seedMode")) {
+    midiPayload.seedMode = options.seedMode;
+  }
+  return midiPayload;
 }
 
 function syncMidiImportStateRequest(options) {

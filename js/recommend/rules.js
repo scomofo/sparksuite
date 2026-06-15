@@ -26,7 +26,7 @@
     var seenTypes = {};
     for(var i=0;i<candidates.length;i++){
       if(out.length >= maxSuggestions) break;
-      if(!seenTypes[candidates[i].type] || candidates[i].type === "lesson"){
+      if(!seenTypes[candidates[i].type]){
         out.push(candidates[i]);
         seenTypes[candidates[i].type] = true;
       }

@@ -63,7 +63,7 @@
     for(var j=0;j<curriculum.length;j++){
       if(curriculum[j] && curriculum[j].id && completed.indexOf(curriculum[j].id)===-1) return curriculum[j];
     }
-    return curriculum[0];
+    return null;
   }
 
   function selectInstrumentModuleCandidate(){

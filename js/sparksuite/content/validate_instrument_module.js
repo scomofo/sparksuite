@@ -67,6 +67,7 @@
   function validateLessons(moduleId, lessons, skillTree) {
     var skillIds = {};
     var lessonIds = {};
+    var seenIds = {};
     var i;
     var j;
     var lesson;
@@ -83,16 +84,24 @@
       skillIds[skills[i].id] = true;
     }
 
+    // First pass: build complete lesson ID map so forward-reference prerequisites validate correctly
+    for (i = 0; i < lessons.length; i++) {
+      lesson = lessons[i] || {};
+      lessonId = lesson.id || (lesson.num != null ? String(lesson.num) : null);
+      if (lessonId) lessonIds[lessonId] = true;
+    }
+
+    // Second pass: validate skills, duplicates, and prerequisites
     for (i = 0; i < lessons.length; i++) {
       lesson = lessons[i] || {};
       lessonId = lesson.id || (lesson.num != null ? String(lesson.num) : null);
       if (!lessonId) {
         throw new Error(moduleId + ": lesson missing id");
       }
-      if (lessonIds[lessonId]) {
+      if (seenIds[lessonId]) {
         throw new Error(moduleId + ': duplicate lesson id "' + lessonId + '"');
       }
-      lessonIds[lessonId] = true;
+      seenIds[lessonId] = true;
 
       lessonSkill = lesson.skill || (Array.isArray(lesson.skills) && lesson.skills.length ? lesson.skills[0] : null);
       if (!lessonSkill) {
