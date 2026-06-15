@@ -452,6 +452,7 @@ function guitarAct(a, v) {
       if (window.SparkProgressBridge && typeof SparkProgressBridge.applySessionStatePatch === "function") {
         var guidedPatch = {
           guided: {
+            instrumentKey: "guitar",
             completedSessionNums: [plan.num],
             nextGuidedSession: Math.min(D.SESSIONS.length, plan.num + 1),
             chordProgress: {}

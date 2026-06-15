@@ -269,11 +269,16 @@
     getNextGuidedSession: function(sessions, userContext) {
       if (!Array.isArray(sessions) || sessions.length === 0) return null;
       userContext = userContext || {};
+      var instrumentKey = userContext.instrumentKey || null;
 
       var completed = {};
       var sources = [];
       if (Array.isArray(userContext.completedSessionNums)) sources.push(userContext.completedSessionNums);
       if (typeof S !== "undefined" && S) {
+        if (instrumentKey && S.completedGuidedSessionsByInstrument &&
+            Array.isArray(S.completedGuidedSessionsByInstrument[instrumentKey])) {
+          sources.push(S.completedGuidedSessionsByInstrument[instrumentKey]);
+        }
         if (Array.isArray(S.completedGuidedSessions)) sources.push(S.completedGuidedSessions);
         if (Array.isArray(S.completedSessions)) sources.push(S.completedSessions);
       }

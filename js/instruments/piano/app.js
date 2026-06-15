@@ -807,14 +807,26 @@ function syncPianoGuidedCompletionFromCore(result, plan) {
   if (!Array.isArray(S.completedSessions)) S.completedSessions = [];
   if (!S.chordProg || typeof S.chordProg !== "object") S.chordProg = {};
 
+  var completedNums = [];
   if (guidedPatch && Array.isArray(guidedPatch.completedSessionNums)) {
     for (var i = 0; i < guidedPatch.completedSessionNums.length; i++) {
       if (S.completedSessions.indexOf(guidedPatch.completedSessionNums[i]) < 0) {
         S.completedSessions.push(guidedPatch.completedSessionNums[i]);
       }
+      completedNums.push(guidedPatch.completedSessionNums[i]);
     }
   } else if (plan && S.completedSessions.indexOf(plan.num) < 0) {
     S.completedSessions.push(plan.num);
+    completedNums.push(plan.num);
+  }
+  if (completedNums.length) {
+    if (!S.completedGuidedSessionsByInstrument || typeof S.completedGuidedSessionsByInstrument !== "object") S.completedGuidedSessionsByInstrument = {};
+    if (!Array.isArray(S.completedGuidedSessionsByInstrument["piano"])) S.completedGuidedSessionsByInstrument["piano"] = [];
+    for (var j = 0; j < completedNums.length; j++) {
+      if (S.completedGuidedSessionsByInstrument["piano"].indexOf(completedNums[j]) < 0) {
+        S.completedGuidedSessionsByInstrument["piano"].push(completedNums[j]);
+      }
+    }
   }
 
   if (guidedPatch && guidedPatch.chordProgress) {

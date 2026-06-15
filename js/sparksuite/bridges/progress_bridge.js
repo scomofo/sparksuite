@@ -94,9 +94,17 @@
     if (patch.guided) {
       if (!Array.isArray(S.completedGuidedSessions)) S.completedGuidedSessions = [];
       var completedSessionNums = Array.isArray(patch.guided.completedSessionNums) ? patch.guided.completedSessionNums : [];
+      var guidedInstrumentKey = patch.guided.instrumentKey || null;
       for (var i = 0; i < completedSessionNums.length; i++) {
         if (S.completedGuidedSessions.indexOf(completedSessionNums[i]) < 0) {
           S.completedGuidedSessions.push(completedSessionNums[i]);
+        }
+        if (guidedInstrumentKey) {
+          if (!S.completedGuidedSessionsByInstrument || typeof S.completedGuidedSessionsByInstrument !== "object") S.completedGuidedSessionsByInstrument = {};
+          if (!Array.isArray(S.completedGuidedSessionsByInstrument[guidedInstrumentKey])) S.completedGuidedSessionsByInstrument[guidedInstrumentKey] = [];
+          if (S.completedGuidedSessionsByInstrument[guidedInstrumentKey].indexOf(completedSessionNums[i]) < 0) {
+            S.completedGuidedSessionsByInstrument[guidedInstrumentKey].push(completedSessionNums[i]);
+          }
         }
       }
 
