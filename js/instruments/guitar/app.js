@@ -225,33 +225,57 @@ function guitarAct(a, v) {
     var toChord = S.drillChords[(S.drillIdx + 1) % 2].name;
     var elapsed = (now - S.drillLastSwitchTime) / 1000;
     S.drillLastSwitchTime = now;
-    if (elapsed < 15) {
-      var key = fromChord + "->" + toChord;
-      var ts = SparkTransitionStats.ensure(key, { attempts: 0, avgTime: 0, best: 999 });
-      ts.avgTime = (ts.avgTime * ts.attempts + elapsed) / (ts.attempts + 1);
-      ts.attempts++;
-      if (elapsed < ts.best) ts.best = elapsed;
-      // Adaptive BPM: adjust target tempo based on switch speed performance
-      var targetSecs = 60 / S.drillAdaptiveBpm;
-      if (elapsed < targetSecs * 0.8) {
-        S.drillConsecutiveFast++; S.drillConsecutiveSlow = 0;
-        if (S.drillConsecutiveFast >= 3) {
-          S.drillAdaptiveBpm = Math.min(S.drillAdaptiveBpm + 3, 160);
-          S.drillConsecutiveFast = 0;
-          fireMicro("speed_up", "Speeding up!", "&#9654;&#65039;");
-        }
-      } else if (elapsed > targetSecs * 1.5) {
-        S.drillConsecutiveSlow++; S.drillConsecutiveFast = 0;
-        if (S.drillConsecutiveSlow >= 2) {
-          S.drillAdaptiveBpm = Math.max(S.drillAdaptiveBpm - 5, 40);
-          S.drillConsecutiveSlow = 0;
-        }
-      } else { S.drillConsecutiveFast = 0; S.drillConsecutiveSlow = 0; }
+    var _pe = typeof SparkSuitePracticeEngine !== "undefined" ? new SparkSuitePracticeEngine() : null;
+    if (_pe && typeof _pe.processDrillSwitch === "function") {
+      var drResult = _pe.processDrillSwitch({
+        drillAdaptiveBpm: S.drillAdaptiveBpm,
+        drillConsecutiveFast: S.drillConsecutiveFast,
+        drillConsecutiveSlow: S.drillConsecutiveSlow,
+        drillSwitches: S.drillSwitches,
+        drillIdx: S.drillIdx
+      }, { elapsed: elapsed, fromChord: fromChord, toChord: toChord });
+      S.drillAdaptiveBpm = drResult.drillAdaptiveBpm;
+      S.drillConsecutiveFast = drResult.drillConsecutiveFast;
+      S.drillConsecutiveSlow = drResult.drillConsecutiveSlow;
+      S.drillSwitches = drResult.drillSwitches;
+      S.drillIdx = drResult.drillIdx;
+      if (drResult.transitionStats) {
+        var _ts = SparkTransitionStats.ensure(drResult.transitionStats.key, { attempts: 0, avgTime: 0, best: 999 });
+        _ts.avgTime = (_ts.avgTime * _ts.attempts + drResult.transitionStats.elapsed) / (_ts.attempts + 1);
+        _ts.attempts++;
+        if (drResult.transitionStats.elapsed < _ts.best) _ts.best = drResult.transitionStats.elapsed;
+      }
+      for (var _ri = 0; _ri < drResult.microRewards.length; _ri++) {
+        fireMicro(drResult.microRewards[_ri].id, drResult.microRewards[_ri].label, drResult.microRewards[_ri].icon);
+      }
+    } else {
+      if (elapsed < 15) {
+        var key = fromChord + "->" + toChord;
+        var ts = SparkTransitionStats.ensure(key, { attempts: 0, avgTime: 0, best: 999 });
+        ts.avgTime = (ts.avgTime * ts.attempts + elapsed) / (ts.attempts + 1);
+        ts.attempts++;
+        if (elapsed < ts.best) ts.best = elapsed;
+        var targetSecs = 60 / S.drillAdaptiveBpm;
+        if (elapsed < targetSecs * 0.8) {
+          S.drillConsecutiveFast++; S.drillConsecutiveSlow = 0;
+          if (S.drillConsecutiveFast >= 3) {
+            S.drillAdaptiveBpm = Math.min(S.drillAdaptiveBpm + 3, 160);
+            S.drillConsecutiveFast = 0;
+            fireMicro("speed_up", "Speeding up!", "&#9654;&#65039;");
+          }
+        } else if (elapsed > targetSecs * 1.5) {
+          S.drillConsecutiveSlow++; S.drillConsecutiveFast = 0;
+          if (S.drillConsecutiveSlow >= 2) {
+            S.drillAdaptiveBpm = Math.max(S.drillAdaptiveBpm - 5, 40);
+            S.drillConsecutiveSlow = 0;
+          }
+        } else { S.drillConsecutiveFast = 0; S.drillConsecutiveSlow = 0; }
+      }
+      S.drillIdx = (S.drillIdx + 1) % 2; S.drillSwitches++;
+      if (S.drillSwitches === 1) fireMicro("clean_switch", "Smooth switch!", "&#9889;");
+      if (S.drillSwitches === 3) fireMicro("three_switches", "On fire!", "&#128293;");
     }
     _prevChordKey = fromChord;
-    S.drillIdx = (S.drillIdx + 1) % 2; S.drillSwitches++;
-    if (S.drillSwitches === 1) fireMicro("clean_switch", "Smooth switch!", "&#9889;");
-    if (S.drillSwitches === 3) fireMicro("three_switches", "On fire!", "&#128293;");
     render();
     return true;
   }
@@ -317,9 +341,26 @@ function guitarAct(a, v) {
         });
       }
       S.quizAns = ch.name;
-      if (ok) { snd("correct"); S.quizCorrect++; S.quizScore++; S.quizStreak++; S.xp += 10; logHistory("quiz", S.quizQ.name, 10); _sparkEmit("drill_answered", { appId: activityAppId, skillId: S.quizQ.name, correct: true, xp: 10 }); checkBadges(); saveState(); if (S.quizStreak === 3) fireMicro("quiz_streak", "Hat trick!", "&#127913;"); }
-      else { snd("wrong"); S.quizStreak = 0; }
-      S.quizTotal++; render(); setTimeout(genQ, 1200);
+      var _pe2 = typeof SparkSuitePracticeEngine !== "undefined" ? new SparkSuitePracticeEngine() : null;
+      if (_pe2 && typeof _pe2.processQuizAnswer === "function") {
+        var qResult = _pe2.processQuizAnswer({
+          quizScore: S.quizScore, quizTotal: S.quizTotal,
+          quizStreak: S.quizStreak, quizCorrect: S.quizCorrect
+        }, { correct: ok });
+        S.quizScore = qResult.quizScore; S.quizTotal = qResult.quizTotal;
+        S.quizStreak = qResult.quizStreak; S.quizCorrect = qResult.quizCorrect;
+        if (ok) {
+          snd("correct");
+          if (qResult.xpDelta) { if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") { SparkProgressBridge.applyLegacyReward({ xpDelta: qResult.xpDelta, toastAmount: qResult.xpDelta }); } else { S.xp += qResult.xpDelta; } }
+          logHistory("quiz", S.quizQ.name, qResult.xpDelta || 0); _sparkEmit("drill_answered", { appId: activityAppId, skillId: S.quizQ.name, correct: true, xp: qResult.xpDelta || 0 }); checkBadges(); saveState();
+          for (var _ri2 = 0; _ri2 < qResult.microRewards.length; _ri2++) { fireMicro(qResult.microRewards[_ri2].id, qResult.microRewards[_ri2].label, qResult.microRewards[_ri2].icon); }
+        } else { snd("wrong"); }
+      } else {
+        if (ok) { snd("correct"); S.quizCorrect++; S.quizScore++; S.quizStreak++; S.xp += 10; logHistory("quiz", S.quizQ.name, 10); _sparkEmit("drill_answered", { appId: activityAppId, skillId: S.quizQ.name, correct: true, xp: 10 }); checkBadges(); saveState(); if (S.quizStreak === 3) fireMicro("quiz_streak", "Hat trick!", "&#127913;"); }
+        else { snd("wrong"); S.quizStreak = 0; }
+        S.quizTotal++;
+      }
+      render(); setTimeout(genQ, 1200);
     }
     return true;
   }
@@ -535,9 +576,14 @@ function guitarAct(a, v) {
             fingerExerciseCount: (S.fingerExCount || 0) + 1
           });
         }
-        snd("complete"); if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") SparkProgressBridge.applyLegacyReward({ xpDelta: 10, toastAmount: 10 }); else { S.xp += 10; S.xpToast = { amount: 10, time: Date.now() }; }
-        SparkFingerStats.increment(v, 1);
-        S.fingerExCount = (S.fingerExCount || 0) + 1;
+        snd("complete");
+        var _pe3 = typeof SparkSuitePracticeEngine !== "undefined" ? new SparkSuitePracticeEngine() : null;
+        var _feResult = _pe3 && typeof _pe3.processFingerExerciseCompletion === "function"
+          ? _pe3.processFingerExerciseCompletion({ fingerExCount: S.fingerExCount || 0 }, { exerciseId: v })
+          : { fingerExCount: (S.fingerExCount || 0) + 1, xpDelta: 10, fingerStatsDelta: { exerciseId: v, increment: 1 } };
+        if (_feResult.xpDelta) { if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") { SparkProgressBridge.applyLegacyReward({ xpDelta: _feResult.xpDelta, toastAmount: _feResult.xpDelta }); } else { S.xp += _feResult.xpDelta; S.xpToast = { amount: _feResult.xpDelta, time: Date.now() }; } }
+        if (_feResult.fingerStatsDelta) SparkFingerStats.increment(_feResult.fingerStatsDelta.exerciseId, _feResult.fingerStatsDelta.increment);
+        S.fingerExCount = _feResult.fingerExCount;
         saveState();
       }
       render();

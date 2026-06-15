@@ -497,6 +497,82 @@
     return String(value).replace(/[_-]+/g, " ").replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
   }
 
+  PracticeEngine.prototype.processDrillSwitch = function(state, options) {
+    state = state || {};
+    options = options || {};
+    var elapsed = typeof options.elapsed === "number" ? options.elapsed : 0;
+    var fromChord = options.fromChord || "";
+    var toChord = options.toChord || "";
+    var bpm = typeof state.drillAdaptiveBpm === "number" ? state.drillAdaptiveBpm : 60;
+    var fast = typeof state.drillConsecutiveFast === "number" ? state.drillConsecutiveFast : 0;
+    var slow = typeof state.drillConsecutiveSlow === "number" ? state.drillConsecutiveSlow : 0;
+    var switches = typeof state.drillSwitches === "number" ? state.drillSwitches : 0;
+    var drillIdx = typeof state.drillIdx === "number" ? state.drillIdx : 0;
+    var transitionStats = null;
+    var microRewards = [];
+    if (elapsed < 15) {
+      transitionStats = { key: fromChord + "->" + toChord, elapsed: elapsed };
+      var targetSecs = 60 / bpm;
+      if (elapsed < targetSecs * 0.8) {
+        fast++; slow = 0;
+        if (fast >= 3) {
+          bpm = Math.min(bpm + 3, 160);
+          fast = 0;
+          microRewards.push({ id: "speed_up", label: "Speeding up!", icon: "&#9654;&#65039;" });
+        }
+      } else if (elapsed > targetSecs * 1.5) {
+        slow++; fast = 0;
+        if (slow >= 2) { bpm = Math.max(bpm - 5, 40); slow = 0; }
+      } else { fast = 0; slow = 0; }
+    }
+    var nextSwitches = switches + 1;
+    var nextIdx = (drillIdx + 1) % 2;
+    if (nextSwitches === 1) microRewards.push({ id: "clean_switch", label: "Smooth switch!", icon: "&#9889;" });
+    if (nextSwitches === 3) microRewards.push({ id: "three_switches", label: "On fire!", icon: "&#128293;" });
+    return {
+      drillAdaptiveBpm: bpm,
+      drillConsecutiveFast: fast,
+      drillConsecutiveSlow: slow,
+      drillSwitches: nextSwitches,
+      drillIdx: nextIdx,
+      transitionStats: transitionStats,
+      microRewards: microRewards
+    };
+  };
+
+  PracticeEngine.prototype.processQuizAnswer = function(state, options) {
+    state = state || {};
+    options = options || {};
+    var correct = !!options.correct;
+    var quizScore = typeof state.quizScore === "number" ? state.quizScore : 0;
+    var quizTotal = typeof state.quizTotal === "number" ? state.quizTotal : 0;
+    var quizStreak = typeof state.quizStreak === "number" ? state.quizStreak : 0;
+    var quizCorrect = typeof state.quizCorrect === "number" ? state.quizCorrect : 0;
+    var nextStreak = correct ? quizStreak + 1 : 0;
+    var xpDelta = correct ? 10 : 0;
+    var microRewards = [];
+    if (correct && nextStreak === 3) microRewards.push({ id: "quiz_streak", label: "Hat trick!", icon: "&#127913;" });
+    return {
+      quizScore: correct ? quizScore + 1 : quizScore,
+      quizTotal: quizTotal + 1,
+      quizStreak: nextStreak,
+      quizCorrect: correct ? quizCorrect + 1 : quizCorrect,
+      xpDelta: xpDelta,
+      correct: correct,
+      microRewards: microRewards
+    };
+  };
+
+  PracticeEngine.prototype.processFingerExerciseCompletion = function(state, options) {
+    state = state || {};
+    options = options || {};
+    return {
+      fingerExCount: (typeof state.fingerExCount === "number" ? state.fingerExCount : 0) + 1,
+      xpDelta: 10,
+      fingerStatsDelta: { exerciseId: options.exerciseId || null, increment: 1 }
+    };
+  };
+
   function clone(value) {
     return JSON.parse(JSON.stringify(value || {}));
   }
