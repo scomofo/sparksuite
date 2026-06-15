@@ -234,19 +234,23 @@ function guitarAct(a, v) {
         drillSwitches: S.drillSwitches,
         drillIdx: S.drillIdx
       }, { elapsed: elapsed, fromChord: fromChord, toChord: toChord });
-      S.drillAdaptiveBpm = drResult.drillAdaptiveBpm;
-      S.drillConsecutiveFast = drResult.drillConsecutiveFast;
-      S.drillConsecutiveSlow = drResult.drillConsecutiveSlow;
-      S.drillSwitches = drResult.drillSwitches;
-      S.drillIdx = drResult.drillIdx;
-      if (drResult.transitionStats) {
-        var _ts = SparkTransitionStats.ensure(drResult.transitionStats.key, { attempts: 0, avgTime: 0, best: 999 });
-        _ts.avgTime = (_ts.avgTime * _ts.attempts + drResult.transitionStats.elapsed) / (_ts.attempts + 1);
-        _ts.attempts++;
-        if (drResult.transitionStats.elapsed < _ts.best) _ts.best = drResult.transitionStats.elapsed;
-      }
-      for (var _ri = 0; _ri < drResult.microRewards.length; _ri++) {
-        fireMicro(drResult.microRewards[_ri].id, drResult.microRewards[_ri].label, drResult.microRewards[_ri].icon);
+      if (drResult) {
+        S.drillAdaptiveBpm = drResult.drillAdaptiveBpm;
+        S.drillConsecutiveFast = drResult.drillConsecutiveFast;
+        S.drillConsecutiveSlow = drResult.drillConsecutiveSlow;
+        S.drillSwitches = drResult.drillSwitches;
+        S.drillIdx = drResult.drillIdx;
+        if (drResult.transitionStats) {
+          var _ts = SparkTransitionStats.ensure(drResult.transitionStats.key, { attempts: 0, avgTime: 0, best: 999 });
+          _ts.avgTime = (_ts.avgTime * _ts.attempts + drResult.transitionStats.elapsed) / (_ts.attempts + 1);
+          _ts.attempts++;
+          if (drResult.transitionStats.elapsed < _ts.best) _ts.best = drResult.transitionStats.elapsed;
+        }
+        if (Array.isArray(drResult.microRewards)) {
+          for (var _ri = 0; _ri < drResult.microRewards.length; _ri++) {
+            fireMicro(drResult.microRewards[_ri].id, drResult.microRewards[_ri].label, drResult.microRewards[_ri].icon);
+          }
+        }
       }
     } else {
       if (elapsed < 15) {
@@ -347,14 +351,20 @@ function guitarAct(a, v) {
           quizScore: S.quizScore, quizTotal: S.quizTotal,
           quizStreak: S.quizStreak, quizCorrect: S.quizCorrect
         }, { correct: ok });
-        S.quizScore = qResult.quizScore; S.quizTotal = qResult.quizTotal;
-        S.quizStreak = qResult.quizStreak; S.quizCorrect = qResult.quizCorrect;
-        if (ok) {
-          snd("correct");
-          if (qResult.xpDelta) { if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") { SparkProgressBridge.applyLegacyReward({ xpDelta: qResult.xpDelta, toastAmount: qResult.xpDelta }); } else { S.xp += qResult.xpDelta; } }
-          logHistory("quiz", S.quizQ.name, qResult.xpDelta || 0); _sparkEmit("drill_answered", { appId: activityAppId, skillId: S.quizQ.name, correct: true, xp: qResult.xpDelta || 0 }); checkBadges(); saveState();
-          for (var _ri2 = 0; _ri2 < qResult.microRewards.length; _ri2++) { fireMicro(qResult.microRewards[_ri2].id, qResult.microRewards[_ri2].label, qResult.microRewards[_ri2].icon); }
-        } else { snd("wrong"); }
+        if (qResult) {
+          S.quizScore = qResult.quizScore; S.quizTotal = qResult.quizTotal;
+          S.quizStreak = qResult.quizStreak; S.quizCorrect = qResult.quizCorrect;
+          if (ok) {
+            snd("correct");
+            if (qResult.xpDelta) { if (window.SparkProgressBridge && typeof SparkProgressBridge.applyLegacyReward === "function") { SparkProgressBridge.applyLegacyReward({ xpDelta: qResult.xpDelta, toastAmount: qResult.xpDelta }); } else { S.xp += qResult.xpDelta; } }
+            logHistory("quiz", S.quizQ.name, qResult.xpDelta || 0); _sparkEmit("drill_answered", { appId: activityAppId, skillId: S.quizQ.name, correct: true, xp: qResult.xpDelta || 0 }); checkBadges(); saveState();
+            if (Array.isArray(qResult.microRewards)) { for (var _ri2 = 0; _ri2 < qResult.microRewards.length; _ri2++) { fireMicro(qResult.microRewards[_ri2].id, qResult.microRewards[_ri2].label, qResult.microRewards[_ri2].icon); } }
+          } else { snd("wrong"); }
+        } else {
+          if (ok) { snd("correct"); S.quizCorrect++; S.quizScore++; S.quizStreak++; S.xp += 10; logHistory("quiz", S.quizQ.name, 10); _sparkEmit("drill_answered", { appId: activityAppId, skillId: S.quizQ.name, correct: true, xp: 10 }); checkBadges(); saveState(); if (S.quizStreak === 3) fireMicro("quiz_streak", "Hat trick!", "&#127913;"); }
+          else { snd("wrong"); S.quizStreak = 0; }
+          S.quizTotal++;
+        }
       } else {
         if (ok) { snd("correct"); S.quizCorrect++; S.quizScore++; S.quizStreak++; S.xp += 10; logHistory("quiz", S.quizQ.name, 10); _sparkEmit("drill_answered", { appId: activityAppId, skillId: S.quizQ.name, correct: true, xp: 10 }); checkBadges(); saveState(); if (S.quizStreak === 3) fireMicro("quiz_streak", "Hat trick!", "&#127913;"); }
         else { snd("wrong"); S.quizStreak = 0; }
