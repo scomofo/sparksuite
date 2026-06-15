@@ -815,8 +815,10 @@ function syncPianoGuidedCompletionFromCore(result, plan) {
       }
       completedNums.push(guidedPatch.completedSessionNums[i]);
     }
-  } else if (plan && S.completedSessions.indexOf(plan.num) < 0) {
-    S.completedSessions.push(plan.num);
+  } else if (plan) {
+    if (S.completedSessions.indexOf(plan.num) < 0) {
+      S.completedSessions.push(plan.num);
+    }
     completedNums.push(plan.num);
   }
   if (completedNums.length) {

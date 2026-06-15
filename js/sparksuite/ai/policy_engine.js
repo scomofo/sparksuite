@@ -30,7 +30,7 @@
     model.consistency = (model.consistency || 0.5) * (1 - ALPHA) + (performance.consistency || 0.5) * ALPHA;
     model.consistency = Math.round(model.consistency * 1000) / 1000;
 
-    var tempo = typeof model.preferredTempo === "number" ? model.preferredTempo : 1.0;
+    var tempo = typeof model.preferredTempo === "number" && !isNaN(model.preferredTempo) ? model.preferredTempo : 1.0;
     if (performance.accuracy > 0.9 && tempo < 1.5) {
       model.preferredTempo = Math.round((tempo + 0.05) * 100) / 100;
     } else if (performance.accuracy < 0.5 && tempo > 0.5) {

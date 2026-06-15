@@ -342,8 +342,8 @@
     // 7. Generate feedback
     var feedback = this.feedbackEngine.generate(performance, style);
 
-    // 8. Drills for weak areas (use heatmap buckets, not raw weakAreas tokens)
-    var drills = this.drillGenerator.generate(heatmap || []);
+    // 8. Drills for weak areas
+    var drills = this.drillGenerator.generate(clusters || []);
 
     // 9. Voice coach final message
     if (this.voiceCoach && typeof this.voiceCoach.sessionComplete === "function") {

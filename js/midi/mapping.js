@@ -10,8 +10,10 @@
         velocity:velocity
       };
     }
-    var noteRange = profile.noteRange || { min: 0, max: 127 };
-    if(note < noteRange.min || note > noteRange.max){
+    var noteRange = profile.noteRange || {};
+    var minNote = noteRange.min != null ? noteRange.min : 0;
+    var maxNote = noteRange.max != null ? noteRange.max : 127;
+    if(note < minNote || note > maxNote){
       return { accepted:false };
     }
     if(profile.channelMap && Object.keys(profile.channelMap).length){

@@ -61,10 +61,10 @@
   }
 
   function midiToNoteName(midi){
-    if(midi == null || typeof midi !== "number" || isNaN(midi)) return "C4";
+    if(midi == null || typeof midi !== "number" || isNaN(midi) || midi < 0 || midi > 127) return "C4";
     var names = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
     var octave = Math.floor(midi / 12) - 1;
-    return names[midi % 12] + octave;
+    return names[Math.floor(midi) % 12] + octave;
   }
 
   window.normalizeParsedMidi = normalizeParsedMidi;

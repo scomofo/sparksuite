@@ -31,6 +31,11 @@
       downbeats_s: [0]
     };
 
+    for (var _u = 0; _u < this.unsubscribers.length; _u++) {
+      safeCall(this.unsubscribers[_u], null);
+    }
+    this.unsubscribers = [];
+
     if (this.gameplay && typeof this.gameplay.bindRuntimeSync === "function") {
       this.unsubscribers.push(this.gameplay.bindRuntimeSync(this.runtimeSync));
     }

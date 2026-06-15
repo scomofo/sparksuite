@@ -31,7 +31,7 @@ test("utility family handles midi refresh and desktop import actions", function(
   assert.ok(utilitySource.indexOf('if (a === "refreshMidiDevices") {') >= 0);
   assert.ok(utilitySource.indexOf('if (typeof refreshMidiDevices === "function") refreshMidiDevices();') >= 0);
   assert.ok(utilitySource.indexOf('if (a === "importMidiDesktop") {') >= 0);
-  assert.ok(utilitySource.indexOf('if (typeof importMidiDesktopAware === "function") importMidiDesktopAware()') >= 0);
+  assert.ok(utilitySource.indexOf('Promise.resolve(importMidiDesktopAware())') >= 0);
 });
 
 test("piano runtime mirrors midi refresh and desktop import actions", function() {

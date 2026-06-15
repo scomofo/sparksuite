@@ -43,7 +43,7 @@
 
   SparkRhythmHighwayRuntimeController.prototype.tick = function(nowMs) {
     if (!this.bridge) return null;
-    var state = this.bridge.tick(nowMs);
+    var state = this.bridge.tick();
     this.renderCallback(state);
     if (state && state.transport && state.transport.status === "completed") {
       this.running = false;
