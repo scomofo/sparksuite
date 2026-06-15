@@ -360,13 +360,13 @@
         var addPhraseMutation = applyPerformanceEditorCoreMutation("add_phrase");
         var addPhraseChart = addPhraseMutation && addPhraseMutation.chart ? addPhraseMutation.chart : S.performEditorChart;
         var phrases = addPhraseChart.phrases;
-        var addedPhrase = phrases[phrases.length - 1];
+        var addedPhrase = phrases && phrases.length ? phrases[phrases.length - 1] : null;
         setLegacyFields({ performEditorChart: addPhraseChart, performEditorDirty: true }, false);
         syncPerformanceEditorDocumentState(addPhraseChart, {
           source: "existing",
           dirty: true,
-          selectedPhraseId: addedPhrase.id,
-          selectedPhrase: addedPhrase
+          selectedPhraseId: addedPhrase ? addedPhrase.id : null,
+          selectedPhrase: addedPhrase || null
         });
         render();
       }

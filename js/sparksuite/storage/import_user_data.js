@@ -48,7 +48,7 @@
     nextPayload = {
       schemaVersion: migratedProfile.schemaVersion,
       profile: migratedProfile,
-      settings: mergeDeep(migratedProfile.settings || {}, payload.settings || {}),
+      settings: payload.settings ? clone(payload.settings) : (migratedProfile.settings || {}),
       practiceJournal: Array.isArray(payload.practiceJournal) ? clone(payload.practiceJournal) : []
     };
 

@@ -482,8 +482,8 @@ function convertSparkSongChartToPerformanceChart(songChart, options) {
       var bestBpm = segs[0].bpm;
       var bestDur = 0;
       for (var si = 0; si < segs.length; si++) {
-        var segStart = segs[si].startTick !== undefined ? segs[si].startTick : 0;
-        var segEnd = si + 1 < segs.length && segs[si + 1].startTick !== undefined ? segs[si + 1].startTick : segStart;
+        var segStart = segs[si].tick !== undefined ? segs[si].tick : 0;
+        var segEnd = si + 1 < segs.length && segs[si + 1].tick !== undefined ? segs[si + 1].tick : segStart;
         var segDur = segEnd - segStart;
         if (segDur > bestDur) {
           bestDur = segDur;

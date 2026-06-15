@@ -119,6 +119,7 @@
     if(result){
       updateWeakSpotsFromPerformance(result);
       updateAdaptiveFromResult(result);
+      if(!Array.isArray(S.practiceHistory)) S.practiceHistory = [];
       S.practiceHistory.push(result);
     }
 

@@ -61,7 +61,7 @@
         accessibility: {
           reducedMotion: !!accessibility.reducedMotion,
           highContrast: !!accessibility.highContrast,
-          noteSize: accessibility.noteSize || "normal",
+          noteSize: (accessibility.noteSize === "large" || accessibility.noteSize === "compact") ? accessibility.noteSize : "normal",
           laneLabels: accessibility.laneLabels !== false,
           colorblindSafeLanes: !!accessibility.colorblindSafeLanes
         }
@@ -87,8 +87,8 @@
             keyboardRemapping: settings.keyboardRemapping && typeof settings.keyboardRemapping === "object" ? clone(settings.keyboardRemapping) : {},
             leftHandedLayout: !!settings.leftHandedLayout,
             slowerDefaultSpeed: !!settings.slowerDefaultSpeed,
-            audioCueVolume: typeof settings.audioCueVolume === "number" ? settings.audioCueVolume : 0.8,
-            metronomeVolume: typeof settings.metronomeVolume === "number" ? settings.metronomeVolume : 0.6
+            audioCueVolume: Math.max(0, Math.min(1, typeof settings.audioCueVolume === "number" && isFinite(settings.audioCueVolume) ? settings.audioCueVolume : 0.8)),
+            metronomeVolume: Math.max(0, Math.min(1, typeof settings.metronomeVolume === "number" && isFinite(settings.metronomeVolume) ? settings.metronomeVolume : 0.6))
           };
         };
 

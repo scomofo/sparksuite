@@ -4,6 +4,7 @@
     this.id = input.id || ("note_" + Math.random().toString(36).slice(2, 10));
     this.tick = input.tick || 0;
     this.tickLength = input.tickLength || 0;
+    this.lane = input.lane != null ? input.lane : null;
     this.laneMask = input.laneMask || 0;
     this.flags = input.flags || {};
     this.difficulty = input.difficulty || "easy";

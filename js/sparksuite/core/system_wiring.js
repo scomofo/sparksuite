@@ -314,8 +314,8 @@
     }
 
     // 2. Performance summary
-    var performance = this.performanceTracker.getSummary();
-    var events = this.performanceTracker.getEvents ? this.performanceTracker.getEvents() : [];
+    var performance = this.performanceTracker.computeSummary();
+    var events = this.performanceTracker.getEvents();
 
     // 3. Heatmap and clusters
     var heatmap = this.heatmapGenerator.generate(events);
@@ -342,8 +342,8 @@
     // 7. Generate feedback
     var feedback = this.feedbackEngine.generate(performance, style);
 
-    // 8. Drills for weak areas
-    var drills = this.drillGenerator.generate(performance.weakAreas || []);
+    // 8. Drills for weak areas (use heatmap buckets, not raw weakAreas tokens)
+    var drills = this.drillGenerator.generate(heatmap || []);
 
     // 9. Voice coach final message
     if (this.voiceCoach && typeof this.voiceCoach.sessionComplete === "function") {

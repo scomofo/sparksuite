@@ -79,7 +79,7 @@
     }
 
     if (a === "importMidiDesktop") {
-      if (typeof importMidiDesktopAware === "function") importMidiDesktopAware();
+      if (typeof importMidiDesktopAware === "function") importMidiDesktopAware().catch(function() { if (typeof render === "function") render(); });
       return true;
     }
 
@@ -99,7 +99,7 @@
     }
 
     if (a === "importMidiFile") {
-      if (typeof handleMidiImport === "function") handleMidiImport(v);
+      if (typeof handleMidiImport === "function") handleMidiImport(v).catch(function() { if (typeof render === "function") render(); });
       return true;
     }
 

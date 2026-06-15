@@ -30,11 +30,13 @@
     model.consistency = (model.consistency || 0.5) * (1 - ALPHA) + (performance.consistency || 0.5) * ALPHA;
     model.consistency = Math.round(model.consistency * 1000) / 1000;
 
-    if (performance.accuracy > 0.9 && model.preferredTempo < 1.5) {
-      model.preferredTempo = Math.round((model.preferredTempo + 0.05) * 100) / 100;
-    }
-    if (performance.accuracy < 0.5 && model.preferredTempo > 0.5) {
-      model.preferredTempo = Math.round((model.preferredTempo - 0.05) * 100) / 100;
+    var tempo = typeof model.preferredTempo === "number" ? model.preferredTempo : 1.0;
+    if (performance.accuracy > 0.9 && tempo < 1.5) {
+      model.preferredTempo = Math.round((tempo + 0.05) * 100) / 100;
+    } else if (performance.accuracy < 0.5 && tempo > 0.5) {
+      model.preferredTempo = Math.round((tempo - 0.05) * 100) / 100;
+    } else {
+      model.preferredTempo = tempo;
     }
 
     model.sessionsCompleted = (model.sessionsCompleted || 0) + 1;

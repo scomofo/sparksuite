@@ -42,8 +42,8 @@
     var src = track.notes || [];
     for(var i=0;i<src.length;i++){
       notes.push({
-        pitch: src[i].midi,
-        note: src[i].name || midiToNoteName(src[i].midi),
+        pitch: src[i].midi != null ? src[i].midi : null,
+        note: src[i].name || (src[i].midi != null ? midiToNoteName(src[i].midi) : "C4"),
         startTick: src[i].ticks || 0,
         endTick: (src[i].ticks || 0) + (src[i].durationTicks || 0),
         startSec: src[i].time || 0,
@@ -61,6 +61,7 @@
   }
 
   function midiToNoteName(midi){
+    if(midi == null || typeof midi !== "number" || isNaN(midi)) return "C4";
     var names = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
     var octave = Math.floor(midi / 12) - 1;
     return names[midi % 12] + octave;

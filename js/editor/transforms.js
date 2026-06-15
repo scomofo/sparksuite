@@ -94,12 +94,13 @@
         items[i].t = snapTimeSec(items[i].t);
       }
       if(kind==="phrase"){
-        items[i].startSec = direction==="left"
-          ? Math.max(0, (items[i].startSec || 0) - step)
-          : (items[i].startSec || 0) + step;
-        items[i].endSec = direction==="left"
-          ? Math.max(items[i].startSec || 0, (items[i].endSec || 0) - step)
-          : (items[i].endSec || 0) + step;
+        var origStart = items[i].startSec || 0;
+        var phraseDur = (items[i].endSec || 0) - origStart;
+        var newStart = direction==="left"
+          ? Math.max(0, origStart - step)
+          : origStart + step;
+        items[i].startSec = newStart;
+        items[i].endSec = newStart + phraseDur;
         snapPhraseBounds(items[i]);
       }
     }
