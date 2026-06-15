@@ -926,7 +926,7 @@ body.sv2 .tabs {
    had no CSS, so the stats rendered as an unstyled vertical list of numbers and
    labels. Style them as a compact card grid matching the app aesthetic. */
 .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:8px 0}
-.stat-item{background:var(--raised-bg);border:1px solid var(--border,rgba(255,255,255,.08));border-radius:var(--radius);padding:14px 12px;text-align:center}
+.stat-item{background:var(--raised-bg);border:1px solid var(--border,rgba(255,255,255,.08));border-radius:var(--radius);padding:14px 12px;text-align:center;transition:background .3s,border-color .3s}
 .stat-val{font-size:24px;font-weight:900;color:var(--text-primary,#fff);line-height:1.1}
 .stat-label{font-size:11px;color:var(--text-muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
 .feedback-card.incorrect{background:rgba(196,80,64,.1);color:var(--danger);border:1px solid rgba(196,80,64,.2)}
