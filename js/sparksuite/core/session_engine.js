@@ -244,7 +244,23 @@
     var sessions = Array.isArray(instrumentContext.sessions) ? instrumentContext.sessions : [];
     var sessionNum = parseInt(context.sessionNum, 10);
     var guidedShell;
-    if (isNaN(sessionNum) || sessionNum < 1) sessionNum = 1;
+    var allComplete = false;
+    var instrumentKey = instrumentContext.instrument || instrumentContext.instrumentType || null;
+
+    if (isNaN(sessionNum) || sessionNum < 1) {
+      var curriculumSvc = typeof SparkCurriculumService !== "undefined" ? SparkCurriculumService : null;
+      if (curriculumSvc && typeof curriculumSvc.getNextGuidedSession === "function") {
+        var next = curriculumSvc.getNextGuidedSession(sessions, { instrumentKey: instrumentKey });
+        if (next) {
+          sessionNum = next.sessionNum;
+          allComplete = !!next.allComplete;
+        } else {
+          sessionNum = 1;
+        }
+      } else {
+        sessionNum = 1;
+      }
+    }
 
     var sessionIndex = Math.max(0, Math.min(sessions.length - 1, sessionNum - 1));
     var guidedPlan = sessions.length ? clone(sessions[sessionIndex]) : null;
@@ -269,7 +285,8 @@
         guidedPlan: guidedPlan,
         guidedSession: sessionNum,
         totalGuidedSessions: sessions.length,
-        guidedShellDurationSec: guidedShell.totalDurationSec
+        guidedShellDurationSec: guidedShell.totalDurationSec,
+        allComplete: allComplete
       }
     });
   };

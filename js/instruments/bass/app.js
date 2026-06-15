@@ -383,6 +383,7 @@
         if (window.SparkProgressBridge && typeof SparkProgressBridge.applySessionStatePatch === "function") {
           SparkProgressBridge.applySessionStatePatch({
             guided: {
+              instrumentKey: "bass",
               completedSessionNums: [plan.num],
               nextGuidedSession: Math.min(D.SESSIONS.length, plan.num + 1),
               chordProgress: {}
