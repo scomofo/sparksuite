@@ -23,6 +23,7 @@
     this.songEndSec = getSongEndSec(this.noteStates);
     this.completed = false;
     this.lastSnapshot = null;
+    this.runtimeUnsubscribe = null;
   }
 
   RhythmGameplayEngine.prototype.update = function(songTimeSec) {
@@ -33,6 +34,35 @@
       });
     }
     return this._updateInternal(songTimeSec);
+  };
+
+  RhythmGameplayEngine.prototype.updateFromRuntimeState = function(runtimeState) {
+    runtimeState = runtimeState || {};
+    var transport = runtimeState.transport || {};
+    var songTimeSec = typeof transport.positionSec === "number" ? transport.positionSec : 0;
+    return this.update(songTimeSec);
+  };
+
+  RhythmGameplayEngine.prototype.bindRuntimeSync = function(runtimeSyncEngine) {
+    if (!runtimeSyncEngine || typeof runtimeSyncEngine.bind !== "function") return function() {};
+    var self = this;
+    if (this.runtimeUnsubscribe) {
+      try { this.runtimeUnsubscribe(); } catch (err) {}
+      this.runtimeUnsubscribe = null;
+    }
+    this.runtimeUnsubscribe = runtimeSyncEngine.bind("rhythm_gameplay", {
+      update: function(state) {
+        self.updateFromRuntimeState(state);
+      }
+    });
+    return this.runtimeUnsubscribe;
+  };
+
+  RhythmGameplayEngine.prototype.unbindRuntimeSync = function() {
+    if (this.runtimeUnsubscribe) {
+      try { this.runtimeUnsubscribe(); } catch (err) {}
+      this.runtimeUnsubscribe = null;
+    }
   };
 
   RhythmGameplayEngine.prototype._updateInternal = function(songTimeSec) {

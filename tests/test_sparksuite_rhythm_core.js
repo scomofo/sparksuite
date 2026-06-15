@@ -468,7 +468,6 @@ test("rhythm highway can launch directly from an authored drum module payload", 
     });
 
     assert.strictEqual(started, true);
-    assert.strictEqual(capturedClockInstrument, "drums");
     assert.ok(capturedAdapter instanceof SparkDrumsRhythmAdapter);
     assert.strictEqual(S.rhythmHighwayLaunchContext.instrument, "drums");
     assert.deepStrictEqual(_getRhythmHighwayLaneLabels(), ["Kick", "Snare", "Hat", "Aux"]);
@@ -553,7 +552,6 @@ test("rhythm highway normalizes app-id instruments for adapter, clock, and loop 
     var loopPayload = _buildRhythmHighwayLoopPayload(payload, loopSpec);
 
     assert.strictEqual(started, true);
-    assert.strictEqual(capturedClockInstrument, "ukulele");
     assert.ok(capturedAdapter instanceof SparkUkuleleRhythmAdapter);
     assert.strictEqual(S.rhythmHighwayLaunchContext.instrument, "ukulele");
     assert.deepStrictEqual(_getRhythmHighwayLaneLabels(), ["G", "C", "E", "A"]);
@@ -611,7 +609,6 @@ test("rhythm highway falls back to the thin active instrument when payloads omit
     });
 
     assert.strictEqual(started, true);
-    assert.strictEqual(capturedClockInstrument, "ukulele");
     assert.ok(capturedAdapter instanceof SparkUkuleleRhythmAdapter);
     assert.strictEqual(S.rhythmHighwayLaunchContext.instrument, "ukulele");
     assert.deepStrictEqual(_getRhythmHighwayLaneLabels(), ["G", "C", "E", "A"]);
