@@ -718,12 +718,13 @@ test('bass register exposes a dedicated songs tab renderer', function() {
   assert.ok(html.indexOf('Midnight Lock') >= 0);
 });
 
-test('shared guided completion preserves app ids for thin active instruments', function() {
-  // The orchestrator-request helpers were extracted from js/app.js to
-  // js/orchestrator-requests.js — the literal lines now live there.
+test('shared guided completion is core-driven with no shadow observer (Phase 7)', function() {
+  // Guided completion routes through core.completeGuidedSession /
+  // core.completeSession; the coreless read-only observer was retired.
   var orchestratorSource = loadJS('js/orchestrator-requests.js');
-  assert.ok(orchestratorSource.indexOf('var guidedActiveInstrument = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;') >= 0);
-  assert.ok(orchestratorSource.indexOf('instrumentId: guidedActiveInstrument ? (guidedActiveInstrument.id || guidedActiveInstrument.appId || null) : null,') >= 0);
+  assert.ok(orchestratorSource.indexOf('core.completeGuidedSession(options || {})') >= 0);
+  assert.strictEqual(orchestratorSource.indexOf('var guidedActiveInstrument'), -1, 'retired observer must not return');
+  assert.ok(orchestratorSource.indexOf('the coreless read-only observer that used to run here') >= 0);
 });
 
 test('onboarding intention input ignores stale sentinel strings', function() {

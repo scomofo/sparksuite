@@ -996,22 +996,9 @@ function completeGuidedSessionRequest(options) {
     }
     return result;
   }
-  // Route through contract-based progress path (Phase 6 migration)
-  if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
-    var guidedActiveInstrument = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
-    var guidedResult = SparkContracts.createSessionResult({
-      mode: "guided",
-      instrumentId: guidedActiveInstrument ? (guidedActiveInstrument.id || guidedActiveInstrument.appId || null) : null,
-      instrumentType: guidedActiveInstrument ? guidedActiveInstrument.instrument : null,
-      duration: 300,
-      accuracy: 0.75,
-      completed: true
-    });
-    var guidedOutcome = SparkProgressOrchestrator.applySessionOutcome(guidedResult);
-    if (typeof console !== "undefined" && console.debug) {
-      console.debug("[App] Guided ProgressOutcome:", guidedOutcome);
-    }
-  }
+  // Phase 7: guided completion is driven by the core's completeSession
+  // branches above; the coreless read-only observer that used to run here
+  // is retired (it awarded nothing and only echoed a snapshot).
   return null;
 }
 

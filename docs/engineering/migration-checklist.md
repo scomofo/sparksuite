@@ -22,12 +22,12 @@ Tracks which flows use the new engine contracts vs legacy direct-call paths.
 |------|-------------------|--------|
 | quickStart timer complete | Yes | **Contract-only** — orchestrator drives via `applySessionOutcome(result, {drive:true})`; the paired legacy `processResults` call at the call site is retired (the same completion handler also serves single-chord timer sessions) |
 | drill timer complete | Yes | **Contract-only** — orchestrator drives the drill completion sequence via `applySessionOutcome(result, {drive:true})` (drill-mode branch); the paired legacy call at the call site is retired |
-| performance finish | Yes | Dual-path |
-| guided session complete | Yes | Dual-path |
-| daily challenge complete | Yes | Dual-path |
-| runner game complete | Yes | Dual-path |
-| rhythm game complete | Yes | Dual-path |
-| practice engine finish | Yes | Dual-path |
+| performance finish | Core-driven | **Contract-only** — `core.completeSession` is the single driver; the shadow observer beside it is retired |
+| guided session complete | Core-driven | **Contract-only** — `core.completeGuidedSession`/`completeSession` drive; the coreless read-only observer is retired |
+| daily challenge complete | Yes | **Contract-only** — orchestrator drives via `{drive:true}` daily branch (challenge XP policy lives in the engine) |
+| runner game complete | Yes | **Contract-only** — orchestrator drives via `{drive:true}` runner branch (score→XP policy lives in the engine) |
+| rhythm game complete | Yes | **Contract-only** — orchestrator drives via `{drive:true}` rhythm branch (score→XP policy lives in the engine) |
+| practice engine finish | Core-driven | **Contract-only** — `core.completeSession` with `earnedCompletion` is the single driver; the shadow observer is retired |
 
 ## Instrument Contracts (Phase 4)
 
@@ -63,14 +63,25 @@ Tracks which flows use the new engine contracts vs legacy direct-call paths.
 
 | Flow | Unified Result Schema | Status |
 |------|---------------------|--------|
-| Performance song finish | SessionResult contract | Dual-path |
-| Practice engine finish | SessionResult contract | Dual-path |
+| Performance song finish | Core completion request | Contract-only (core-driven; shadow observer retired) |
+| Practice engine finish | Core completion request | Contract-only (core-driven; shadow observer retired) |
 
 ## Legacy Removal (Phase 7)
 
-First retirements landed: the quickStart and drill timer-completion flows are
-contract-only. Drive mode dispatches per result mode — session-shaped flows run
-the shared progression sequence, drill runs its activity-completion sequence.
+**All Phase 3/6 dual-path flows are retired.** Two retirement shapes were used:
+
+- **Orchestrator-driven** (quickStart, drill, daily, rhythm, runner): the flows
+  whose legacy driver lived at the call site now make one
+  `applySessionOutcome(result, {drive:true})` call; drive mode dispatches per
+  result mode and owns the reward policy (activity XP, score→XP formulas,
+  challenge XP). Legacy branches remain only as no-contract-stack fallbacks.
+- **Core-driven** (performance finish, guided complete, practice plan finish):
+  these were already driven by the v2 core's `completeSession` — the
+  "dual-path" was a read-only shadow observer beside it, which is now removed.
+
+Next consolidation step (see spark-core-retirement-inventory.md): absorb
+`SparkSession.processResults` into the orchestrator, then converge the two
+completion entry points (`core.completeSession` and drive mode).
 `SparkProgressOrchestrator.applySessionOutcome` gained a drive mode (`{drive:true}`)
 that makes it the single progression entry point for a retired flow — it runs the
 progression sequence exactly once and returns a real ProgressOutcome (renderer

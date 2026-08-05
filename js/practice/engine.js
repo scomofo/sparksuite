@@ -127,38 +127,17 @@
     var earned = practicePlanHasEarnedCompletion();
     var core = getPracticeCore();
     if(core && typeof core.completeSession === "function"){
-      var activeInstrument = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
-      if (activeInstrument && !activeInstrument.instrument && typeof SparkInstruments.getAll === "function") {
-        var activeId = activeInstrument.id || activeInstrument.appId || activeInstrument.instrumentId || null;
-        var allInstruments = SparkInstruments.getAll() || [];
-        for (var i = 0; i < allInstruments.length; i++) {
-          var entry = allInstruments[i] || {};
-          if (entry.id === activeId || entry.appId === activeId) {
-            activeInstrument = entry;
-            break;
-          }
-        }
-      }
       // earnedCompletion tells ProgressEngine.completeSession whether this
       // completion deserves a reward: with zero items done it still marks
       // the plan finished for today (so the UI stops nagging) but withholds
-      // the XP, toast, and orchestrator credit.
+      // the XP and toast. The core is the single progression driver — the
+      // dual-path shadow observer that used to run beside it is retired
+      // (Phase 7).
       core.completeSession({
         flow: SparkSessionTypes.FLOW_DAILY_PRACTICE,
         markPlanComplete: true,
         earnedCompletion: earned
       });
-      // Route through contract-based progress path — but only when at least
-      // one item was actually done.
-      if (earned && typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
-        var practiceResult = SparkContracts.createSessionResult({
-          mode: "practice",
-          instrumentId: activeInstrument ? (activeInstrument.id || activeInstrument.appId || null) : null,
-          instrumentType: activeInstrument ? activeInstrument.instrument : null,
-          completed: true
-        });
-        SparkProgressOrchestrator.applySessionOutcome(practiceResult);
-      }
       return;
     }
 

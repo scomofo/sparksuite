@@ -162,7 +162,19 @@ function tickDy(){
       challengeId: S.dailyChallenge ? S.dailyChallenge.id : null,
       durationSec: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60
     });
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+    // Contract-only completion (Phase 7): the orchestrator drives the daily
+    // challenge completion sequence; fallbacks only cover contexts without
+    // the contract stack.
+    if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+      var dailyResult = SparkContracts.createSessionResult({
+        mode: "daily",
+        duration: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60,
+        accuracy: 1.0,
+        completed: true,
+        meta: { challenge: S.dailyChallenge ? { id: S.dailyChallenge.id, title: S.dailyChallenge.title, xp: S.dailyChallenge.xp } : null }
+      });
+      SparkProgressOrchestrator.applySessionOutcome(dailyResult, { drive: true });
+    }else if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
       SparkProgressBridge.applyLegacyActivityCompletion({
         xpDelta:xp,
         toastAmount:xp,
@@ -176,16 +188,6 @@ function tickDy(){
       if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp,toastAmount:xp});else{S.xp+=xp;S.xpToast={amount:xp,time:Date.now()};}
       logHistory("daily",S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp);
       checkBadges();saveState();
-    }
-    // Route through contract-based progress path
-    if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
-      var dailyResult = SparkContracts.createSessionResult({
-        mode: "daily",
-        duration: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60,
-        accuracy: 1.0,
-        completed: true
-      });
-      SparkProgressOrchestrator.applySessionOutcome(dailyResult);
     }
     trigC();render();
   }
@@ -269,8 +271,19 @@ function finishRhythm(){
     S.rhythmResults=rhythmResult;
   }
   _rhythmAnim=null;
+  // Contract-only completion (Phase 7): the orchestrator drives the rhythm
+  // completion sequence and owns the score→XP policy; fallbacks only cover
+  // contexts without the contract stack.
   var xp=Math.round(S.rhythmScore/10);
-  if(xp>0){
+  if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+    var rhythmSessionResult = SparkContracts.createSessionResult({
+      mode: "rhythm",
+      accuracy: total > 0 ? hits / total : 0,
+      completed: true,
+      meta: { score: S.rhythmScore }
+    });
+    SparkProgressOrchestrator.applySessionOutcome(rhythmSessionResult, { drive: true });
+  }else if(xp>0){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
       SparkProgressBridge.applyLegacyActivityCompletion({
         xpDelta:xp,
@@ -279,15 +292,6 @@ function finishRhythm(){
     }else{
       if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else S.xp+=xp;logHistory("rhythm","Score: "+S.rhythmScore,xp);saveState();
     }
-  }
-  // Route through contract-based progress path
-  if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
-    var rhythmResult = SparkContracts.createSessionResult({
-      mode: "rhythm",
-      accuracy: total > 0 ? hits / total : 0,
-      completed: true
-    });
-    SparkProgressOrchestrator.applySessionOutcome(rhythmResult);
   }
   render();
 }
@@ -364,8 +368,19 @@ function finishRunner(){
     S.runnerResults=runnerResult;
   }
   _runnerAnim=null;
+  // Contract-only completion (Phase 7): the orchestrator drives the runner
+  // completion sequence and owns the score→XP policy; fallbacks only cover
+  // contexts without the contract stack.
   var xp=Math.round(S.runnerScore/20);
-  if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+  if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+    var runnerSessionResult = SparkContracts.createSessionResult({
+      mode: "runner",
+      accuracy: S.runnerScore > 0 ? Math.min(1, S.runnerScore / 100) : 0,
+      completed: true,
+      meta: { score: S.runnerScore, results: runnerResult }
+    });
+    SparkProgressOrchestrator.applySessionOutcome(runnerSessionResult, { drive: true });
+  }else if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
     SparkProgressBridge.applyLegacyActivityCompletion({
       xpDelta:xp>0?xp:0,
       maxFields:{runnerHighScore:S.runnerScore},
@@ -376,15 +391,6 @@ function finishRunner(){
     if(S.runnerScore>S.runnerHighScore)S.runnerHighScore=S.runnerScore;
     S.runnerResults=runnerResult;
     if(xp>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else S.xp+=xp;logHistory("runner","Score: "+S.runnerScore,xp);saveState();}
-  }
-  // Route through contract-based progress path
-  if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
-    var runnerSessionResult = SparkContracts.createSessionResult({
-      mode: "runner",
-      accuracy: S.runnerScore > 0 ? Math.min(1, S.runnerScore / 100) : 0,
-      completed: true
-    });
-    SparkProgressOrchestrator.applySessionOutcome(runnerSessionResult);
   }
   snd("complete");
   render();

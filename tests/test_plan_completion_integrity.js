@@ -63,13 +63,12 @@ function makeContext(opts) {
 
 console.log('=== Plan Completion Integrity Tests ===');
 
-test('earned completion routes credit to the orchestrator', function() {
+test('earned completion routes credit through the core alone (Phase 7)', function() {
   var ctx = makeContext({ withCore: true, items: [{ id: 'a', completed: true }, { id: 'b' }] });
   ctx.completePracticePlan();
   assert.strictEqual(ctx.coreCompleted, true, 'plan should still be marked done in the core');
   assert.strictEqual(ctx.corePayload.earnedCompletion, true, 'core must be told the completion was earned');
-  assert.strictEqual(ctx.orchestratorCalls.length, 1, 'credit should be awarded');
-  assert.strictEqual(ctx.orchestratorCalls[0].completed, true);
+  assert.strictEqual(ctx.orchestratorCalls.length, 0, 'core is the single driver — no shadow observer call');
 });
 
 test('zero items done marks the plan finished but earns nothing', function() {

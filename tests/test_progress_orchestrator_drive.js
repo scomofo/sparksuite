@@ -105,6 +105,87 @@ test('drive mode routes drill through the activity completion sequence, not proc
   assert.strictEqual(outcome.sessionEffects.jackpot, false);
 });
 
+test('daily drive awards the challenge XP with flags, count, history, and badges', function() {
+  var ctx = makeContext();
+  ctx.activityCompletions = [];
+  ctx.SparkProgressBridge = {
+    applyLegacyActivityCompletion: function(payload) { ctx.activityCompletions.push(payload); }
+  };
+  var outcome = ctx.SparkProgressOrchestrator.applySessionOutcome({
+    mode: 'daily',
+    meta: { challenge: { id: 'hold', title: 'Hold It', xp: 55 } }
+  }, { drive: true });
+  var payload = ctx.activityCompletions[0];
+  assert.strictEqual(payload.xpDelta, 55);
+  assert.strictEqual(payload.setFlags.dailyComplete, true);
+  assert.strictEqual(payload.incrementFields.dailyDone, 1);
+  assert.strictEqual(payload.history.detail, 'Hold It');
+  assert.strictEqual(payload.checkBadges, true);
+  assert.strictEqual(outcome.xpEarned, 55);
+  assert.strictEqual(ctx.processResultsCalls.length, 0);
+});
+
+test('daily drive defaults to 40 XP and "Challenge" when no challenge meta exists', function() {
+  var ctx = makeContext();
+  ctx.activityCompletions = [];
+  ctx.SparkProgressBridge = {
+    applyLegacyActivityCompletion: function(payload) { ctx.activityCompletions.push(payload); }
+  };
+  var outcome = ctx.SparkProgressOrchestrator.applySessionOutcome({ mode: 'daily' }, { drive: true });
+  assert.strictEqual(ctx.activityCompletions[0].xpDelta, 40);
+  assert.strictEqual(ctx.activityCompletions[0].history.detail, 'Challenge');
+  assert.strictEqual(outcome.xpEarned, 40);
+});
+
+test('rhythm drive owns the score/10 XP policy and skips zero-score awards', function() {
+  var ctx = makeContext();
+  ctx.activityCompletions = [];
+  ctx.SparkProgressBridge = {
+    applyLegacyActivityCompletion: function(payload) { ctx.activityCompletions.push(payload); }
+  };
+  var outcome = ctx.SparkProgressOrchestrator.applySessionOutcome({
+    mode: 'rhythm',
+    meta: { score: 230 }
+  }, { drive: true });
+  assert.strictEqual(ctx.activityCompletions[0].xpDelta, 23);
+  assert.strictEqual(ctx.activityCompletions[0].history.detail, 'Score: 230');
+  assert.strictEqual(outcome.xpEarned, 23);
+
+  var zero = ctx.SparkProgressOrchestrator.applySessionOutcome({
+    mode: 'rhythm',
+    meta: { score: 0 }
+  }, { drive: true });
+  assert.strictEqual(ctx.activityCompletions.length, 1, 'zero score must not run the completion sequence');
+  assert.strictEqual(zero.xpEarned, 0);
+});
+
+test('runner drive persists high score and results even on a zero-XP run', function() {
+  var ctx = makeContext();
+  ctx.activityCompletions = [];
+  ctx.SparkProgressBridge = {
+    applyLegacyActivityCompletion: function(payload) { ctx.activityCompletions.push(payload); }
+  };
+  var results = { score: 5, maxCombo: 1, distance: 3 };
+  var outcome = ctx.SparkProgressOrchestrator.applySessionOutcome({
+    mode: 'runner',
+    meta: { score: 5, results: results }
+  }, { drive: true });
+  var payload = ctx.activityCompletions[0];
+  assert.strictEqual(payload.xpDelta, 0, 'score 5 rounds to 0 XP');
+  assert.strictEqual(payload.maxFields.runnerHighScore, 5);
+  assert.strictEqual(payload.resultFields.runnerResults.distance, 3);
+  assert.strictEqual(payload.history, null);
+  assert.strictEqual(outcome.xpEarned, 0);
+
+  var scored = ctx.SparkProgressOrchestrator.applySessionOutcome({
+    mode: 'runner',
+    meta: { score: 100, results: results }
+  }, { drive: true });
+  assert.strictEqual(ctx.activityCompletions[1].xpDelta, 5);
+  assert.strictEqual(ctx.activityCompletions[1].history.detail, 'Score: 100');
+  assert.strictEqual(scored.xpEarned, 5);
+});
+
 test('drill drive falls back to direct state updates when the bridge is absent', function() {
   var ctx = makeContext();
   ctx.historyCalls = [];

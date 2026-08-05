@@ -52,7 +52,10 @@
       songId: opts.songId || null,
       lessonRef: opts.lessonRef || null,
       chordName: opts.chordName || null,
-      completed: opts.completed !== false
+      completed: opts.completed !== false,
+      // Flow-specific completion data (e.g. game score, daily challenge
+      // descriptor) consumed by the orchestrator's drive-mode branches.
+      meta: opts.meta || {}
     };
   }
 

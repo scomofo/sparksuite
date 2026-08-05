@@ -2,8 +2,44 @@
 // Unified progression cascade: evaluates all progression systems after any session event.
 (function() {
 
-  // Drill completion sequence (Phase 7 drive mode): fixed activity XP, drill
-  // count, history entry, completion event, badge check. Chord names ride on
+  // Generic activity-completion executor (Phase 7 drive mode). Prefers the
+  // progress bridge; falls back to equivalent direct state updates so the
+  // sequence behaves the same when the bridge isn't loaded.
+  function runActivityCompletion(payload) {
+    payload = payload || {};
+    if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyLegacyActivityCompletion === "function") {
+      SparkProgressBridge.applyLegacyActivityCompletion(payload);
+      return;
+    }
+    var key;
+    if (typeof S !== "undefined") {
+      if (payload.setFlags) for (key in payload.setFlags) S[key] = payload.setFlags[key];
+      if (payload.incrementFields) for (key in payload.incrementFields) S[key] = (S[key] || 0) + payload.incrementFields[key];
+      if (payload.maxFields) for (key in payload.maxFields) S[key] = Math.max(S[key] || 0, payload.maxFields[key]);
+      if (payload.resultFields) for (key in payload.resultFields) S[key] = payload.resultFields[key];
+      if (payload.xpDelta) S.xp = (S.xp || 0) + payload.xpDelta;
+      if (payload.toastAmount) S.xpToast = { amount: payload.toastAmount, time: Date.now() };
+    }
+    if (payload.history && typeof logHistory === "function") {
+      logHistory(payload.history.type, payload.history.detail, payload.history.xp || 0);
+    }
+    if (payload.emit && typeof _sparkEmit === "function") {
+      _sparkEmit(payload.emit.type, payload.emit.payload || {});
+    }
+    if (payload.checkBadges && typeof checkBadges === "function") checkBadges();
+    if (typeof saveState === "function") saveState();
+  }
+
+  function activityOutcome(xp) {
+    var outcome = typeof SparkContracts !== "undefined"
+      ? SparkContracts.createProgressOutcome({ xpEarned: xp })
+      : { xpEarned: xp };
+    outcome.sessionEffects = { xpEarned: xp, jackpot: false, leveledUp: false, newBadges: [], streakUpdated: false };
+    return outcome;
+  }
+
+  // Drill completion: fixed activity XP, drill count, history entry,
+  // completion event, badge check. Chord names ride on
   // sessionResult.exerciseResults; the instrument appId on instrumentId.
   function driveDrillCompletion(sessionResult) {
     var results = Array.isArray(sessionResult.exerciseResults) ? sessionResult.exerciseResults : [];
@@ -15,33 +51,59 @@
     var detail = chordNames.join(" / ");
     var appId = sessionResult.instrumentId || null;
     var xp = 20;
+    runActivityCompletion({
+      xpDelta: xp,
+      toastAmount: xp,
+      incrementFields: { drillCount: 1 },
+      history: { type: "drill", detail: detail, xp: xp },
+      emit: { type: "practice_session_completed", payload: { appId: appId, type: "drill", xp: xp, detail: detail } },
+      checkBadges: true
+    });
+    return activityOutcome(xp);
+  }
 
-    if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyLegacyActivityCompletion === "function") {
-      SparkProgressBridge.applyLegacyActivityCompletion({
+  // Daily challenge completion: XP comes from the challenge definition
+  // (sessionResult.meta.challenge = { id, title, xp }).
+  function driveDailyCompletion(sessionResult) {
+    var challenge = (sessionResult.meta && sessionResult.meta.challenge) || {};
+    var xp = challenge.xp || 40;
+    runActivityCompletion({
+      xpDelta: xp,
+      toastAmount: xp,
+      setFlags: { dailyComplete: true },
+      incrementFields: { dailyDone: 1 },
+      history: { type: "daily", detail: challenge.title || "Challenge", xp: xp },
+      checkBadges: true
+    });
+    return activityOutcome(xp);
+  }
+
+  // Rhythm game completion: XP is score/10; zero score awards nothing.
+  function driveRhythmCompletion(sessionResult) {
+    var score = (sessionResult.meta && typeof sessionResult.meta.score === "number") ? sessionResult.meta.score : 0;
+    var xp = Math.round(score / 10);
+    if (xp > 0) {
+      runActivityCompletion({
         xpDelta: xp,
-        toastAmount: xp,
-        incrementFields: { drillCount: 1 },
-        history: { type: "drill", detail: detail, xp: xp },
-        emit: { type: "practice_session_completed", payload: { appId: appId, type: "drill", xp: xp, detail: detail } },
-        checkBadges: true
+        history: { type: "rhythm", detail: "Score: " + score, xp: xp }
       });
-    } else {
-      if (typeof S !== "undefined") {
-        S.drillCount = (S.drillCount || 0) + 1;
-        S.xp = (S.xp || 0) + xp;
-        S.xpToast = { amount: xp, time: Date.now() };
-      }
-      if (typeof logHistory === "function") logHistory("drill", detail, xp);
-      if (typeof _sparkEmit === "function") _sparkEmit("practice_session_completed", { appId: appId, type: "drill", xp: xp, detail: detail });
-      if (typeof checkBadges === "function") checkBadges();
-      if (typeof saveState === "function") saveState();
     }
+    return activityOutcome(xp > 0 ? xp : 0);
+  }
 
-    var outcome = typeof SparkContracts !== "undefined"
-      ? SparkContracts.createProgressOutcome({ xpEarned: xp })
-      : { xpEarned: xp };
-    outcome.sessionEffects = { xpEarned: xp, jackpot: false, leveledUp: false, newBadges: [], streakUpdated: false };
-    return outcome;
+  // Runner game completion: XP is score/20; high score and results persist
+  // even on a zero-XP run.
+  function driveRunnerCompletion(sessionResult) {
+    var meta = sessionResult.meta || {};
+    var score = typeof meta.score === "number" ? meta.score : 0;
+    var xp = Math.round(score / 20);
+    runActivityCompletion({
+      xpDelta: xp > 0 ? xp : 0,
+      maxFields: { runnerHighScore: score },
+      resultFields: meta.results ? { runnerResults: meta.results } : null,
+      history: xp > 0 ? { type: "runner", detail: "Score: " + score, xp: xp } : null
+    });
+    return activityOutcome(xp > 0 ? xp : 0);
   }
 
   var SparkProgressOrchestrator = {
@@ -192,11 +254,12 @@
       if (opts.drive) {
         var mode = sessionResult.mode || "session";
 
-        // Drill has its own completion sequence (fixed activity XP, drill
-        // count, history, event, badges) — it never ran processResults.
-        if (mode === "drill") {
-          return driveDrillCompletion(sessionResult);
-        }
+        // Activity flows have their own completion sequences — they never
+        // ran processResults.
+        if (mode === "drill") return driveDrillCompletion(sessionResult);
+        if (mode === "daily") return driveDailyCompletion(sessionResult);
+        if (mode === "rhythm") return driveRhythmCompletion(sessionResult);
+        if (mode === "runner") return driveRunnerCompletion(sessionResult);
 
         // The session progression sequence itself (streak, XP/jackpot, chord
         // mastery, level-up, history, events, badges, evaluateAll cascade)
