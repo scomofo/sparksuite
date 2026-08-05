@@ -59,11 +59,10 @@ function awardStreakXP(){}
 
 <!-- Load core scripts in order -->
 <script src="../js/sparksuite/core/contracts.js"></script>
-<script src="../js/spark-core/psychology-engine.js"></script>
+<script src="../js/sparksuite/services/psychology.js"></script>
 <script src="../js/sparksuite/core/progress_orchestrator.js"></script>
-<script src="../js/spark-core/instrument-adapter.js"></script>
-<script src="../js/spark-core/session-engine.js"></script>
-<script src="../js/spark-core/index.js"></script>
+<script src="../js/sparksuite/bridges/instrument_adapter.js"></script>
+<script src="../js/sparksuite/legacy/session_engine.js"></script>
 <script src="../js/curriculum/curriculum_engine.js"></script>
 <script src="../js/ui/stringed_chord_svg.js"></script>
 <script src="../js/instruments/ukulele/chord_normalizer.js"></script>
@@ -85,18 +84,13 @@ function skip(name, reason) {
 }
 
 // === Core Globals ===
-check("SparkCore exists", typeof SparkCore !== "undefined");
-check("SparkCore.version is 0.3.0", SparkCore && SparkCore.version === "0.3.0");
-check("SparkCore.getServices exists", SparkCore && typeof SparkCore.getServices === "function");
-
-// === Services ===
-var svc = SparkCore ? SparkCore.getServices() : {};
-check("getServices returns session", svc && svc.session === SparkSession);
-check("getServices returns psychology", svc && svc.psychology === SparkPsychology);
-check("getServices returns progressOrchestrator", svc && svc.progressOrchestrator === SparkProgressOrchestrator);
-check("getServices returns instrumentAdapter", svc && svc.instrumentAdapter === SparkInstrumentAdapter);
-check("getServices returns curriculum", svc && svc.curriculum === SparkCurriculumService);
-check("getServices returns recommendations", svc && svc.recommendations === SparkRecommendationService);
+// The window.SparkCore namespace barrel is retired; the globals it wrapped
+// are checked directly.
+check("SparkSession exists", typeof SparkSession !== "undefined");
+check("SparkPsychology exists", typeof SparkPsychology !== "undefined");
+check("SparkProgressOrchestrator exists", typeof SparkProgressOrchestrator !== "undefined");
+check("SparkInstrumentAdapter exists", typeof SparkInstrumentAdapter !== "undefined");
+check("SparkCurriculumService exists", typeof SparkCurriculumService !== "undefined");
 
 // === Contracts ===
 check("SparkContracts exists", typeof SparkContracts !== "undefined");

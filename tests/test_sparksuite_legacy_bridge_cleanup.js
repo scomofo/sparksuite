@@ -117,7 +117,7 @@ global.SparkInstruments = {
 eval(loadJS("js/performance/practice_engine.js"));
 var performanceGeneratePracticePlan = generatePracticePlan;
 var performanceMarkPracticePlanItem = markPracticePlanItem;
-eval(loadJS("js/spark-core/session-engine.js"));
+eval(loadJS("js/sparksuite/legacy/session_engine.js"));
 eval(loadJS("js/practice/weakspots.js"));
 eval(loadJS("js/practice/adaptive.js"));
 

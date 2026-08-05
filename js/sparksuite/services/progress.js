@@ -1,4 +1,4 @@
-// js/spark-core/progress-engine.js
+// js/sparksuite/services/progress.js
 (function() {
 
   function _daysBetween(dateA, dateB) {

@@ -1,4 +1,4 @@
-// ===== SPARK INSTRUMENT ADAPTER =====
+// js/sparksuite/bridges/instrument_adapter.js
 // Bridges the SparkInstruments registry to the core engine.
 // Provides a unified interface for retrieving the active instrument's
 // curriculum data, type, and session structure.

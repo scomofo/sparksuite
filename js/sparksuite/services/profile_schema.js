@@ -1,4 +1,4 @@
-// js/spark-core/profile-schema.js
+// js/sparksuite/services/profile_schema.js
 (function() {
 
   function createEmptyAppProfile(instrument) {

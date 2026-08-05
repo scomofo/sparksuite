@@ -84,11 +84,38 @@ decision (adopt into `js/sparksuite/` or keep as standalone services).
    `js/sparksuite/core/progress_orchestrator.js` (globals unchanged:
    SparkContracts, SparkProgressOrchestrator). `js/spark-core/runtime/` is
    gone; `index.html` and all test loaders updated.
-5. **Home decision for shared services** (storage/events/achievements/
-   content/profile): adopt as-is under `js/sparksuite/services/` — they are
-   instrument-agnostic and engine-consumed, so relocation is mechanical.
-6. Drop the `js/spark-core/` script tags from `index.html` and delete the
-   directory; `test_legacy_spark_core_index_resolution.js` retires with it.
+5. ✅ **Shared services relocated** to `js/sparksuite/services/` (storage,
+   events, achievements, content_schema, content_normalizer, profile_schema,
+   plus psychology and progress — stateless policy and per-app-profile
+   progression are services, not dying legacy). `SparkInstrumentAdapter`
+   moved to `js/sparksuite/bridges/instrument_adapter.js` — it is a
+   stateless proxy over the ACTIVE legacy `SparkInstruments` module, i.e. a
+   bridge by nature; retiring it now means retiring `SparkInstruments`
+   itself (the legacy activation system), which is the one remaining
+   long-term design task.
+6. ✅ **`js/spark-core/` is deleted.** The namespace barrel (`index.js`,
+   zero live consumers) is gone along with its `index.html` script tag and
+   `test_legacy_spark_core_index_resolution.js`; `smoke_test.html` checks
+   the wrapped globals directly. The two genuinely-legacy engines moved to
+   `js/sparksuite/legacy/` (`session_engine.js` — buildSession + the
+   processResults delegate; `practice_engine.js` — active-module proxy used
+   by tests). All globals unchanged throughout.
 
-Steps 1–2 are gated on the remaining Phase 7 flow retirements; steps 3–6
-are mechanical after that.
+## Post-retirement state (2026-08-05)
+
+`js/spark-core/` no longer exists. The single composition root is the v2
+constructor (`SparkCoreRuntime` / `window.sparkCore`) in
+`js/sparksuite/core/spark_core.js`. What remains of the old barrel, by
+architectural role:
+
+- `js/sparksuite/core/` — contracts + progress orchestrator (Phase 7 layer)
+- `js/sparksuite/services/` — storage, events, achievements, content schema
+  + normalizer, profile schema, psychology, progress
+- `js/sparksuite/bridges/instrument_adapter.js` — active-legacy-instrument
+  proxy (retires with `SparkInstruments`)
+- `js/sparksuite/legacy/` — session_engine (buildSession + delegate),
+  practice_engine (test-only)
+
+Remaining long-term work: converge `core.completeSession` with orchestrator
+drive mode, and retire the `SparkInstruments` legacy activation system
+(which takes the bridge and `js/sparksuite/legacy/` with it).

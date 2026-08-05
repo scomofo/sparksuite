@@ -1,4 +1,4 @@
-// js/spark-core/session-engine.js
+// js/sparksuite/legacy/session_engine.js
 (function() {
   function getLegacySessionActiveInstrument() {
     var activeInstrument;

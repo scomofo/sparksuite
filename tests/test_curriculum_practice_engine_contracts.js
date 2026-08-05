@@ -185,8 +185,8 @@ assert.strictEqual(ukuleleMiniSessionPlan.segments.length, 5);
 assert.strictEqual(ukuleleMiniSessionPlan.exercises.length, 5);
 assert.strictEqual(ukuleleMiniSessionPlan.segments[1].meta.songTitle, "Riptide");
 
-loadJS("js/spark-core/instrument-adapter.js");
-loadJS("js/spark-core/practice-engine.js");
+loadJS("js/sparksuite/bridges/instrument_adapter.js");
+loadJS("js/sparksuite/legacy/practice_engine.js");
 global.SparkInstruments = {
   getActive: function() {
     return {
