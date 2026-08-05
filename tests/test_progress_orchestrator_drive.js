@@ -1,11 +1,14 @@
 // ===== Progress Orchestrator Drive Mode Tests =====
 // Run: node tests/test_progress_orchestrator_drive.js
 //
-// Phase 7 retirement: applySessionOutcome(sessionResult, { drive: true }) makes
-// the orchestrator the single progression entry point for retired flows — it
-// runs the progression sequence exactly once and returns a real ProgressOutcome
-// with renderer effect data on .sessionEffects. Without the flag it must stay a
-// read-only observer (the not-yet-retired dual-path flows depend on that).
+// Phase 7 retirement: applySessionOutcome(sessionResult, { drive: true }) is
+// the single progression entry point for retired flows. The session
+// progression sequence (streak, XP/jackpot, chord mastery, level-up, history,
+// events, badges, evaluateAll cascade) is absorbed into
+// SparkProgressOrchestrator.runSessionProgression; SparkSession.processResults
+// is a thin delegate kept for legacy callers. Activity flows (drill, daily,
+// rhythm, runner) run their own completion sequences. Without the drive flag,
+// applySessionOutcome must stay a read-only observer.
 
 var assert = require('assert');
 var fs = require('fs');
@@ -27,62 +30,105 @@ function test(name, fn) {
   }
 }
 
+function loadInto(ctx, file) {
+  vm.runInContext(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), ctx);
+}
+
 function makeContext(opts) {
   opts = opts || {};
   var ctx = {
     console: { debug: function() {} },
     Date: Date,
-    Math: Math,
     JSON: JSON,
-    S: { xp: 40, level: 2, playerLevel: 2 }
+    emits: [],
+    historyCalls: []
   };
-  if (!opts.withoutSession) {
-    ctx.processResultsCalls = [];
-    ctx.SparkSession = {
-      processResults: function(results) {
-        ctx.processResultsCalls.push(results);
-        return opts.effects || {
-          xpEarned: 10, jackpot: false, leveledUp: false,
-          newLevel: 2, newBadges: [], streakUpdated: false
-        };
-      }
-    };
+  // Deterministic jackpot control: the sequence rolls Math.random() < 1/15.
+  ctx.Math = Object.create(Math);
+  ctx.Math.random = function() { return opts.random != null ? opts.random : 0.9; };
+  if (!opts.withoutState) {
+    ctx.S = { xp: 40, level: 1, playerLevel: 1, sessions: 0, chordProgress: {} };
   }
+  ctx._sparkEmit = function(type, payload) { ctx.emits.push({ type: type, payload: payload }); };
+  ctx.logHistory = function(t, d, xp) { ctx.historyCalls.push([t, d, xp]); };
+  ctx.saveState = function() {};
   ctx.window = ctx;
   vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js/spark-core/runtime/contracts.js'), 'utf8'), ctx);
-  vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js/spark-core/progress-orchestrator.js'), 'utf8'), ctx);
+  loadInto(ctx, 'js/spark-core/runtime/contracts.js');
+  loadInto(ctx, 'js/spark-core/progress-orchestrator.js');
   return ctx;
 }
 
 console.log('=== Progress Orchestrator Drive Mode Tests ===');
 
-test('drive mode runs the progression sequence exactly once', function() {
+test('session drive runs the absorbed progression sequence exactly once', function() {
   var ctx = makeContext();
   var result = ctx.SparkContracts.createSessionResult({
     mode: 'quickStart', chordName: 'Am', duration: 120, accuracy: 0.75, completed: true
   });
-  ctx.SparkProgressOrchestrator.applySessionOutcome(result, { drive: true });
-  assert.strictEqual(ctx.processResultsCalls.length, 1, 'processResults must run exactly once');
+  var outcome = ctx.SparkProgressOrchestrator.applySessionOutcome(result, { drive: true });
+  assert.strictEqual(ctx.S.sessions, 1, 'sequence must run exactly once');
+  assert.strictEqual(ctx.S.xp, 50, 'starting 40 xp + 10 session award');
+  assert.strictEqual(ctx.S.chordProgress['Am'], 34, 'chord mastery +34');
+  assert.strictEqual(ctx.S.streak, 1, 'first session today updates the streak');
+  assert.strictEqual(outcome.xpEarned, 10);
+  assert.ok(outcome.streakChanges, 'streak change must be reported');
+  assert.strictEqual(outcome.sessionEffects.jackpot, false);
 });
 
-test('drive mode maps quickStart/chord modes to legacy type "session"', function() {
+test('quickStart and chord modes emit as legacy type "session"', function() {
   var ctx = makeContext();
   ctx.SparkProgressOrchestrator.applySessionOutcome({ mode: 'quickStart', chordName: 'Am' }, { drive: true });
   ctx.SparkProgressOrchestrator.applySessionOutcome({ mode: 'chord', chordName: 'Em' }, { drive: true });
-  assert.strictEqual(ctx.processResultsCalls[0].type, 'session');
-  assert.strictEqual(ctx.processResultsCalls[0].chordName, 'Am');
-  assert.strictEqual(ctx.processResultsCalls[1].type, 'session');
+  assert.strictEqual(ctx.emits[0].payload.type, 'session');
+  assert.strictEqual(ctx.emits[0].payload.chord, 'Am');
+  assert.strictEqual(ctx.emits[1].payload.type, 'session');
 });
 
-test('drive mode preserves the song type for the session sequence', function() {
+test('song mode is preserved through the session sequence', function() {
   var ctx = makeContext();
   ctx.SparkProgressOrchestrator.applySessionOutcome({ mode: 'song', songId: 'x' }, { drive: true });
-  assert.strictEqual(ctx.processResultsCalls[0].type, 'song');
-  assert.strictEqual(ctx.processResultsCalls[0].songId, 'x');
+  assert.strictEqual(ctx.emits[0].payload.type, 'song');
 });
 
-test('drive mode routes drill through the activity completion sequence, not processResults', function() {
+test('jackpot roll awards 50 XP and reports it on sessionEffects', function() {
+  var ctx = makeContext({ random: 0 });
+  var outcome = ctx.SparkProgressOrchestrator.applySessionOutcome({ mode: 'quickStart' }, { drive: true });
+  assert.strictEqual(outcome.xpEarned, 50);
+  assert.strictEqual(outcome.sessionEffects.jackpot, true);
+});
+
+test('mastering the last chord of the level maps into levelUps', function() {
+  var ctx = makeContext();
+  ctx.S.chordProgress = { Am: 66 };
+  ctx.SparkInstrumentAdapter = {
+    getCurriculum: function() { return { CHORDS: { 1: [{ name: 'Am' }] } }; }
+  };
+  var outcome = ctx.SparkProgressOrchestrator.applySessionOutcome({ mode: 'quickStart', chordName: 'Am' }, { drive: true });
+  assert.strictEqual(ctx.S.chordProgress['Am'], 100, '66 + 34 caps at 100');
+  assert.strictEqual(ctx.S.level, 2);
+  assert.strictEqual(outcome.levelUps.length, 1);
+  assert.strictEqual(outcome.levelUps[0], 2);
+  assert.strictEqual(outcome.sessionEffects.leveledUp, true);
+});
+
+test('SparkSession.processResults delegates to the absorbed sequence', function() {
+  var ctx = makeContext();
+  loadInto(ctx, 'js/spark-core/session-engine.js');
+  var outcome = ctx.SparkSession.processResults({ type: 'session', chordName: 'Am', duration: 120 });
+  assert.strictEqual(ctx.S.sessions, 1);
+  assert.strictEqual(outcome.xpEarned, 10);
+  assert.strictEqual(ctx.S.chordProgress['Am'], 34);
+});
+
+test('drive without app state returns zeroed effects without throwing', function() {
+  var ctx = makeContext({ withoutState: true });
+  var outcome = ctx.SparkProgressOrchestrator.applySessionOutcome({ mode: 'quickStart' }, { drive: true });
+  assert.strictEqual(outcome.xpEarned, 0);
+  assert.strictEqual(outcome.sessionEffects.streakUpdated, false);
+});
+
+test('drive mode routes drill through the activity completion sequence, not the session sequence', function() {
   var ctx = makeContext();
   ctx.activityCompletions = [];
   ctx.SparkProgressBridge = {
@@ -93,7 +139,7 @@ test('drive mode routes drill through the activity completion sequence, not proc
     instrumentId: 'chordspark',
     exerciseResults: ['Am', 'G']
   }, { drive: true });
-  assert.strictEqual(ctx.processResultsCalls.length, 0, 'drill must not run the session sequence');
+  assert.strictEqual(ctx.S.sessions, 0, 'drill must not run the session sequence');
   assert.strictEqual(ctx.activityCompletions.length, 1, 'drill runs the activity completion exactly once');
   var payload = ctx.activityCompletions[0];
   assert.strictEqual(payload.xpDelta, 20);
@@ -122,7 +168,7 @@ test('daily drive awards the challenge XP with flags, count, history, and badges
   assert.strictEqual(payload.history.detail, 'Hold It');
   assert.strictEqual(payload.checkBadges, true);
   assert.strictEqual(outcome.xpEarned, 55);
-  assert.strictEqual(ctx.processResultsCalls.length, 0);
+  assert.strictEqual(ctx.S.sessions, 0);
 });
 
 test('daily drive defaults to 40 XP and "Challenge" when no challenge meta exists', function() {
@@ -188,11 +234,8 @@ test('runner drive persists high score and results even on a zero-XP run', funct
 
 test('drill drive falls back to direct state updates when the bridge is absent', function() {
   var ctx = makeContext();
-  ctx.historyCalls = [];
-  ctx.logHistory = function(type, detail, xp) { ctx.historyCalls.push([type, detail, xp]); };
   ctx.badgeChecks = 0;
   ctx.checkBadges = function() { ctx.badgeChecks++; };
-  ctx.saveState = function() {};
   var outcome = ctx.SparkProgressOrchestrator.applySessionOutcome({
     mode: 'drill',
     exerciseResults: ['C']
@@ -205,36 +248,12 @@ test('drill drive falls back to direct state updates when the bridge is absent',
   assert.strictEqual(outcome.xpEarned, 20);
 });
 
-test('drive mode returns a ProgressOutcome mapped from the sequence effects', function() {
-  var ctx = makeContext({
-    effects: {
-      xpEarned: 50, jackpot: true, leveledUp: true,
-      newLevel: 3, newBadges: ['first_week'], streakUpdated: true
-    }
-  });
-  var outcome = ctx.SparkProgressOrchestrator.applySessionOutcome({ mode: 'quickStart' }, { drive: true });
-  assert.strictEqual(outcome.xpEarned, 50);
-  assert.strictEqual(outcome.levelUps.length, 1);
-  assert.strictEqual(outcome.levelUps[0], 3);
-  assert.strictEqual(outcome.achievements.length, 1);
-  assert.strictEqual(outcome.achievements[0], 'first_week');
-  assert.ok(outcome.streakChanges, 'streak change must be reported');
-  assert.strictEqual(outcome.sessionEffects.jackpot, true, 'renderer effects ride on sessionEffects');
-  assert.strictEqual(outcome.sessionEffects.leveledUp, true);
-});
-
-test('drive mode without SparkSession loaded returns zeroed effects without throwing', function() {
-  var ctx = makeContext({ withoutSession: true });
-  var outcome = ctx.SparkProgressOrchestrator.applySessionOutcome({ mode: 'quickStart' }, { drive: true });
-  assert.strictEqual(outcome.xpEarned, 0);
-  assert.strictEqual(outcome.sessionEffects.newLevel, 2, 'falls back to current S.level');
-});
-
-test('default (observer) mode stays read-only: no processResults call, no XP awarded', function() {
+test('default (observer) mode stays read-only: no sequence run, no XP awarded', function() {
   var ctx = makeContext();
   var outcome = ctx.SparkProgressOrchestrator.applySessionOutcome({ mode: 'guided' });
-  assert.strictEqual(ctx.processResultsCalls.length, 0, 'observer mode must not drive the sequence');
-  assert.strictEqual(outcome.xpEarned, 0, 'observer mode must not award XP');
+  assert.strictEqual(ctx.S.sessions, 0, 'observer mode must not drive the sequence');
+  assert.strictEqual(ctx.S.xp, 40, 'observer mode must not award XP');
+  assert.strictEqual(outcome.xpEarned, 0);
 });
 
 console.log('');

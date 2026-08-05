@@ -48,11 +48,14 @@ decision (adopt into `js/sparksuite/` or keep as standalone services).
 
 ## Proposed retirement order
 
-1. **Absorb SparkSession.processResults into the orchestrator** once the
-   remaining session-shaped dual-path flows (performance finish, guided
-   complete, daily, rhythm, runner, practice finish) retire via drive mode —
-   at that point SparkSession's last live responsibility disappears and
-   `session-engine.js` + its 4 consumers repoint to `sparkCore.startSession`.
+1. ✅ **SparkSession.processResults absorbed into the orchestrator** as
+   `SparkProgressOrchestrator.runSessionProgression` (all dual-path flows
+   retired first — see migration checklist Phase 7). `processResults` is now
+   a thin delegate kept for its 4 legacy callers (guitar/bass guided
+   completions, v2 progress_engine legacy branch, spark-core barrel
+   completeSession); repointing those callers is part of step 3's barrel
+   consumer sweep. SparkSession's remaining live responsibility is
+   `buildSession` only.
 2. **Retire SparkInstrumentAdapter** (5 consumers) onto
    InstrumentManager/adapter registry — the registry already carries
    capabilities (sessionStructure, skillProgress, micCalibration).

@@ -2,6 +2,31 @@
 // Unified progression cascade: evaluates all progression systems after any session event.
 (function() {
 
+  // Resolves the active instrument entry (mirrors the legacy session
+  // engine's resolution: prefer the active module, fall back to matching a
+  // registered entry by id/appId).
+  function getActiveInstrumentEntry() {
+    var activeInstrument;
+    var candidate;
+    var all;
+    var i;
+    var entry;
+    if (typeof SparkInstruments === "undefined" || !SparkInstruments || typeof SparkInstruments.getActive !== "function") {
+      return null;
+    }
+    activeInstrument = SparkInstruments.getActive();
+    if (!activeInstrument) return null;
+    if (typeof activeInstrument.getData === "function") return activeInstrument;
+    candidate = activeInstrument.id || activeInstrument.appId || activeInstrument.instrumentId || null;
+    if (!candidate || typeof SparkInstruments.getAll !== "function") return activeInstrument;
+    all = SparkInstruments.getAll() || [];
+    for (i = 0; i < all.length; i++) {
+      entry = all[i] || {};
+      if (entry.id === candidate || entry.appId === candidate) return entry;
+    }
+    return activeInstrument;
+  }
+
   // Generic activity-completion executor (Phase 7 drive mode). Prefers the
   // progress bridge; falls back to equivalent direct state updates so the
   // sequence behaves the same when the bridge isn't loaded.
@@ -107,6 +132,187 @@
   }
 
   var SparkProgressOrchestrator = {
+
+    /**
+     * runSessionProgression(results)
+     * The session progression sequence, absorbed from the legacy
+     * SparkSession.processResults (which now delegates here): once-a-day
+     * streak, XP with 1-in-15 jackpot, chord mastery (+34 capped at 100),
+     * chord-set level-up, history entry, completion event, badge check, the
+     * evaluateAll cascade, and a state save.
+     * results: { type, chordName, duration, accuracy, songId, instrumentId }
+     * Returns: { xpEarned, jackpot, leveledUp, newLevel, newBadges, streakUpdated }
+     */
+    runSessionProgression: function(results) {
+      results = results || {};
+
+      var xpEarned      = 0;
+      var jackpot       = false;
+      var leveledUp     = false;
+      var newLevel      = typeof S !== "undefined" ? S.level : 1;
+      var streakUpdated = false;
+
+      if (typeof S === "undefined") {
+        return { xpEarned: xpEarned, jackpot: jackpot, leveledUp: leveledUp, newLevel: newLevel, newBadges: [], streakUpdated: streakUpdated };
+      }
+
+      // --- Streak: once per day ---
+      var today = new Date().toISOString().slice(0, 10);
+      var sessionUpdate = {
+        streak: null,
+        sessionsDelta: 1,
+        xpDelta: 0,
+        chordProgress: {},
+        level: null
+      };
+      if (S.lastSessionDate !== today) {
+        sessionUpdate.streak = {
+          increment: 1,
+          lastSessionDate: today
+        };
+        streakUpdated = true;
+      }
+
+      // --- XP with 1-in-15 jackpot ---
+      jackpot  = Math.random() < (1 / 15);
+      xpEarned = jackpot ? 50 : 10;
+      sessionUpdate.xpDelta = xpEarned;
+
+      // --- Chord mastery (+34 per session, capped at 100) ---
+      var chordName = results.chordName || null;
+      if (chordName) {
+        sessionUpdate.chordProgress[chordName] = 34;
+      }
+
+      if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyLegacySessionOutcome === "function") {
+        SparkProgressBridge.applyLegacySessionOutcome(sessionUpdate);
+      } else if (typeof SparkInstrumentProgress !== "undefined") {
+        // Engine-first path: route xp/streak/sessions through
+        // SparkProgress on the per-app profile, which mirrors the
+        // updated stats back into S.* for the dumb-renderer UI.
+        if (sessionUpdate.streak) {
+          SparkInstrumentProgress.updateStreak(sessionUpdate.streak.lastSessionDate);
+          S.lastSessionDate = sessionUpdate.streak.lastSessionDate;
+        }
+        if (sessionUpdate.sessionsDelta) {
+          for (var _si = 0; _si < sessionUpdate.sessionsDelta; _si++) {
+            SparkInstrumentProgress.completeSession("legacy_session");
+          }
+        }
+        if (sessionUpdate.xpDelta) SparkInstrumentProgress.addXp(sessionUpdate.xpDelta);
+      } else {
+        if (sessionUpdate.streak) {
+          S.streak = (S.streak || 0) + sessionUpdate.streak.increment;
+          S.lastSessionDate = sessionUpdate.streak.lastSessionDate;
+        }
+        S.sessions = (S.sessions || 0) + sessionUpdate.sessionsDelta;
+        S.xp = (S.xp || 0) + sessionUpdate.xpDelta;
+        if (chordName) {
+          if (typeof SparkChordProgress !== "undefined") {
+            SparkChordProgress.add(chordName, sessionUpdate.chordProgress[chordName]);
+          } else {
+            if (typeof S.chordProgress !== "object" || S.chordProgress === null) S.chordProgress = {};
+            S.chordProgress[chordName] = Math.min((S.chordProgress[chordName] || 0) + sessionUpdate.chordProgress[chordName], 100);
+          }
+        }
+      }
+
+      // --- Level-up: all chords at current level mastered ---
+      var activeInstrument = getActiveInstrumentEntry();
+      var D = results.instrumentData || {};
+      if (!results.instrumentData) {
+        if (activeInstrument && typeof activeInstrument.getData === "function") {
+          D = activeInstrument.getData() || {};
+        } else if (typeof SparkInstrumentAdapter !== "undefined") {
+          D = SparkInstrumentAdapter.getCurriculum() || {};
+        }
+      }
+      var levelChords = (D.CHORDS && D.CHORDS[S.level]) || [];
+      if (levelChords.length > 0) {
+        var allMastered = true;
+        for (var i = 0; i < levelChords.length; i++) {
+          var chordPct = typeof SparkChordProgress !== "undefined"
+            ? SparkChordProgress.get(levelChords[i].name)
+            : (S.chordProgress && S.chordProgress[levelChords[i].name] || 0);
+          if (chordPct < 100) { allMastered = false; break; }
+        }
+        if (allMastered) {
+          if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyLegacySessionOutcome === "function") {
+            SparkProgressBridge.applyLegacySessionOutcome({ level: (S.level || 1) + 1 });
+          } else {
+            S.level++;
+          }
+          leveledUp = true;
+          newLevel  = S.level;
+        }
+      }
+
+      // --- Log history ---
+      if (typeof logHistory === "function") {
+        logHistory("session", chordName || results.type || "session", xpEarned);
+      }
+
+      // --- Emit event ---
+      if (typeof _sparkEmit === "function") {
+        var emitInstrumentId = activeInstrument ? (activeInstrument.id || activeInstrument.appId || activeInstrument.instrumentId || null) : null;
+        var resultInstrumentId = results.instrumentId || results.appId || results.instrumentAppId || null;
+        _sparkEmit("practice_session_completed", {
+          // Preserve legacy "chordspark" fallback so downstream event consumers
+          // that expect a non-null appId don't break when no active instrument
+          // can be resolved.
+          appId:     emitInstrumentId || resultInstrumentId || "chordspark",
+          type:      results.type || "session",
+          xp:        xpEarned,
+          chord:     chordName,
+          jackpot:   jackpot,
+          leveledUp: leveledUp
+        });
+      }
+
+      // --- Check badges ---
+      var newBadges = [];
+      if (typeof checkBadges === "function") {
+        var beforeBadges = Array.isArray(S.earnedBadges) ? S.earnedBadges.slice() : [];
+        checkBadges();
+        var afterBadges  = Array.isArray(S.earnedBadges) ? S.earnedBadges : [];
+        for (var b = 0; b < afterBadges.length; b++) {
+          if (beforeBadges.indexOf(afterBadges[b]) < 0) newBadges.push(afterBadges[b]);
+        }
+      }
+
+      // --- Run full progression cascade ---
+      var outcome = {
+        xpEarned:      xpEarned,
+        jackpot:       jackpot,
+        leveledUp:     leveledUp,
+        newLevel:      newLevel,
+        newBadges:     newBadges,
+        streakUpdated: streakUpdated
+      };
+      var progressResult = SparkProgressOrchestrator.evaluateAll({
+        type: results.type || "session",
+        chordName: chordName,
+        accuracy: results.accuracy,
+        xpAwarded: xpEarned,
+        duration: results.duration,
+        songId: results.songId,
+        streakUpdated: streakUpdated
+      });
+      if (progressResult.leveledUp) {
+        outcome.playerLeveledUp = true;
+        outcome.newPlayerLevel = progressResult.newLevel;
+      }
+      if (progressResult.newAchievements.length) {
+        outcome.newAchievements = progressResult.newAchievements;
+      }
+
+      // --- Save state ---
+      if (typeof saveState === "function") {
+        saveState();
+      }
+
+      return outcome;
+    },
 
     evaluateAll: function(event) {
       event = event || {};
@@ -261,29 +467,20 @@
         if (mode === "rhythm") return driveRhythmCompletion(sessionResult);
         if (mode === "runner") return driveRunnerCompletion(sessionResult);
 
-        // The session progression sequence itself (streak, XP/jackpot, chord
-        // mastery, level-up, history, events, badges, evaluateAll cascade)
-        // still lives in SparkSession.processResults — shared with flows that
-        // are not yet retired. Driving it from here makes this the flow's
-        // single entry point; the sequence internals migrate into the
-        // orchestrator once the remaining dual-path flows retire.
+        // Session-shaped flows run the absorbed progression sequence (streak,
+        // XP/jackpot, chord mastery, level-up, history, events, badges,
+        // evaluateAll cascade) — the orchestrator owns it outright now;
+        // SparkSession.processResults is a thin delegate kept for legacy
+        // callers.
         var legacyType = mode === "song" ? mode : "session";
-        var effects;
-        if (typeof SparkSession !== "undefined" && typeof SparkSession.processResults === "function") {
-          effects = SparkSession.processResults({
-            type: legacyType,
-            chordName: sessionResult.chordName || null,
-            duration: sessionResult.duration,
-            accuracy: sessionResult.accuracy,
-            songId: sessionResult.songId
-          });
-        } else {
-          effects = {
-            xpEarned: 0, jackpot: false, leveledUp: false,
-            newLevel: (typeof S !== "undefined" && S.level) || 1,
-            newBadges: [], streakUpdated: false
-          };
-        }
+        var effects = SparkProgressOrchestrator.runSessionProgression({
+          type: legacyType,
+          chordName: sessionResult.chordName || null,
+          duration: sessionResult.duration,
+          accuracy: sessionResult.accuracy,
+          songId: sessionResult.songId,
+          instrumentId: sessionResult.instrumentId || null
+        });
 
         var driven = typeof SparkContracts !== "undefined"
           ? SparkContracts.createProgressOutcome({

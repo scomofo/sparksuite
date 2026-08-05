@@ -81,6 +81,9 @@ function resetEnvironment() {
 function test(name, fn) {
   try {
     resetEnvironment();
+    // processResults delegates its absorbed session progression sequence to
+    // the orchestrator, so load it alongside the legacy session engine.
+    eval(loadJS("js/spark-core/progress-orchestrator.js"));
     eval(loadJS("js/spark-core/session-engine.js"));
     eval(loadJS("js/spark-core/practice-engine.js"));
     fn();
