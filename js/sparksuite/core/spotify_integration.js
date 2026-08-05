@@ -6,7 +6,14 @@
    *
    * Load this file AFTER spark_core.js.
    */
-  if (typeof SparkCore === "undefined") return;
+  // Resolve the v2 constructor: SparkCoreRuntime is the exported name; a
+  // bare SparkCore only counts if it is actually a constructor (the legacy
+  // barrel exports a plain object under that name, which must be skipped).
+  var SparkCoreCtor = null;
+  if (typeof SparkCoreRuntime === "function") SparkCoreCtor = SparkCoreRuntime;
+  else if (typeof window !== "undefined" && typeof window.SparkCore === "function") SparkCoreCtor = window.SparkCore;
+  if (!SparkCoreCtor) return;
+  var SparkCore = SparkCoreCtor;
 
   /**
    * Initialize Spotify integration. Call once after obtaining an OAuth token.

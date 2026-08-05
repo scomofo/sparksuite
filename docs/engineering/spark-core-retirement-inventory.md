@@ -64,10 +64,26 @@ decision (adopt into `js/sparksuite/` or keep as standalone services).
    adapters to source curriculum/skill-tree/exercises from their own
    modules unconditionally, and InstrumentManager's active-context
    resolution to stop falling back to it. Treat as a design task.
-3. **Repoint the 9 SparkCore barrel consumers** at `window.sparkCore`
-   (v2 constructor root) service accessors, then delete `index.js`.
-4. **Relocate contracts.js + progress-orchestrator.js** under
-   `js/sparksuite/core/` (rename globals only if cheap; alias otherwise).
+3. ✅ **Barrel consumers repointed / eliminated.** Audit outcome: the "9
+   consumers" were mostly comments and same-name collisions with the v2
+   constructor. The only live app consumers were 4 dual-branch sites in
+   `guitar/app.js` (`SparkCore.startSession` with a `SparkSession.buildSession`
+   fallback carrying identical arguments) — collapsed to the direct
+   `buildSession` call, since the barrel's startSession only pre-enriched
+   options that buildSession resolves internally anyway. `window.SparkCore`
+   now has ZERO live app consumers; it is held only by the `index.html`
+   script tag and the pinning tests (`test_spark_core.js`,
+   `test_legacy_spark_core_index_resolution.js`, `smoke_test.html`).
+   Latent bug fixed en route: `spotify_integration.js` and
+   `system_wiring.js` (currently unloaded extension files) extended
+   `SparkCore.prototype` where `SparkCore` is the barrel *object* — their
+   methods could never reach v2 instances. Both now resolve the real
+   constructor (`SparkCoreRuntime`, matching `spotify_playlist_sync.js`).
+4. ✅ **contracts.js and progress-orchestrator.js relocated** to
+   `js/sparksuite/core/contracts.js` and
+   `js/sparksuite/core/progress_orchestrator.js` (globals unchanged:
+   SparkContracts, SparkProgressOrchestrator). `js/spark-core/runtime/` is
+   gone; `index.html` and all test loaders updated.
 5. **Home decision for shared services** (storage/events/achievements/
    content/profile): adopt as-is under `js/sparksuite/services/` — they are
    instrument-agnostic and engine-consumed, so relocation is mechanical.

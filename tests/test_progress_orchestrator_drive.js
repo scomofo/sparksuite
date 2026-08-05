@@ -54,8 +54,8 @@ function makeContext(opts) {
   ctx.saveState = function() {};
   ctx.window = ctx;
   vm.createContext(ctx);
-  loadInto(ctx, 'js/spark-core/runtime/contracts.js');
-  loadInto(ctx, 'js/spark-core/progress-orchestrator.js');
+  loadInto(ctx, 'js/sparksuite/core/contracts.js');
+  loadInto(ctx, 'js/sparksuite/core/progress_orchestrator.js');
   return ctx;
 }
 

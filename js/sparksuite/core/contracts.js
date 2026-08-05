@@ -1,4 +1,4 @@
-// js/spark-core/runtime/contracts.js
+// js/sparksuite/core/contracts.js
 // Normalized contracts for session planning, results, and progress outcomes.
 // These are factory functions that create contract-conforming objects.
 (function() {

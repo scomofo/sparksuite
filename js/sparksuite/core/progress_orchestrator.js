@@ -1,4 +1,4 @@
-// js/spark-core/progress-orchestrator.js
+// js/sparksuite/core/progress_orchestrator.js
 // Unified progression cascade: evaluates all progression systems after any session event.
 (function() {
 
