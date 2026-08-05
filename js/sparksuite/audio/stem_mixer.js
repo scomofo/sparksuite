@@ -7,7 +7,7 @@
   }
 
   StemMixer.prototype.loadStems = function(stems) {
-    for (var _n in this._tracks) { if (this._tracks[_n].gain) this._tracks[_n].gain.disconnect(); }
+    for (var _n in this._tracks) { if (Object.prototype.hasOwnProperty.call(this._tracks, _n) && this._tracks[_n] && this._tracks[_n].gain) { this._tracks[_n].gain.disconnect(); } }
     this.stop(); this._tracks = {};
     for (var name in stems) {
       if (!stems[name]) continue;

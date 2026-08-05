@@ -38,6 +38,10 @@
     var beatsPerBar = Math.max(1, Math.floor(num(beatGrid.beatsPerBar, 4)));
     var positionSec = Math.max(0, num(transport.positionSec, 0));
     var absoluteBeat = num(barBeat.absoluteBeat, positionSec / secondsPerBeat);
+    if (this.lastBeat !== null && absoluteBeat < this.lastBeat) {
+      this.lastBeat = null;
+      this.events = this.events.filter(function(e) { return e.beat < absoluteBeat; });
+    }
     var step = 1 / this.subdivision;
     var startStep = Math.floor(absoluteBeat / step);
     var endBeat = absoluteBeat + (this.lookaheadSec / secondsPerBeat);

@@ -36,8 +36,8 @@
     };
   };
 
-  SparkRuntimeSyncEngine.prototype.emit = function(reason) {
-    this.state = this.createState((this.state && this.state.status) || "idle", reason || null);
+  SparkRuntimeSyncEngine.prototype.emit = function(reason, prebuiltState) {
+    this.state = prebuiltState || this.createState((this.state && this.state.status) || "idle", reason || null);
     var snapshot = this.getState();
     for (var i = 0; i < this.subscribers.length; i++) {
       try { this.subscribers[i](snapshot); } catch (err) {}
@@ -132,7 +132,7 @@
     }
 
     this.state.status = transport ? transport.status : this.state.status;
-    return this.emit("tick");
+    return this.emit("tick", this.state);
   };
 
   SparkRuntimeSyncEngine.prototype.getState = function() {

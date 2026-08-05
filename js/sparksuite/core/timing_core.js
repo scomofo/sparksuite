@@ -29,14 +29,16 @@
     var parsed = parseTimeSignature(timeSignature);
     var downbeats = Array.isArray(input.downbeats_s) ? input.downbeats_s.slice() : [];
 
+    downbeats = downbeats
+      .map(function(value) { return num(value, null); })
+      .filter(function(value) { return value !== null && value >= 0; });
+
     var isAscending = true;
     for (var i = 1; i < downbeats.length; i++) {
       if (downbeats[i] <= downbeats[i - 1]) isAscending = false;
     }
 
-    downbeats = downbeats
-      .map(function(value) { return num(value, null); })
-      .filter(function(value) { return value !== null && value >= 0; });
+    downbeats.sort(function(a, b) { return a - b; });
 
     if (!downbeats.length) downbeats.push(0);
 
