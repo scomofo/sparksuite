@@ -56,9 +56,14 @@ decision (adopt into `js/sparksuite/` or keep as standalone services).
    completeSession); repointing those callers is part of step 3's barrel
    consumer sweep. SparkSession's remaining live responsibility is
    `buildSession` only.
-2. **Retire SparkInstrumentAdapter** (5 consumers) onto
-   InstrumentManager/adapter registry — the registry already carries
-   capabilities (sessionStructure, skillProgress, micCalibration).
+2. **Retire SparkInstrumentAdapter** — audit correction: this is NOT a
+   mechanical sweep. Beyond its 5 direct consumers, the v2 instrument
+   adapters (`guitar/bass/piano *_adapter.js`) and the v2 InstrumentManager
+   use it as a *fallback shim* bridging the legacy active-instrument system
+   (SparkInstruments) into the v2 core. Retiring it requires the v2
+   adapters to source curriculum/skill-tree/exercises from their own
+   modules unconditionally, and InstrumentManager's active-context
+   resolution to stop falling back to it. Treat as a design task.
 3. **Repoint the 9 SparkCore barrel consumers** at `window.sparkCore`
    (v2 constructor root) service accessors, then delete `index.js`.
 4. **Relocate contracts.js + progress-orchestrator.js** under
