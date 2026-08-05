@@ -41,7 +41,7 @@ function resetEnvironment() {
 function test(name, fn) {
   try {
     resetEnvironment();
-    eval(loadJS("js/spark-core/instrument-adapter.js"));
+    eval(loadJS("js/sparksuite/bridges/instrument_adapter.js"));
     fn();
     console.log("  PASS: " + name);
   } catch (err) {

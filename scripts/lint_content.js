@@ -48,7 +48,7 @@ function loadJS(file) {
 }
 
 [
-  "js/spark-core/instrument-adapter.js",
+  "js/sparksuite/bridges/instrument_adapter.js",
   "js/sparksuite/content/validate_instrument_module.js",
   "js/launcher.js",
   "js/data.js",

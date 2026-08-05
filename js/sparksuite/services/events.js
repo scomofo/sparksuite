@@ -1,4 +1,4 @@
-// js/spark-core/events.js
+// js/sparksuite/services/events.js
 (function() {
 
   var _queue = [];

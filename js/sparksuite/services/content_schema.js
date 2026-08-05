@@ -1,4 +1,4 @@
-// js/spark-core/content-schema.js
+// js/sparksuite/services/content_schema.js
 (function() {
 
   var SparkContent = {

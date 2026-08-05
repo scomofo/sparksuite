@@ -26,8 +26,8 @@ function loadJS(file) {
   return code;
 }
 
-eval(loadJS('js/spark-core/profile-schema.js'));
-eval(loadJS('js/spark-core/storage.js'));
+eval(loadJS('js/sparksuite/services/profile_schema.js'));
+eval(loadJS('js/sparksuite/services/storage.js'));
 
 console.log('\n--- SparkCore: Profile Schema ---');
 
@@ -81,7 +81,7 @@ test('loadSuiteProfile returns empty profile when nothing saved', function() {
   assert.ok(loaded.apps);
 });
 
-eval(loadJS('js/spark-core/events.js'));
+eval(loadJS('js/sparksuite/services/events.js'));
 
 console.log('\n--- SparkCore: Events ---');
 
@@ -211,7 +211,7 @@ test('recordDrillAnswer updates mastery', function() {
   assert.ok(p.apps.chordspark.mastery['chord_em'] > 0);
 });
 
-eval(loadJS('js/spark-core/achievements.js'));
+eval(loadJS('js/sparksuite/services/achievements.js'));
 
 console.log('\n--- SparkCore: Achievements ---');
 
@@ -248,8 +248,8 @@ test('evaluateAchievements awards dual_instrument when both apps have lessons', 
   assert.ok(earned.indexOf('dual_instrument_starter') >= 0);
 });
 
-eval(loadJS('js/spark-core/content-schema.js'));
-eval(loadJS('js/spark-core/content-normalizer.js'));
+eval(loadJS('js/sparksuite/services/content_schema.js'));
+eval(loadJS('js/sparksuite/services/content_normalizer.js'));
 
 console.log('\n--- SparkCore: Content ---');
 

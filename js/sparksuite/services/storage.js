@@ -1,4 +1,4 @@
-// js/spark-core/storage.js
+// js/sparksuite/services/storage.js
 (function() {
 
   var STORAGE_KEY = "spark_suite_profile";

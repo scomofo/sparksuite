@@ -1,4 +1,4 @@
-// js/spark-core/content-normalizer.js
+// js/sparksuite/services/content_normalizer.js
 (function() {
 
   function resolveNormalizedContentInstrument(appId, fallbackInstrument) {

@@ -1,4 +1,4 @@
-// js/spark-core/achievements.js
+// js/sparksuite/services/achievements.js
 (function() {
 
   var SUITE_ACHIEVEMENTS = [

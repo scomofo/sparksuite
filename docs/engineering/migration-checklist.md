@@ -79,22 +79,17 @@ Tracks which flows use the new engine contracts vs legacy direct-call paths.
   these were already driven by the v2 core's `completeSession` — the
   "dual-path" was a read-only shadow observer beside it, which is now removed.
 
-Next consolidation step (see spark-core-retirement-inventory.md): absorb
-`SparkSession.processResults` into the orchestrator, then converge the two
-completion entry points (`core.completeSession` and drive mode).
-`SparkProgressOrchestrator.applySessionOutcome` gained a drive mode (`{drive:true}`)
-that makes it the single progression entry point for a retired flow — it runs the
-progression sequence exactly once and returns a real ProgressOutcome (renderer
-effect data on `.sessionEffects`). The sequence internals still delegate to
-`SparkSession.processResults`, which is shared with unretired flows; those
-internals move into the orchestrator once the remaining flows retire. Pinned by
-`tests/test_progress_orchestrator_drive.js`. Remaining migrated flows run
-dual-path for safety; retire them one at a time via the same drive-mode pattern.
+The session progression sequence itself is absorbed into the orchestrator as
+`SparkProgressOrchestrator.runSessionProgression`; `SparkSession.processResults`
+is a thin delegate kept for legacy callers. Pinned by
+`tests/test_progress_orchestrator_drive.js`. Next consolidation step (see
+spark-core-retirement-inventory.md): converge the two completion entry points
+(`core.completeSession` and drive mode) and finish the barrel retirement.
 
-### Retirement criteria
-- Dual-path flow must produce matching outcomes for 2+ weeks
-- Console.debug logs show no discrepancies
-- Then legacy path can be removed
+### Retirement criteria (met)
+The 2+ week dual-path validation window elapsed with no logged discrepancies
+before the retirements above landed; the criteria section is kept for the
+record.
 
 ## Visual Refresh (Vibrant Playground)
 
@@ -121,7 +116,7 @@ already implemented; the list below reflects current reality._
 
 0. ✅ Removed the abandoned top-level `engine/` TypeScript prototype (10 files, one early-history commit, zero references from `index.html`, `js/`, tests, or the electron-builder `files` list). The live core is `js/sparksuite/core/`; the TS tree only duplicated it (e.g. `timing-engine.ts` vs the wired, calibration-aware `js/sparksuite/core/timing_engine.js`) and misled readers about the target architecture.
 1. ✅ `buildLearningQueue(userContext)` on CurriculumService — `js/curriculum/curriculum_engine.js`; covered by `test_curriculum_service_instrument_resolution.js` and the curriculum guardrails.
-3. ✅ InstrumentAdapter normalized methods proxied through spark-core (`getExercisesForLesson`, `getPerformanceConfig`) — `js/spark-core/instrument-adapter.js` + `practice-engine.js`; Phase 4 table is Complete for all four instruments.
+3. ✅ InstrumentAdapter normalized methods proxied through spark-core (`getExercisesForLesson`, `getPerformanceConfig`) — `js/sparksuite/bridges/instrument_adapter.js` + `js/spark-core/practice-engine.js`; Phase 4 table is Complete for all four instruments.
 4. ✅ Recommendation engine wired through SparkCore — `SparkCore.getServices().recommendations` and `SparkCore.recommendNextAction()` in `js/spark-core/index.js` (curriculum queue first, recommendation fallback).
 6. ✅ Scriptable smoke checks — packaged desktop smoke (`scripts/desktop_packaged_smoke.js`, `test_packaged_smoke_*`) and the browser clickthrough smoke run in CI.
 
