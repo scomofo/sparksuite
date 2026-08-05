@@ -21,7 +21,7 @@ Tracks which flows use the new engine contracts vs legacy direct-call paths.
 | Flow | applySessionOutcome | Status |
 |------|-------------------|--------|
 | quickStart timer complete | Yes | **Contract-only** — orchestrator drives via `applySessionOutcome(result, {drive:true})`; the paired legacy `processResults` call at the call site is retired (the same completion handler also serves single-chord timer sessions) |
-| drill timer complete | Yes | Dual-path |
+| drill timer complete | Yes | **Contract-only** — orchestrator drives the drill completion sequence via `applySessionOutcome(result, {drive:true})` (drill-mode branch); the paired legacy call at the call site is retired |
 | performance finish | Yes | Dual-path |
 | guided session complete | Yes | Dual-path |
 | daily challenge complete | Yes | Dual-path |
@@ -68,7 +68,9 @@ Tracks which flows use the new engine contracts vs legacy direct-call paths.
 
 ## Legacy Removal (Phase 7)
 
-First retirement landed: the quickStart timer-completion flow is contract-only.
+First retirements landed: the quickStart and drill timer-completion flows are
+contract-only. Drive mode dispatches per result mode — session-shaped flows run
+the shared progression sequence, drill runs its activity-completion sequence.
 `SparkProgressOrchestrator.applySessionOutcome` gained a drive mode (`{drive:true}`)
 that makes it the single progression entry point for a retired flow — it runs the
 progression sequence exactly once and returns a real ProgressOutcome (renderer
@@ -119,5 +121,5 @@ already implemented; the list below reflects current reality._
 
 5. Begin retiring legacy paths once dual-path validation passes (see Phase 7 retirement criteria — process-gated, not a code task). The 2-week validation window has long elapsed (migrated flows have run dual-path since mid-June); next concrete step is to verify no logged discrepancies for one flow (quickStart is the simplest) and retire its legacy branch first.
 8. ✅ Guided session choice is engine-owned end to end. Correction to an earlier audit note: `js/pages/guided.js` was already dual-path (its `getGuidedSessionView()` prefers `sparkCore.getActiveSessionView()`), but every UI entry point pinned an explicit `sessionNum` (`parseInt(v) || S.guidedSession || 1`), so the engine's `getNextGuidedSession` choice was never exercised from the app. Now an unpinned start — plain "start/continue" buttons, the done-page next-session CTA, and launcher items without an explicit number — passes no `sessionNum`, letting the CurriculumEngine advance by per-instrument completion. Explicit picks (lesson list, showroom, done-page display labels aside) still pin. Touched: `js/actions/system_family.js`, `js/instruments/{guitar,bass,piano}/app.js`, `js/practice/launchers.js`, `js/pages/guided.js`. Remaining page-level target: `js/pages/practice.js`.
-9. ✅ Core de-leaked of the flagship instrument hardcodes (CLAUDE.md failure-mode #2). Instrument adapters now declare their specifics via `getCapabilities()`: `sessionStructure` (bass's groove block order) and `skillProgress: { stateKey, movementBasis }` (bass/ukulele rhythm-drill persistence). Both psychology engines resolve session structure from the adapter registry, `progress_engine.js` builds skill-progress patches from the declared config, and `progress_bridge.js` merges any `*SkillProgress` patch key generically. Zero instrument names remain in `psychology_engine.js`, `progress_engine.js`, or `js/spark-core/psychology-engine.js`. Smaller leaks remain in `execution_gateway.js`, `session_runtime.js`, and `calibration_engine.js` (follow-up).
+9. ✅ Core de-leaked of the flagship instrument hardcodes (CLAUDE.md failure-mode #2). Instrument adapters now declare their specifics via `getCapabilities()`: `sessionStructure` (bass's groove block order) and `skillProgress: { stateKey, movementBasis }` (bass/ukulele rhythm-drill persistence). Both psychology engines resolve session structure from the adapter registry, `progress_engine.js` builds skill-progress patches from the declared config, and `progress_bridge.js` merges any `*SkillProgress` patch key generically. Zero instrument names remain in `psychology_engine.js`, `progress_engine.js`, or `js/spark-core/psychology-engine.js`. The remaining leaks are gone too: `execution_gateway.js` and `session_runtime.js` recognize instrument types via adapter-registry membership instead of a hardcoded shortlist, and `calibration_engine.js` gates the mic-latency offset on the adapter-declared `micCalibration` capability (declared by guitar). Zero instrument-name equality checks remain anywhere in `js/sparksuite/core/`.
 10. Consolidate composition roots: the legacy `js/spark-core/` barrel and the constructor-based `js/sparksuite/core/` both load in `index.html`. Plan retirement of `js/spark-core/` once its remaining consumers are inventoried (`test_legacy_spark_core_index_resolution.js` currently pins it in place).

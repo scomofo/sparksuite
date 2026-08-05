@@ -119,7 +119,10 @@
       supportsFingerpicking: true,
       supportsMelody: true,
       preferredRenderer: "string-lane-highway",
-      inputModes: ["keyboard", "midi", "mouse"]
+      inputModes: ["keyboard", "midi", "mouse"],
+      // Opts into the mic-latency timing offset (S.performMicOffsetMs) that
+      // the CalibrationEngine applies during performance scoring.
+      micCalibration: true
     };
   };
 

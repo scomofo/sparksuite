@@ -75,13 +75,53 @@ test('drive mode maps quickStart/chord modes to legacy type "session"', function
   assert.strictEqual(ctx.processResultsCalls[1].type, 'session');
 });
 
-test('drive mode preserves drill and song types', function() {
+test('drive mode preserves the song type for the session sequence', function() {
   var ctx = makeContext();
-  ctx.SparkProgressOrchestrator.applySessionOutcome({ mode: 'drill' }, { drive: true });
   ctx.SparkProgressOrchestrator.applySessionOutcome({ mode: 'song', songId: 'x' }, { drive: true });
-  assert.strictEqual(ctx.processResultsCalls[0].type, 'drill');
-  assert.strictEqual(ctx.processResultsCalls[1].type, 'song');
-  assert.strictEqual(ctx.processResultsCalls[1].songId, 'x');
+  assert.strictEqual(ctx.processResultsCalls[0].type, 'song');
+  assert.strictEqual(ctx.processResultsCalls[0].songId, 'x');
+});
+
+test('drive mode routes drill through the activity completion sequence, not processResults', function() {
+  var ctx = makeContext();
+  ctx.activityCompletions = [];
+  ctx.SparkProgressBridge = {
+    applyLegacyActivityCompletion: function(payload) { ctx.activityCompletions.push(payload); }
+  };
+  var outcome = ctx.SparkProgressOrchestrator.applySessionOutcome({
+    mode: 'drill',
+    instrumentId: 'chordspark',
+    exerciseResults: ['Am', 'G']
+  }, { drive: true });
+  assert.strictEqual(ctx.processResultsCalls.length, 0, 'drill must not run the session sequence');
+  assert.strictEqual(ctx.activityCompletions.length, 1, 'drill runs the activity completion exactly once');
+  var payload = ctx.activityCompletions[0];
+  assert.strictEqual(payload.xpDelta, 20);
+  assert.strictEqual(payload.incrementFields.drillCount, 1);
+  assert.strictEqual(payload.history.detail, 'Am / G');
+  assert.strictEqual(payload.emit.payload.appId, 'chordspark');
+  assert.strictEqual(payload.checkBadges, true);
+  assert.strictEqual(outcome.xpEarned, 20);
+  assert.strictEqual(outcome.sessionEffects.jackpot, false);
+});
+
+test('drill drive falls back to direct state updates when the bridge is absent', function() {
+  var ctx = makeContext();
+  ctx.historyCalls = [];
+  ctx.logHistory = function(type, detail, xp) { ctx.historyCalls.push([type, detail, xp]); };
+  ctx.badgeChecks = 0;
+  ctx.checkBadges = function() { ctx.badgeChecks++; };
+  ctx.saveState = function() {};
+  var outcome = ctx.SparkProgressOrchestrator.applySessionOutcome({
+    mode: 'drill',
+    exerciseResults: ['C']
+  }, { drive: true });
+  assert.strictEqual(ctx.S.drillCount, 1);
+  assert.strictEqual(ctx.S.xp, 60, 'starting 40 xp + 20 drill award');
+  assert.strictEqual(ctx.historyCalls.length, 1);
+  assert.strictEqual(ctx.historyCalls[0][1], 'C');
+  assert.strictEqual(ctx.badgeChecks, 1);
+  assert.strictEqual(outcome.xpEarned, 20);
 });
 
 test('drive mode returns a ProgressOutcome mapped from the sequence effects', function() {

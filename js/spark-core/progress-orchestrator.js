@@ -2,6 +2,48 @@
 // Unified progression cascade: evaluates all progression systems after any session event.
 (function() {
 
+  // Drill completion sequence (Phase 7 drive mode): fixed activity XP, drill
+  // count, history entry, completion event, badge check. Chord names ride on
+  // sessionResult.exerciseResults; the instrument appId on instrumentId.
+  function driveDrillCompletion(sessionResult) {
+    var results = Array.isArray(sessionResult.exerciseResults) ? sessionResult.exerciseResults : [];
+    var chordNames = [];
+    for (var i = 0; i < results.length; i++) {
+      if (typeof results[i] === "string") chordNames.push(results[i]);
+      else if (results[i] && results[i].chordName) chordNames.push(results[i].chordName);
+    }
+    var detail = chordNames.join(" / ");
+    var appId = sessionResult.instrumentId || null;
+    var xp = 20;
+
+    if (typeof SparkProgressBridge !== "undefined" && typeof SparkProgressBridge.applyLegacyActivityCompletion === "function") {
+      SparkProgressBridge.applyLegacyActivityCompletion({
+        xpDelta: xp,
+        toastAmount: xp,
+        incrementFields: { drillCount: 1 },
+        history: { type: "drill", detail: detail, xp: xp },
+        emit: { type: "practice_session_completed", payload: { appId: appId, type: "drill", xp: xp, detail: detail } },
+        checkBadges: true
+      });
+    } else {
+      if (typeof S !== "undefined") {
+        S.drillCount = (S.drillCount || 0) + 1;
+        S.xp = (S.xp || 0) + xp;
+        S.xpToast = { amount: xp, time: Date.now() };
+      }
+      if (typeof logHistory === "function") logHistory("drill", detail, xp);
+      if (typeof _sparkEmit === "function") _sparkEmit("practice_session_completed", { appId: appId, type: "drill", xp: xp, detail: detail });
+      if (typeof checkBadges === "function") checkBadges();
+      if (typeof saveState === "function") saveState();
+    }
+
+    var outcome = typeof SparkContracts !== "undefined"
+      ? SparkContracts.createProgressOutcome({ xpEarned: xp })
+      : { xpEarned: xp };
+    outcome.sessionEffects = { xpEarned: xp, jackpot: false, leveledUp: false, newBadges: [], streakUpdated: false };
+    return outcome;
+  }
+
   var SparkProgressOrchestrator = {
 
     evaluateAll: function(event) {
@@ -148,14 +190,21 @@
       opts = opts || {};
 
       if (opts.drive) {
-        // The progression sequence itself (streak, XP/jackpot, chord mastery,
-        // level-up, history, events, badges, evaluateAll cascade) still lives in
-        // SparkSession.processResults — shared with flows that are not yet
-        // retired. Driving it from here makes this the flow's single entry
-        // point; the sequence internals migrate into the orchestrator once the
-        // remaining dual-path flows retire.
         var mode = sessionResult.mode || "session";
-        var legacyType = (mode === "drill" || mode === "song") ? mode : "session";
+
+        // Drill has its own completion sequence (fixed activity XP, drill
+        // count, history, event, badges) — it never ran processResults.
+        if (mode === "drill") {
+          return driveDrillCompletion(sessionResult);
+        }
+
+        // The session progression sequence itself (streak, XP/jackpot, chord
+        // mastery, level-up, history, events, badges, evaluateAll cascade)
+        // still lives in SparkSession.processResults — shared with flows that
+        // are not yet retired. Driving it from here makes this the flow's
+        // single entry point; the sequence internals migrate into the
+        // orchestrator once the remaining dual-path flows retire.
+        var legacyType = mode === "song" ? mode : "session";
         var effects;
         if (typeof SparkSession !== "undefined" && typeof SparkSession.processResults === "function") {
           effects = SparkSession.processResults({
