@@ -130,14 +130,60 @@
     },
 
     /**
-     * applySessionOutcome(sessionResult)
+     * applySessionOutcome(sessionResult, opts)
      * Single entry point for post-session state updates.
-     * During dual-path migration: READ-ONLY observer that builds a ProgressOutcome
-     * from current state WITHOUT running evaluateAll (legacy processResults already did that).
-     * When legacy path is retired, this will become the sole progression driver.
+     *
+     * Two modes:
+     * - opts.drive (Phase 7, retired flows): the orchestrator IS the progression
+     *   driver. It runs the full progression sequence exactly once and returns a
+     *   real ProgressOutcome. The caller must NOT also call
+     *   SparkSession.processResults. Renderer-side effect data (xp toast amount,
+     *   jackpot, level-up sounds) rides on outcome.sessionEffects.
+     * - default (dual-path flows not yet retired): READ-ONLY observer that builds
+     *   a ProgressOutcome snapshot WITHOUT running evaluateAll (the legacy
+     *   processResults call at the call site already did that).
      */
-    applySessionOutcome: function(sessionResult) {
+    applySessionOutcome: function(sessionResult, opts) {
       sessionResult = sessionResult || {};
+      opts = opts || {};
+
+      if (opts.drive) {
+        // The progression sequence itself (streak, XP/jackpot, chord mastery,
+        // level-up, history, events, badges, evaluateAll cascade) still lives in
+        // SparkSession.processResults — shared with flows that are not yet
+        // retired. Driving it from here makes this the flow's single entry
+        // point; the sequence internals migrate into the orchestrator once the
+        // remaining dual-path flows retire.
+        var mode = sessionResult.mode || "session";
+        var legacyType = (mode === "drill" || mode === "song") ? mode : "session";
+        var effects;
+        if (typeof SparkSession !== "undefined" && typeof SparkSession.processResults === "function") {
+          effects = SparkSession.processResults({
+            type: legacyType,
+            chordName: sessionResult.chordName || null,
+            duration: sessionResult.duration,
+            accuracy: sessionResult.accuracy,
+            songId: sessionResult.songId
+          });
+        } else {
+          effects = {
+            xpEarned: 0, jackpot: false, leveledUp: false,
+            newLevel: (typeof S !== "undefined" && S.level) || 1,
+            newBadges: [], streakUpdated: false
+          };
+        }
+
+        var driven = typeof SparkContracts !== "undefined"
+          ? SparkContracts.createProgressOutcome({
+              xpEarned: effects.xpEarned || 0,
+              levelUps: effects.leveledUp ? [effects.newLevel] : [],
+              achievements: effects.newBadges || [],
+              streakChanges: effects.streakUpdated ? { incremented: 1 } : null
+            })
+          : { xpEarned: effects.xpEarned || 0 };
+        driven.sessionEffects = effects;
+        return driven;
+      }
 
       // During dual-path phase: do NOT call evaluateAll — the legacy processResults
       // path already ran it. Instead, snapshot current state into a ProgressOutcome

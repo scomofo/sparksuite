@@ -20,7 +20,7 @@ Tracks which flows use the new engine contracts vs legacy direct-call paths.
 
 | Flow | applySessionOutcome | Status |
 |------|-------------------|--------|
-| quickStart timer complete | Yes | Dual-path |
+| quickStart timer complete | Yes | **Contract-only** — orchestrator drives via `applySessionOutcome(result, {drive:true})`; the paired legacy `processResults` call at the call site is retired (the same completion handler also serves single-chord timer sessions) |
 | drill timer complete | Yes | Dual-path |
 | performance finish | Yes | Dual-path |
 | guided session complete | Yes | Dual-path |
@@ -68,7 +68,15 @@ Tracks which flows use the new engine contracts vs legacy direct-call paths.
 
 ## Legacy Removal (Phase 7)
 
-No legacy paths have been retired yet. All migrated flows run dual-path for safety.
+First retirement landed: the quickStart timer-completion flow is contract-only.
+`SparkProgressOrchestrator.applySessionOutcome` gained a drive mode (`{drive:true}`)
+that makes it the single progression entry point for a retired flow — it runs the
+progression sequence exactly once and returns a real ProgressOutcome (renderer
+effect data on `.sessionEffects`). The sequence internals still delegate to
+`SparkSession.processResults`, which is shared with unretired flows; those
+internals move into the orchestrator once the remaining flows retire. Pinned by
+`tests/test_progress_orchestrator_drive.js`. Remaining migrated flows run
+dual-path for safety; retire them one at a time via the same drive-mode pattern.
 
 ### Retirement criteria
 - Dual-path flow must produce matching outcomes for 2+ weeks

@@ -48,13 +48,11 @@ function tickS(){
         durationSec: 120
       });
     }
-    // Delegate all completion logic to SparkSession
-    var outcome=SparkSession.processResults({
-      type:"session",
-      chordName:S.currentChord?S.currentChord.name:null,
-      duration:120
-    });
-    // Route through contract-based progress path (Phase 3 migration)
+    // Contract-only completion (Phase 7): the orchestrator is the single
+    // progression entry point for this flow — the legacy processResults call
+    // and the shadow observer call it ran beside are retired. Fallback to the
+    // direct legacy call only when the contract stack isn't loaded.
+    var outcome;
     if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
       var sessionResult = SparkContracts.createSessionResult({
         mode: S.lastChordName ? "chord" : "quickStart",
@@ -63,10 +61,17 @@ function tickS(){
         accuracy: 0.75,
         completed: true
       });
-      var progressOutcome = SparkProgressOrchestrator.applySessionOutcome(sessionResult);
+      var progressOutcome = SparkProgressOrchestrator.applySessionOutcome(sessionResult, { drive: true });
       if (typeof console !== "undefined" && console.debug) {
         console.debug("[App] ProgressOutcome:", progressOutcome);
       }
+      outcome = progressOutcome.sessionEffects;
+    } else {
+      outcome = SparkSession.processResults({
+        type:"session",
+        chordName:S.currentChord?S.currentChord.name:null,
+        duration:120
+      });
     }
     if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({toastAmount:outcome.xpEarned,jackpot:outcome.jackpot});
     else S.xpToast={amount:outcome.xpEarned,time:Date.now(),jackpot:outcome.jackpot};
