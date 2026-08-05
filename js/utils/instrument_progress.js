@@ -2,7 +2,7 @@
 // Engine-first facade for per-instrument XP/streak/level/session progress.
 //
 // Per CLAUDE.md, all progression logic lives in the core engine
-// (`SparkProgress` in js/spark-core/progress-engine.js) and the per-app
+// (`SparkProgress` in js/sparksuite/services/progress.js) and the per-app
 // profile (`SparkProfile.apps[appId].stats` in profile-schema.js). This
 // facade is the ONLY write path legacy call sites should use for XP,
 // streak, session-count, and level changes:
@@ -28,7 +28,7 @@
 // pool shared across instruments.
 //
 // Legacy fallback: if SparkStorage / SparkProgress / SparkInstruments are
-// unavailable (e.g. tests that don't load spark-core), the facade silently
+// unavailable (e.g. tests that do not load the progress service), the facade silently
 // falls back to the legacy "just mutate S.xp" behavior so nothing breaks.
 (function() {
   function activeAppId() {

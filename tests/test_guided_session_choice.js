@@ -24,7 +24,7 @@ function setup(stateOverrides) {
   // CurriculumService provides the engine-owned lesson choice; SparkSession
   // orchestrates. No SparkContracts loaded, so wrapPlan returns the raw plan.
   eval(loadJS("js/curriculum/curriculum_engine.js"));
-  eval(loadJS("js/spark-core/session-engine.js"));
+  eval(loadJS("js/sparksuite/legacy/session_engine.js"));
 }
 
 function sessions() {

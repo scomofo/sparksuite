@@ -1,4 +1,4 @@
-// js/spark-core/practice-engine.js
+// js/sparksuite/legacy/practice_engine.js
 // Generates drills, builds exercise sets, and analyzes practice results.
 // Delegates to instrument modules via SparkInstrumentAdapter.
 (function() {

@@ -84,8 +84,8 @@ function test(name, fn) {
     // processResults delegates its absorbed session progression sequence to
     // the orchestrator, so load it alongside the legacy session engine.
     eval(loadJS("js/sparksuite/core/progress_orchestrator.js"));
-    eval(loadJS("js/spark-core/session-engine.js"));
-    eval(loadJS("js/spark-core/practice-engine.js"));
+    eval(loadJS("js/sparksuite/legacy/session_engine.js"));
+    eval(loadJS("js/sparksuite/legacy/practice_engine.js"));
     fn();
     console.log("  PASS: " + name);
   } catch (err) {

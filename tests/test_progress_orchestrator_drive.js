@@ -114,7 +114,7 @@ test('mastering the last chord of the level maps into levelUps', function() {
 
 test('SparkSession.processResults delegates to the absorbed sequence', function() {
   var ctx = makeContext();
-  loadInto(ctx, 'js/spark-core/session-engine.js');
+  loadInto(ctx, 'js/sparksuite/legacy/session_engine.js');
   var outcome = ctx.SparkSession.processResults({ type: 'session', chordName: 'Am', duration: 120 });
   assert.strictEqual(ctx.S.sessions, 1);
   assert.strictEqual(outcome.xpEarned, 10);

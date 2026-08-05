@@ -117,7 +117,7 @@ test('onSparkEvent listener fires', function() {
   SparkEvents.clear();
 });
 
-eval(loadJS('js/spark-core/progress-engine.js'));
+eval(loadJS('js/sparksuite/services/progress.js'));
 
 console.log('\n--- SparkCore: Progress Engine ---');
 
