@@ -22,6 +22,10 @@ loadJS("js/sparksuite/domain/types.js");
 loadJS("js/sparksuite/core/psychology_engine.js");
 loadJS("js/sparksuite/core/practice_engine.js");
 loadJS("js/sparksuite/core/progress_engine.js");
+// Bass declares its groove session structure via adapter capabilities —
+// the engine must resolve it from the registry, not hardcode instruments.
+loadJS("js/sparksuite/instruments/bass/bass_adapter.js");
+loadJS("js/sparksuite/instruments/bass/index.js");
 
 var psychology = new SparkSuitePsychologyEngine();
 var practice = new SparkSuitePracticeEngine(psychology);

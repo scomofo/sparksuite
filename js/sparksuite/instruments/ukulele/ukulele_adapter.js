@@ -39,7 +39,10 @@
       supportsFingerpicking: true,
       supportsMelody: true,
       preferredRenderer: "string-lane-highway",
-      inputModes: ["keyboard", "midi", "mouse"]
+      inputModes: ["keyboard", "midi", "mouse"],
+      // Where rhythm-drill skill progress persists and which computed stat
+      // fills the entry's movement slot ("control" = accuracy/groove composite).
+      skillProgress: { stateKey: "ukuleleSkillProgress", movementBasis: "control" }
     };
   };
 

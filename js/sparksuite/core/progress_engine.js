@@ -483,10 +483,30 @@
     }
     var instrumentSkillPatch = buildInstrumentSkillProgressPatch(gameplayContext, learning, gameplay);
     if (instrumentSkillPatch) {
-      if (instrumentSkillPatch.bassSkillProgress) patch.bassSkillProgress = instrumentSkillPatch.bassSkillProgress;
-      if (instrumentSkillPatch.ukuleleSkillProgress) patch.ukuleleSkillProgress = instrumentSkillPatch.ukuleleSkillProgress;
+      for (var skillKey in instrumentSkillPatch) {
+        if (Object.prototype.hasOwnProperty.call(instrumentSkillPatch, skillKey)) {
+          patch[skillKey] = instrumentSkillPatch[skillKey];
+        }
+      }
     }
     return patch;
+  }
+
+  // Instrument-agnostic: an instrument opts into rhythm-drill skill progress
+  // by declaring getCapabilities().skillProgress = { stateKey, movementBasis }
+  // on its adapter. No instrument names live in this engine.
+  function resolveInstrumentSkillProgressConfig(instrumentType) {
+    var registry = typeof window !== "undefined" ? window.SparkSuiteInstrumentAdapters : null;
+    var factory = registry && instrumentType ? registry[instrumentType] : null;
+    if (typeof factory !== "function") return null;
+    try {
+      var adapter = factory();
+      var caps = adapter && typeof adapter.getCapabilities === "function" ? adapter.getCapabilities() : null;
+      var config = caps ? caps.skillProgress : null;
+      return config && typeof config.stateKey === "string" && config.stateKey ? config : null;
+    } catch (err) {
+      return null;
+    }
   }
 
   function buildInstrumentSkillProgressPatch(gameplayContext, learning, gameplay) {
@@ -494,6 +514,8 @@
     var instrument = gameplayContext.instrument || null;
     var focus = gameplayContext.exerciseFocus || null;
     if (!instrument || !focus) return null;
+    var skillConfig = resolveInstrumentSkillProgressConfig(instrument);
+    if (!skillConfig) return null;
 
     var accuracy = typeof gameplay.accuracy === "number" ? Math.max(0, Math.min(1, gameplay.accuracy)) : 0;
     var maxCombo = typeof gameplay.maxCombo === "number" ? gameplay.maxCombo : 0;
@@ -509,16 +531,12 @@
       groove: groove,
       timing: timing,
       accuracy: accuracy,
-      movement: instrument === "bass" ? movement : control
+      movement: skillConfig.movementBasis === "movement" ? movement : control
     };
 
-    if (instrument === "bass") {
-      return { bassSkillProgress: buildSkillProgressMap(focus, entry) };
-    }
-    if (instrument === "ukulele") {
-      return { ukuleleSkillProgress: buildSkillProgressMap(focus, entry) };
-    }
-    return null;
+    var skillPatch = {};
+    skillPatch[skillConfig.stateKey] = buildSkillProgressMap(focus, entry);
+    return skillPatch;
   }
 
   function buildSkillProgressMap(skill, entry) {

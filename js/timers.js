@@ -48,13 +48,11 @@ function tickS(){
         durationSec: 120
       });
     }
-    // Delegate all completion logic to SparkSession
-    var outcome=SparkSession.processResults({
-      type:"session",
-      chordName:S.currentChord?S.currentChord.name:null,
-      duration:120
-    });
-    // Route through contract-based progress path (Phase 3 migration)
+    // Contract-only completion (Phase 7): the orchestrator is the single
+    // progression entry point for this flow — the legacy processResults call
+    // and the shadow observer call it ran beside are retired. Fallback to the
+    // direct legacy call only when the contract stack isn't loaded.
+    var outcome;
     if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
       var sessionResult = SparkContracts.createSessionResult({
         mode: S.lastChordName ? "chord" : "quickStart",
@@ -63,10 +61,17 @@ function tickS(){
         accuracy: 0.75,
         completed: true
       });
-      var progressOutcome = SparkProgressOrchestrator.applySessionOutcome(sessionResult);
+      var progressOutcome = SparkProgressOrchestrator.applySessionOutcome(sessionResult, { drive: true });
       if (typeof console !== "undefined" && console.debug) {
         console.debug("[App] ProgressOutcome:", progressOutcome);
       }
+      outcome = progressOutcome.sessionEffects;
+    } else {
+      outcome = SparkSession.processResults({
+        type:"session",
+        chordName:S.currentChord?S.currentChord.name:null,
+        duration:120
+      });
     }
     if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({toastAmount:outcome.xpEarned,jackpot:outcome.jackpot});
     else S.xpToast={amount:outcome.xpEarned,time:Date.now(),jackpot:outcome.jackpot};
@@ -102,7 +107,25 @@ function tickD(){
         chordNames: S.drillChords.map(function(c){return c.name;})
       });
     }
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+    // Contract-only completion (Phase 7): the orchestrator drives the drill
+    // completion sequence — the legacy call here and the shadow observer call
+    // it ran beside are retired. Fallbacks below only cover contexts where
+    // the contract stack isn't loaded.
+    if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+      var drillSessionResult = SparkContracts.createSessionResult({
+        mode: "drill",
+        instrumentId: activityInstrument.appId,
+        exerciseResults: S.drillChords.map(function(c){return c.name;}),
+        chordName: S.drillChords && S.drillChords[0] ? S.drillChords[0].name : null,
+        duration: 60,
+        accuracy: 0.75,
+        completed: true
+      });
+      var drillProgressOutcome = SparkProgressOrchestrator.applySessionOutcome(drillSessionResult, { drive: true });
+      if (typeof console !== "undefined" && console.debug) {
+        console.debug("[App] Drill ProgressOutcome:", drillProgressOutcome);
+      }
+    }else if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
       SparkProgressBridge.applyLegacyActivityCompletion({
         xpDelta:20,
         toastAmount:20,
@@ -116,20 +139,6 @@ function tickD(){
       logHistory("drill",detail,20);
       _sparkEmit("practice_session_completed", { appId: activityInstrument.appId, type: "drill", xp: 20, detail: detail });
       checkBadges();saveState();
-    }
-    // Route through contract-based progress path (Phase 6 migration)
-    if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
-      var drillSessionResult = SparkContracts.createSessionResult({
-        mode: "drill",
-        chordName: S.drillChords && S.drillChords[0] ? S.drillChords[0].name : null,
-        duration: 60,
-        accuracy: 0.75,
-        completed: true
-      });
-      var drillProgressOutcome = SparkProgressOrchestrator.applySessionOutcome(drillSessionResult);
-      if (typeof console !== "undefined" && console.debug) {
-        console.debug("[App] Drill ProgressOutcome:", drillProgressOutcome);
-      }
     }
     trigC();S.screen=SCR.DRILL_DONE;render();
   }
@@ -153,7 +162,19 @@ function tickDy(){
       challengeId: S.dailyChallenge ? S.dailyChallenge.id : null,
       durationSec: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60
     });
-    if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+    // Contract-only completion (Phase 7): the orchestrator drives the daily
+    // challenge completion sequence; fallbacks only cover contexts without
+    // the contract stack.
+    if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+      var dailyResult = SparkContracts.createSessionResult({
+        mode: "daily",
+        duration: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60,
+        accuracy: 1.0,
+        completed: true,
+        meta: { challenge: S.dailyChallenge ? { id: S.dailyChallenge.id, title: S.dailyChallenge.title, xp: S.dailyChallenge.xp } : null }
+      });
+      SparkProgressOrchestrator.applySessionOutcome(dailyResult, { drive: true });
+    }else if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
       SparkProgressBridge.applyLegacyActivityCompletion({
         xpDelta:xp,
         toastAmount:xp,
@@ -167,16 +188,6 @@ function tickDy(){
       if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp,toastAmount:xp});else{S.xp+=xp;S.xpToast={amount:xp,time:Date.now()};}
       logHistory("daily",S.dailyChallenge?S.dailyChallenge.title:"Challenge",xp);
       checkBadges();saveState();
-    }
-    // Route through contract-based progress path
-    if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
-      var dailyResult = SparkContracts.createSessionResult({
-        mode: "daily",
-        duration: S.dailyChallenge && S.dailyChallenge.id === "hold" ? 30 : S.dailyChallenge && S.dailyChallenge.id === "marathon" ? 180 : 60,
-        accuracy: 1.0,
-        completed: true
-      });
-      SparkProgressOrchestrator.applySessionOutcome(dailyResult);
     }
     trigC();render();
   }
@@ -260,8 +271,19 @@ function finishRhythm(){
     S.rhythmResults=rhythmResult;
   }
   _rhythmAnim=null;
+  // Contract-only completion (Phase 7): the orchestrator drives the rhythm
+  // completion sequence and owns the score→XP policy; fallbacks only cover
+  // contexts without the contract stack.
   var xp=Math.round(S.rhythmScore/10);
-  if(xp>0){
+  if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+    var rhythmSessionResult = SparkContracts.createSessionResult({
+      mode: "rhythm",
+      accuracy: total > 0 ? hits / total : 0,
+      completed: true,
+      meta: { score: S.rhythmScore }
+    });
+    SparkProgressOrchestrator.applySessionOutcome(rhythmSessionResult, { drive: true });
+  }else if(xp>0){
     if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
       SparkProgressBridge.applyLegacyActivityCompletion({
         xpDelta:xp,
@@ -270,15 +292,6 @@ function finishRhythm(){
     }else{
       if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else S.xp+=xp;logHistory("rhythm","Score: "+S.rhythmScore,xp);saveState();
     }
-  }
-  // Route through contract-based progress path
-  if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
-    var rhythmResult = SparkContracts.createSessionResult({
-      mode: "rhythm",
-      accuracy: total > 0 ? hits / total : 0,
-      completed: true
-    });
-    SparkProgressOrchestrator.applySessionOutcome(rhythmResult);
   }
   render();
 }
@@ -355,8 +368,19 @@ function finishRunner(){
     S.runnerResults=runnerResult;
   }
   _runnerAnim=null;
+  // Contract-only completion (Phase 7): the orchestrator drives the runner
+  // completion sequence and owns the score→XP policy; fallbacks only cover
+  // contexts without the contract stack.
   var xp=Math.round(S.runnerScore/20);
-  if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
+  if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
+    var runnerSessionResult = SparkContracts.createSessionResult({
+      mode: "runner",
+      accuracy: S.runnerScore > 0 ? Math.min(1, S.runnerScore / 100) : 0,
+      completed: true,
+      meta: { score: S.runnerScore, results: runnerResult }
+    });
+    SparkProgressOrchestrator.applySessionOutcome(runnerSessionResult, { drive: true });
+  }else if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityCompletion==="function"){
     SparkProgressBridge.applyLegacyActivityCompletion({
       xpDelta:xp>0?xp:0,
       maxFields:{runnerHighScore:S.runnerScore},
@@ -367,15 +391,6 @@ function finishRunner(){
     if(S.runnerScore>S.runnerHighScore)S.runnerHighScore=S.runnerScore;
     S.runnerResults=runnerResult;
     if(xp>0){if(window.SparkProgressBridge)SparkProgressBridge.applyLegacyReward({xpDelta:xp});else S.xp+=xp;logHistory("runner","Score: "+S.runnerScore,xp);saveState();}
-  }
-  // Route through contract-based progress path
-  if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
-    var runnerSessionResult = SparkContracts.createSessionResult({
-      mode: "runner",
-      accuracy: S.runnerScore > 0 ? Math.min(1, S.runnerScore / 100) : 0,
-      completed: true
-    });
-    SparkProgressOrchestrator.applySessionOutcome(runnerSessionResult);
   }
   snd("complete");
   render();

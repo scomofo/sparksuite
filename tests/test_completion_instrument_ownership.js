@@ -121,21 +121,26 @@ function test(name, fn) {
   }
 }
 
-console.log("\n--- Completion Instrument Ownership ---");
+console.log("\n--- Completion Single-Path Ownership ---");
 
-test("practice plan completion preserves app-id-only active instruments", function() {
+// Phase 7: the core's completeSession is the single progression driver for
+// these flows. Instrument identity is resolved inside the core
+// (InstrumentManager.getActiveContext) — covered in
+// test_sparksuite_core_migration.js. These tests pin that completion runs
+// through the core exactly once with NO shadow observer double-processing.
+
+test("practice plan completion routes through the core exactly once", function() {
   resetPracticeEnvironment();
   eval(loadJS("js/practice/engine.js"));
 
   completePracticePlan();
 
   assert.strictEqual(sparkCorePayloads.length, 1);
-  assert.strictEqual(progressPayloads.length, 1);
-  assert.strictEqual(progressPayloads[0].instrumentId, "pianospark");
-  assert.strictEqual(progressPayloads[0].instrumentType, "piano");
+  assert.strictEqual(sparkCorePayloads[0].earnedCompletion, true);
+  assert.strictEqual(progressPayloads.length, 0, "no shadow observer call beside the core driver");
 });
 
-test("performance completion preserves app-id-only active instruments", function() {
+test("performance completion routes through the core exactly once", function() {
   resetPerformanceEnvironment();
   eval(loadJS("js/performance/session.js"));
   stopPerformance = function() {};
@@ -143,9 +148,8 @@ test("performance completion preserves app-id-only active instruments", function
   finishPerformance();
 
   assert.strictEqual(sparkCoreCompletionPayloads.length, 1);
-  assert.strictEqual(performanceProgressPayloads.length, 1);
-  assert.strictEqual(performanceProgressPayloads[0].instrumentId, "pianospark");
-  assert.strictEqual(performanceProgressPayloads[0].instrumentType, "piano");
+  assert.strictEqual(sparkCoreCompletionPayloads[0].performanceResults.accuracy, 87);
+  assert.strictEqual(performanceProgressPayloads.length, 0, "no shadow observer call beside the core driver");
 });
 
 if (process.exitCode) process.exit(process.exitCode);

@@ -99,7 +99,10 @@ resetState();
 eval(loadJS("js/sparksuite/bridges/progress_bridge.js"));
 eval(loadJS("js/practice/progress.js"));
 global.Math.random = function() { return 1; };
-global.SparkProgressOrchestrator = { evaluateAll: function() { return { newAchievements: [] }; } };
+// Load the real orchestrator (processResults delegates its absorbed session
+// progression sequence to it), then stub only the evaluateAll cascade.
+eval(loadJS("js/sparksuite/core/progress_orchestrator.js"));
+global.SparkProgressOrchestrator.evaluateAll = function() { return { newAchievements: [] }; };
 global.SparkInstruments = {
   getActive: function() {
     return {

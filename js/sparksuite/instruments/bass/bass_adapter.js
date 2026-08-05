@@ -99,7 +99,14 @@
       supportsFingerpicking: true,
       supportsMelody: true,
       preferredRenderer: "string-lane-highway",
-      inputModes: ["keyboard", "midi", "mouse"]
+      inputModes: ["keyboard", "midi", "mouse"],
+      // Groove-focused guided session block order; core engines fall back to
+      // the generic structure when an instrument doesn't declare one.
+      sessionStructure: ["spark", "reviewGroove", "technique", "grooveDrill", "songGroove", "victoryGroove"],
+      // Where rhythm-drill skill progress persists and which computed stat
+      // fills the entry's movement slot ("movement" = fret movement,
+      // "control" = accuracy/groove composite).
+      skillProgress: { stateKey: "bassSkillProgress", movementBasis: "movement" }
     };
   };
 

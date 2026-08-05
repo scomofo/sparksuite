@@ -295,7 +295,7 @@
     if (a === "start_guided_session") {
       var sessionNum = parseInt(v, 10);
       if (typeof window.openGuidedSessionRequest === "function") {
-        var guidedSession = isNaN(sessionNum) ? (S.guidedSession || 1) : sessionNum;
+        var guidedSession = isNaN(sessionNum) ? undefined : sessionNum; // unpinned: CurriculumEngine chooses
         var corePlan = window.openGuidedSessionRequest({
           sessionNum: guidedSession
         });
@@ -308,7 +308,7 @@
           return true;
         }
       } else if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
-        var guidedSession = isNaN(sessionNum) ? (S.guidedSession || 1) : sessionNum;
+        var guidedSession = isNaN(sessionNum) ? undefined : sessionNum; // unpinned: CurriculumEngine chooses
         var corePlan = window.sparkCore.startSession({
           flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
           sessionNum: guidedSession

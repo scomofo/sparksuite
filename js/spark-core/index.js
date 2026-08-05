@@ -150,35 +150,21 @@
     },
 
     /**
-     * completeSession(result) — processes session results through both legacy and contract paths
-     * Returns a ProgressOutcome contract
+     * completeSession(result) — runs the session progression sequence once
+     * (Phase 7: single-path; the dual legacy-call + shadow-observer pair is
+     * retired) and returns its outcome.
      */
     completeSession: function(result) {
       result = result || {};
       var outcome = null;
-
-      // Legacy path
-      if (typeof SparkSession !== "undefined") {
+      if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.runSessionProgression === "function") {
+        outcome = SparkProgressOrchestrator.runSessionProgression(result);
+      } else if (typeof SparkSession !== "undefined") {
         outcome = SparkSession.processResults(result);
       }
-
-      // Contract path
-      if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
-        var sessionResult = SparkContracts.createSessionResult({
-          mode: result.type || result.mode || "session",
-          chordName: result.chordName || null,
-          duration: result.duration || 0,
-          accuracy: result.accuracy || 0,
-          songId: result.songId || null,
-          completed: true
-        });
-        var progressOutcome = SparkProgressOrchestrator.applySessionOutcome(sessionResult);
-        if (typeof console !== "undefined" && console.debug) {
-          console.debug("[SparkCore] completeSession outcome:", progressOutcome);
-        }
-        return progressOutcome;
+      if (typeof console !== "undefined" && console.debug) {
+        console.debug("[SparkCore] completeSession outcome:", outcome);
       }
-
       return outcome || {};
     }
   };

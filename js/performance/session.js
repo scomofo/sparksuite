@@ -778,34 +778,9 @@ function finishPerformance() {
   } else {
     S.xp += xpAward; S.xpToast = { amount: xpAward, time: Date.now() };
   }
-  // Route through contract-based progress path (Phase 6 migration)
-  if (typeof SparkProgressOrchestrator !== "undefined" && typeof SparkProgressOrchestrator.applySessionOutcome === "function" && typeof SparkContracts !== "undefined") {
-    var activeInstrument = typeof SparkInstruments !== "undefined" && SparkInstruments.getActive ? SparkInstruments.getActive() : null;
-    if (activeInstrument && !activeInstrument.instrument && typeof SparkInstruments.getAll === "function") {
-      var activeId = activeInstrument.id || activeInstrument.appId || activeInstrument.instrumentId || null;
-      var allInstruments = SparkInstruments.getAll() || [];
-      for (var i = 0; i < allInstruments.length; i++) {
-        var entry = allInstruments[i] || {};
-        if (entry.id === activeId || entry.appId === activeId) {
-          activeInstrument = entry;
-          break;
-        }
-      }
-    }
-    var perfSessionResult = SparkContracts.createSessionResult({
-      mode: "song",
-      instrumentId: activeInstrument ? (activeInstrument.id || activeInstrument.appId || null) : null,
-      instrumentType: activeInstrument ? activeInstrument.instrument : null,
-      accuracy: S.performResults ? S.performResults.accuracy / 100 : 0,
-      duration: S.performResults ? (S.performResults.duration || 0) : 0,
-      songId: S.performChartId || null,
-      completed: true
-    });
-    var perfProgressOutcome = SparkProgressOrchestrator.applySessionOutcome(perfSessionResult);
-    if (typeof console !== "undefined" && console.debug) {
-      console.debug("[Performance] ProgressOutcome:", perfProgressOutcome);
-    }
-  }
+  // Phase 7: the core's completeSession above is the single progression
+  // driver for performance finishes — the dual-path shadow observer that
+  // used to run here is retired.
   logHistory("perform", S.performResults.title + " - " + S.performResults.accuracy + "% accuracy", xpAward);
 
   if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.applyPerformanceRunOutcome === "function") {

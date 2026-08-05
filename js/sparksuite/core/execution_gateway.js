@@ -412,7 +412,10 @@
     var i;
     var entry;
     if (!instrument) return null;
-    if (instrument === "guitar" || instrument === "bass" || instrument === "piano" || instrument === "ukulele" || instrument === "drums") {
+    // Instrument-agnostic: anything registered as an adapter type is already
+    // an instrument type (not an app id) and needs no mapping.
+    if (typeof window !== "undefined" && window.SparkSuiteInstrumentAdapters &&
+        typeof window.SparkSuiteInstrumentAdapters[instrument] === "function") {
       return instrument;
     }
     if (typeof SparkInstruments !== "undefined" && SparkInstruments && typeof SparkInstruments.getAll === "function") {

@@ -254,15 +254,19 @@
 
   function launchGuidedSessionItem(item){
     if(typeof act!=="function") return false;
-    var sessionNum = item && item.meta && item.meta.guidedSession || S.guidedSession || 1;
+    // Engine-owned lesson choice: only pin a session number the item
+    // explicitly carries. An unpinned start lets the CurriculumEngine pick
+    // the next guided session by completion state.
+    var explicitNum = item && item.meta && item.meta.guidedSession ? parseInt(item.meta.guidedSession, 10) || null : null;
     var activeSessionNum = getActiveGuidedLauncherSessionNum();
-    var shouldResume = activeSessionNum != null && activeSessionNum === sessionNum;
+    var shouldResume = activeSessionNum != null && (explicitNum == null || activeSessionNum === explicitNum);
+    var startValue = shouldResume || explicitNum == null ? undefined : explicitNum;
     if(getPracticeLauncherInstrumentType()==="piano"){
       act("tab", TAB.PRACTICE);
-      act(shouldResume ? "resume_guided_session" : "start_guided_session", shouldResume ? undefined : sessionNum);
+      act(shouldResume ? "resume_guided_session" : "start_guided_session", startValue);
       return true;
     }
-    act(shouldResume ? "resume_guided_session" : "start_guided_session", shouldResume ? undefined : sessionNum);
+    act(shouldResume ? "resume_guided_session" : "start_guided_session", startValue);
     return true;
   }
 

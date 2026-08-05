@@ -65,12 +65,28 @@
     };
   };
 
+  // Instrument-agnostic: an instrument that wants a custom guided block
+  // order declares it via getCapabilities().sessionStructure on its adapter.
+  function resolveAdapterSessionStructure(instrumentType) {
+    var registry = typeof window !== "undefined" ? window.SparkSuiteInstrumentAdapters : null;
+    var factory = registry && instrumentType ? registry[instrumentType] : null;
+    if (typeof factory !== "function") return null;
+    try {
+      var adapter = factory();
+      var caps = adapter && typeof adapter.getCapabilities === "function" ? adapter.getCapabilities() : null;
+      return caps && Array.isArray(caps.sessionStructure) && caps.sessionStructure.length
+        ? caps.sessionStructure.slice()
+        : null;
+    } catch (err) {
+      return null;
+    }
+  }
+
   PsychologyEngine.prototype.getSessionStructure = function(instrumentType) {
+    var declared = resolveAdapterSessionStructure(instrumentType);
+    if (declared) return declared;
     if (typeof SparkPsychology !== "undefined" && typeof SparkPsychology.getSessionStructure === "function") {
       return SparkPsychology.getSessionStructure(instrumentType);
-    }
-    if (instrumentType === "bass") {
-      return ["spark", "reviewGroove", "technique", "grooveDrill", "songGroove", "victoryGroove"];
     }
     return ["spark", "review", "newMove", "songSlice", "victoryLap"];
   };
