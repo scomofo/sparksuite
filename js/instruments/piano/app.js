@@ -490,13 +490,15 @@ function buildTick() {
 
 // ── Guided session flow ──
 function startGuidedSession(requestedSession) {
-  var guidedSession = parseInt(requestedSession, 10);
-  if (isNaN(guidedSession) || guidedSession < 1) guidedSession = parseInt(S.currentSession, 10);
-  if (isNaN(guidedSession) || guidedSession < 1) guidedSession = 1;
+  // Engine-owned lesson choice: only pin a session number the caller
+  // explicitly requested; an unpinned start lets the CurriculumEngine pick
+  // the next guided session by completion state.
+  var requestedGuided = parseInt(requestedSession, 10);
+  if (isNaN(requestedGuided) || requestedGuided < 1) requestedGuided = null;
 
   if (typeof window.openGuidedSessionRequest === "function") {
     var corePlan = window.openGuidedSessionRequest({
-      sessionNum: guidedSession
+      sessionNum: requestedGuided || undefined
     });
     if (corePlan && corePlan.context && corePlan.context.guidedPlan) {
       syncPianoGuidedPlanFromCore(corePlan);
@@ -509,7 +511,7 @@ function startGuidedSession(requestedSession) {
   } else if (window.sparkCore && typeof window.sparkCore.startSession === "function") {
     var corePlan = window.sparkCore.startSession({
       flow: SparkSessionTypes.FLOW_GUIDED_SESSION,
-      sessionNum: guidedSession
+      sessionNum: requestedGuided || undefined
     });
     if (corePlan && corePlan.context && corePlan.context.guidedPlan) {
       syncPianoGuidedPlanFromCore(corePlan);
@@ -521,6 +523,7 @@ function startGuidedSession(requestedSession) {
     }
   }
 
+  var guidedSession = requestedGuided || parseInt(S.currentSession, 10) || 1;
   S.currentSession = guidedSession;
   var plan = getCurrentSessionPlan();
   if (!plan) { showToast("No more sessions!"); render(); return; }

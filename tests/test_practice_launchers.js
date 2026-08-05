@@ -200,6 +200,42 @@ test("launchGuidedSessionItem starts a different guided day when the requested s
   ]);
 });
 
+test("launchGuidedSessionItem leaves the session unpinned when the item carries no explicit number", function() {
+  // No meta.guidedSession and no active shell: the launcher must NOT pin
+  // S.guidedSession — an undefined value lets the CurriculumEngine choose.
+  global.S.guidedSession = 4;
+
+  var launched = launchGuidedSessionItem({ id: "guided_generic" });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(global._acts, [
+    { name: "start_guided_session", value: undefined }
+  ]);
+});
+
+test("launchGuidedSessionItem resumes the active shell when the item carries no explicit number", function() {
+  global.sparkCore = {
+    getActiveSessionView: function() {
+      return {
+        plan: {
+          flow: "guided_session",
+          context: { guidedSession: 2 }
+        },
+        runtimeState: {
+          activeScreen: "guided_session"
+        }
+      };
+    }
+  };
+
+  var launched = launchGuidedSessionItem({ id: "guided_generic" });
+
+  assert.strictEqual(launched, true);
+  assert.deepStrictEqual(global._acts, [
+    { name: "resume_guided_session", value: undefined }
+  ]);
+});
+
 test("launchPracticeItem routes chord practice items into a specific chord session", function() {
   var launched = launchPracticeItem({
     id: "chord_g",

@@ -989,10 +989,14 @@
     }
 
     if (a === "start_guided_session") {
-      var _gsNum = parseInt(v, 10) || S.guidedSession || 1;
+      // Engine-owned lesson choice: only pin a session number the caller
+      // explicitly requested. An unpinned start lets the SessionEngine ask
+      // the CurriculumEngine which guided session is next by completion,
+      // instead of the UI deciding via the legacy S.guidedSession pointer.
+      var requestedGuidedSessionNum = parseInt(v, 10) > 0 ? parseInt(v, 10) : null;
+      var _gsNum = requestedGuidedSessionNum || S.guidedSession || 1;
       var guidedStartCore = getSparkCoreHandle();
       var activeGuidedSessionNum = getActiveGuidedSessionNumber();
-      var requestedGuidedSessionNum = parseInt(v, 10);
       if (guidedStartCore && isGuidedSessionActive() && (!requestedGuidedSessionNum || requestedGuidedSessionNum === activeGuidedSessionNum)) {
         mirrorGuidedRuntimeFields(guidedStartCore.getRuntimeState ? guidedStartCore.getRuntimeState() : null);
         setGuidedLegacyState({ guidedSession: activeGuidedSessionNum || S.guidedSession || _gsNum, screen: SCR.GUIDED }, false);
@@ -1004,7 +1008,7 @@
         return true;
       }
       if (guidedStartCore && typeof guidedStartCore.startSession === "function") {
-        var _gsPlan = guidedStartCore.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: _gsNum });
+        var _gsPlan = guidedStartCore.startSession({ flow: SparkSessionTypes.FLOW_GUIDED_SESSION, sessionNum: requestedGuidedSessionNum || undefined });
         if (_gsPlan && _gsPlan.context && _gsPlan.context.guidedPlan) {
           mirrorGuidedRuntimeFields(guidedStartCore.getRuntimeState ? guidedStartCore.getRuntimeState() : null);
           setGuidedLegacyState({ guidedSession: _gsPlan.context.guidedSession || _gsNum, screen: SCR.GUIDED }, false);

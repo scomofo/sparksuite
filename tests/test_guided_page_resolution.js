@@ -836,7 +836,7 @@ test("guided done page falls back to curriculum v2 session totals", function() {
   };
   var html = guidedDonePage();
   assert.ok(html.indexOf(">3/30<") >= 0);
-  assert.ok(html.indexOf("act('start_guided_session',3)") >= 0);
+  assert.ok(html.indexOf("act('start_guided_session')") >= 0); // unpinned: engine chooses next session
   assert.ok(html.indexOf("/22<") === -1);
 });
 
@@ -879,7 +879,7 @@ test("guided done page acknowledges deep focus landings", function() {
   assert.ok(html.indexOf(">In Bank<") >= 0);
   assert.ok(html.indexOf("background:linear-gradient(135deg,#6E56B308,#F6F3FF)") >= 0);
   assert.ok(html.indexOf("Start Next Session Gently") >= 0);
-  assert.ok(html.indexOf("act('start_guided_session',4)") >= 0);
+  assert.ok(html.indexOf("act('start_guided_session')") >= 0); // unpinned: engine chooses next session
   assert.ok(html.indexOf("Land at Home") >= 0);
   assert.ok(html.indexOf("Ready now is great. Later is great too.") >= 0);
   assert.ok(html.indexOf("background:linear-gradient(135deg,#A78BFA,#FFB86B);color:#2F2347") >= 0);
@@ -929,7 +929,7 @@ test("guided done page softens the primary CTA when the track is complete", func
   assert.ok(html.indexOf("Phase 1 Track Complete") >= 0);
   assert.ok(html.indexOf("You finished every session in this track. Replay a favorite, switch instruments, or leave this one proudly in the bank.") >= 0);
   assert.ok(html.indexOf("Play This One Again") >= 0);
-  assert.ok(html.indexOf("act('start_guided_session',30)") >= 0);
+  assert.ok(html.indexOf("act('start_guided_session')") >= 0); // unpinned: engine offers last-session replay when track complete
   assert.ok(html.indexOf("You've reached the end of this track. Replay this one or head home whenever you like.") >= 0);
   assert.strictEqual(html.indexOf("Next Session"), -1);
 });

@@ -1415,7 +1415,9 @@ function guidedDonePage() {
     h += '<div style="font-size:14px;line-height:1.6;color:var(--text-secondary)">' + escHTML(getGuidedDonePauseCopy(extensionCount)) + '</div>';
     h += '</div>';
   }
-  h += '<div class="flex-col"><button class="btn" onclick="act(\'start_guided_session\',' + escHTML(String(nextSessionNum)) + ')" style="' + getGuidedDoneNextActionStyle(extensionCount) + '">&#9654; ' + escHTML(getGuidedDoneNextActionLabel(extensionCount, hasNextSession)) + '</button>';
+  // Unpinned start: the CurriculumEngine picks the next guided session by
+  // completion state (nextSessionNum stays display-only for the label).
+  h += '<div class="flex-col"><button class="btn" onclick="act(\'start_guided_session\')" style="' + getGuidedDoneNextActionStyle(extensionCount) + '">&#9654; ' + escHTML(getGuidedDoneNextActionLabel(extensionCount, hasNextSession)) + '</button>';
   h += '<button class="btn" onclick="act(\'guidedDoneHome\')" style="' + getGuidedDoneHomeStyle(extensionCount) + '">&#127968; ' + escHTML(getGuidedDoneHomeLabel(extensionCount)) + '</button></div>';
   if (extensionCount >= 2 || !hasNextSession) {
     h += '<div style="margin-top:10px;font-size:12px;color:var(--text-muted)">' + escHTML(getGuidedDoneActionHint(extensionCount, hasNextSession)) + '</div>';
