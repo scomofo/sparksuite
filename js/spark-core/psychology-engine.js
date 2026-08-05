@@ -59,11 +59,21 @@ window.SparkPsychology = (function () {
 
   // -----------------------------------------------------------------------
   // 5. getSessionStructure(instrumentType)
-  // Returns ordered segment name array for the given instrument
+  // Returns ordered segment name array for the given instrument.
+  // Instrument-agnostic: a custom block order comes from the instrument
+  // adapter's getCapabilities().sessionStructure declaration.
   // -----------------------------------------------------------------------
   function getSessionStructure(instrumentType) {
-    if (instrumentType === "bass") {
-      return ["spark", "reviewGroove", "technique", "grooveDrill", "songGroove", "victoryGroove"];
+    var registry = typeof window !== "undefined" ? window.SparkSuiteInstrumentAdapters : null;
+    var factory = registry && instrumentType ? registry[instrumentType] : null;
+    if (typeof factory === "function") {
+      try {
+        var adapter = factory();
+        var caps = adapter && typeof adapter.getCapabilities === "function" ? adapter.getCapabilities() : null;
+        if (caps && Array.isArray(caps.sessionStructure) && caps.sessionStructure.length) {
+          return caps.sessionStructure.slice();
+        }
+      } catch (err) {}
     }
     return ["spark", "review", "newMove", "songSlice", "victoryLap"];
   }

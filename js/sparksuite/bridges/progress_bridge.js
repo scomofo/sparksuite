@@ -152,14 +152,15 @@
       }
     }
 
-    if (patch.bassSkillProgress) {
-      if (!S.bassSkillProgress || typeof S.bassSkillProgress !== "object") S.bassSkillProgress = {};
-      mergeInstrumentSkillProgress(S.bassSkillProgress, patch.bassSkillProgress);
-    }
-
-    if (patch.ukuleleSkillProgress) {
-      if (!S.ukuleleSkillProgress || typeof S.ukuleleSkillProgress !== "object") S.ukuleleSkillProgress = {};
-      mergeInstrumentSkillProgress(S.ukuleleSkillProgress, patch.ukuleleSkillProgress);
+    // Instrument-agnostic merge: any per-instrument skill-progress patch key
+    // (declared by the instrument adapter's skillProgress.stateKey capability,
+    // e.g. bassSkillProgress, ukuleleSkillProgress) mirrors into the
+    // same-named legacy S.* structure.
+    for (var skillPatchKey in patch) {
+      if (!Object.prototype.hasOwnProperty.call(patch, skillPatchKey)) continue;
+      if (!/SkillProgress$/.test(skillPatchKey) || !patch[skillPatchKey]) continue;
+      if (!S[skillPatchKey] || typeof S[skillPatchKey] !== "object") S[skillPatchKey] = {};
+      mergeInstrumentSkillProgress(S[skillPatchKey], patch[skillPatchKey]);
     }
 
     if (patch.xpToast) S.xpToast = patch.xpToast;
