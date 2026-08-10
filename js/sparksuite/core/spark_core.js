@@ -648,47 +648,10 @@
     return false;
   };
 
-  SparkCore.prototype.getGameplayTimingConfig = function() {
-    var config = this.runtimeState && this.runtimeState.gameplayTimingConfig
-      ? this.runtimeState.gameplayTimingConfig
-      : null;
-    if (typeof SparkNormalizeTimingConfig === "function") {
-      return SparkNormalizeTimingConfig(config || {});
-    }
-    return this.cloneValue(config);
-  };
-
-  SparkCore.prototype.syncGameplayTimingConfig = function(patch) {
-    var next = typeof SparkNormalizeTimingConfig === "function"
-      ? SparkNormalizeTimingConfig(Object.assign({}, this.getGameplayTimingConfig() || {}, patch || {}))
-      : Object.assign({}, this.getGameplayTimingConfig() || {}, patch || {});
-    this.updateRuntimeState({ gameplayTimingConfig: next });
-    return next;
-  };
-
-  SparkCore.prototype.applyInputCalibrationOffset = function(offsetMs) {
-    return this.syncGameplayTimingConfig({
-      inputLatencyOffsetMs: Math.round(typeof offsetMs === "number" && isFinite(offsetMs) ? offsetMs : 0)
-    });
-  };
-
-  SparkCore.prototype.getPracticeAssistConfig = function() {
-    var config = this.runtimeState && this.runtimeState.practiceAssistConfig
-      ? this.runtimeState.practiceAssistConfig
-      : null;
-    if (typeof SparkNormalizePracticeAssist === "function") {
-      return SparkNormalizePracticeAssist(config || {});
-    }
-    return this.cloneValue(config);
-  };
-
-  SparkCore.prototype.syncPracticeAssistConfig = function(patch) {
-    var next = typeof SparkNormalizePracticeAssist === "function"
-      ? SparkNormalizePracticeAssist(Object.assign({}, this.getPracticeAssistConfig() || {}, patch || {}))
-      : Object.assign({}, this.getPracticeAssistConfig() || {}, patch || {});
-    this.updateRuntimeState({ practiceAssistConfig: next });
-    return next;
-  };
+  // Gameplay-timing-config and practice-assist accessors were removed with
+  // the third (never-loaded) timing system in js/sparksuite/{runtime,gameplay}
+  // — hit windows are owned by SparkEnginePresetRegistry, latency by the
+  // timing core / calibration engine.
 
   SparkCore.prototype.getAccessibilitySettings = function() {
     var settings = this.runtimeState && this.runtimeState.accessibilitySettings

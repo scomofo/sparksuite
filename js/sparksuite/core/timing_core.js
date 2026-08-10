@@ -75,7 +75,25 @@
   };
 
   SparkTimingCore.prototype.applyLatencyCompensation = function(timeSec, inputMode) {
+    // Subtracting the offset from an INPUT timestamp is equivalent to adding
+    // it to the SONG clock (calibration_engine) or to the raw delta at
+    // judgment time (performance session): all three application points yield
+    // the same corrected delta. This model is the single source for the
+    // offset values themselves.
     return Math.max(0, num(timeSec, 0) - this.getInputOffsetMs(inputMode) / 1000);
+  };
+
+  // Build the latency model from the persisted performance calibration store
+  // (S.performTimingOffsetMs / performMidiOffsetMs / performMicOffsetMs) —
+  // the one place users' measured offsets live. Both performance mode and the
+  // rhythm gameplay clock resolve offsets through this.
+  SparkTimingCore.fromPerformanceState = function(state) {
+    state = state || {};
+    return new SparkTimingCore({
+      globalOffsetMs: state.performTimingOffsetMs,
+      midiOffsetMs: state.performMidiOffsetMs,
+      micOffsetMs: state.performMicOffsetMs
+    });
   };
 
   SparkTimingCore.prototype.secondsToBeat = function(timeSec, beatGrid) {
