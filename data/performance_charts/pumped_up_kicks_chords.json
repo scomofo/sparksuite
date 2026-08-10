@@ -1,274 +1,1812 @@
 {
-  "id": "pumped_up_kicks_chords",
-  "title": "Pumped Up Kicks",
-  "artist": "Foster the People",
-  "bpm": 128,
-  "beatsPerBar": 4,
-  "offsetSec": 0,
-  "audio": {
-    "type": "midi",
-    "src": "content/songs/midi/pumped_up_kicks.mid"
+ "id": "pumped_up_kicks_chords",
+ "title": "Pumped Up Kicks",
+ "artist": "Foster the People",
+ "bpm": 120,
+ "beatsPerBar": 4,
+ "offsetSec": 0,
+ "audio": {
+  "type": "midi",
+  "src": "content/songs/midi/pumped_up_kicks.mid"
+ },
+ "generated": {
+  "by": "scripts/generate-charts-from-midi.js",
+  "from": "content/songs/midi/pumped_up_kicks.mid",
+  "tempoSegments": 1,
+  "progressionLength": 4
+ },
+ "phrases": [
+  {
+   "id": 0,
+   "name": "Section 1",
+   "startSec": 0,
+   "endSec": 16
   },
-  "phrases": [
-    {
-      "id": 0,
-      "name": "Verse",
-      "startSec": 0,
-      "endSec": 15
-    },
-    {
-      "id": 1,
-      "name": "Chorus",
-      "startSec": 15,
-      "endSec": 30
-    },
-    {
-      "id": 2,
-      "name": "Outro",
-      "startSec": 30,
-      "endSec": 45
-    }
-  ],
-  "events": [
-    {
-      "id": 1,
-      "t": 0,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "Em",
-      "notes": ["E", "G", "B"],
-      "laneLabel": "Em",
-      "strum": "down"
-    },
-    {
-      "id": 2,
-      "t": 1.875,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "G",
-      "notes": ["G", "B", "D"],
-      "laneLabel": "G",
-      "strum": "up"
-    },
-    {
-      "id": 3,
-      "t": 3.75,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "D",
-      "notes": ["D", "F#", "A"],
-      "laneLabel": "D",
-      "strum": "down"
-    },
-    {
-      "id": 4,
-      "t": 5.625,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "A",
-      "notes": ["A", "C#", "E"],
-      "laneLabel": "A",
-      "strum": "up"
-    },
-    {
-      "id": 5,
-      "t": 7.5,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "Em",
-      "notes": ["E", "G", "B"],
-      "laneLabel": "Em",
-      "strum": "down"
-    },
-    {
-      "id": 6,
-      "t": 9.375,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "G",
-      "notes": ["G", "B", "D"],
-      "laneLabel": "G",
-      "strum": "up"
-    },
-    {
-      "id": 7,
-      "t": 11.25,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "D",
-      "notes": ["D", "F#", "A"],
-      "laneLabel": "D",
-      "strum": "down"
-    },
-    {
-      "id": 8,
-      "t": 13.125,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "A",
-      "notes": ["A", "C#", "E"],
-      "laneLabel": "A",
-      "strum": "up"
-    },
-    {
-      "id": 9,
-      "t": 15,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "Em",
-      "notes": ["E", "G", "B"],
-      "laneLabel": "Em",
-      "strum": "down"
-    },
-    {
-      "id": 10,
-      "t": 16.875,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "G",
-      "notes": ["G", "B", "D"],
-      "laneLabel": "G",
-      "strum": "up"
-    },
-    {
-      "id": 11,
-      "t": 18.75,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "D",
-      "notes": ["D", "F#", "A"],
-      "laneLabel": "D",
-      "strum": "down"
-    },
-    {
-      "id": 12,
-      "t": 20.625,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "A",
-      "notes": ["A", "C#", "E"],
-      "laneLabel": "A",
-      "strum": "up"
-    },
-    {
-      "id": 13,
-      "t": 22.5,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "Em",
-      "notes": ["E", "G", "B"],
-      "laneLabel": "Em",
-      "strum": "down"
-    },
-    {
-      "id": 14,
-      "t": 24.375,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "G",
-      "notes": ["G", "B", "D"],
-      "laneLabel": "G",
-      "strum": "up"
-    },
-    {
-      "id": 15,
-      "t": 26.25,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "D",
-      "notes": ["D", "F#", "A"],
-      "laneLabel": "D",
-      "strum": "down"
-    },
-    {
-      "id": 16,
-      "t": 28.125,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "A",
-      "notes": ["A", "C#", "E"],
-      "laneLabel": "A",
-      "strum": "up"
-    },
-    {
-      "id": 17,
-      "t": 30,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "Em",
-      "notes": ["E", "G", "B"],
-      "laneLabel": "Em",
-      "strum": "down"
-    },
-    {
-      "id": 18,
-      "t": 31.875,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "G",
-      "notes": ["G", "B", "D"],
-      "laneLabel": "G",
-      "strum": "up"
-    },
-    {
-      "id": 19,
-      "t": 33.75,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "D",
-      "notes": ["D", "F#", "A"],
-      "laneLabel": "D",
-      "strum": "down"
-    },
-    {
-      "id": 20,
-      "t": 35.625,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "A",
-      "notes": ["A", "C#", "E"],
-      "laneLabel": "A",
-      "strum": "up"
-    },
-    {
-      "id": 21,
-      "t": 37.5,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "Em",
-      "notes": ["E", "G", "B"],
-      "laneLabel": "Em",
-      "strum": "down"
-    },
-    {
-      "id": 22,
-      "t": 39.375,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "G",
-      "notes": ["G", "B", "D"],
-      "laneLabel": "G",
-      "strum": "up"
-    },
-    {
-      "id": 23,
-      "t": 41.25,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "D",
-      "notes": ["D", "F#", "A"],
-      "laneLabel": "D",
-      "strum": "down"
-    },
-    {
-      "id": 24,
-      "t": 43.125,
-      "dur": 1.875,
-      "type": "chord",
-      "chord": "A",
-      "notes": ["A", "C#", "E"],
-      "laneLabel": "A",
-      "strum": "up"
-    }
-  ]
+  {
+   "id": 1,
+   "name": "Section 2",
+   "startSec": 16,
+   "endSec": 32
+  },
+  {
+   "id": 2,
+   "name": "Section 3",
+   "startSec": 32,
+   "endSec": 48
+  },
+  {
+   "id": 3,
+   "name": "Section 4",
+   "startSec": 48,
+   "endSec": 64
+  },
+  {
+   "id": 4,
+   "name": "Section 5",
+   "startSec": 64,
+   "endSec": 80
+  },
+  {
+   "id": 5,
+   "name": "Section 6",
+   "startSec": 80,
+   "endSec": 96
+  },
+  {
+   "id": 6,
+   "name": "Section 7",
+   "startSec": 96,
+   "endSec": 112
+  },
+  {
+   "id": 7,
+   "name": "Section 8",
+   "startSec": 112,
+   "endSec": 128
+  },
+  {
+   "id": 8,
+   "name": "Section 9",
+   "startSec": 128,
+   "endSec": 144
+  },
+  {
+   "id": 9,
+   "name": "Section 10",
+   "startSec": 144,
+   "endSec": 160
+  },
+  {
+   "id": 10,
+   "name": "Section 11",
+   "startSec": 160,
+   "endSec": 176
+  },
+  {
+   "id": 11,
+   "name": "Section 12",
+   "startSec": 176,
+   "endSec": 192
+  },
+  {
+   "id": 12,
+   "name": "Section 13",
+   "startSec": 192,
+   "endSec": 208
+  },
+  {
+   "id": 13,
+   "name": "Section 14",
+   "startSec": 208,
+   "endSec": 224
+  },
+  {
+   "id": 14,
+   "name": "Section 15",
+   "startSec": 224,
+   "endSec": 240
+  },
+  {
+   "id": 15,
+   "name": "Section 16",
+   "startSec": 240,
+   "endSec": 242
+  }
+ ],
+ "events": [
+  {
+   "id": 1,
+   "t": 0,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 2,
+   "t": 2,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 3,
+   "t": 4,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 4,
+   "t": 6,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 5,
+   "t": 8,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 6,
+   "t": 10,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 7,
+   "t": 12,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 8,
+   "t": 14,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 9,
+   "t": 16,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 10,
+   "t": 18,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 11,
+   "t": 20,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 12,
+   "t": 22,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 13,
+   "t": 24,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 14,
+   "t": 26,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 15,
+   "t": 28,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 16,
+   "t": 30,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 17,
+   "t": 32,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 18,
+   "t": 34,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 19,
+   "t": 36,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 20,
+   "t": 38,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 21,
+   "t": 40,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 22,
+   "t": 42,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 23,
+   "t": 44,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 24,
+   "t": 46,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 25,
+   "t": 48,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 26,
+   "t": 50,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 27,
+   "t": 52,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 28,
+   "t": 54,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 29,
+   "t": 56,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 30,
+   "t": 58,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 31,
+   "t": 60,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 32,
+   "t": 62,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 33,
+   "t": 64,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 34,
+   "t": 66,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 35,
+   "t": 68,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 36,
+   "t": 70,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 37,
+   "t": 72,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 38,
+   "t": 74,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 39,
+   "t": 76,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 40,
+   "t": 78,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 41,
+   "t": 80,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 42,
+   "t": 82,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 43,
+   "t": 84,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 44,
+   "t": 86,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 45,
+   "t": 88,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 46,
+   "t": 90,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 47,
+   "t": 92,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 48,
+   "t": 94,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 49,
+   "t": 96,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 50,
+   "t": 98,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 51,
+   "t": 100,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 52,
+   "t": 102,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 53,
+   "t": 104,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 54,
+   "t": 106,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 55,
+   "t": 108,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 56,
+   "t": 110,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 57,
+   "t": 112,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 58,
+   "t": 114,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 59,
+   "t": 116,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 60,
+   "t": 118,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 61,
+   "t": 120,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 62,
+   "t": 122,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 63,
+   "t": 124,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 64,
+   "t": 126,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 65,
+   "t": 128,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 66,
+   "t": 130,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 67,
+   "t": 132,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 68,
+   "t": 134,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 69,
+   "t": 136,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 70,
+   "t": 138,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 71,
+   "t": 140,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 72,
+   "t": 142,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 73,
+   "t": 144,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 74,
+   "t": 146,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 75,
+   "t": 148,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 76,
+   "t": 150,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 77,
+   "t": 152,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 78,
+   "t": 154,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 79,
+   "t": 156,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 80,
+   "t": 158,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 81,
+   "t": 160,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 82,
+   "t": 162,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 83,
+   "t": 164,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 84,
+   "t": 166,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 85,
+   "t": 168,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 86,
+   "t": 170,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 87,
+   "t": 172,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 88,
+   "t": 174,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 89,
+   "t": 176,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 90,
+   "t": 178,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 91,
+   "t": 180,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 92,
+   "t": 182,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 93,
+   "t": 184,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 94,
+   "t": 186,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 95,
+   "t": 188,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 96,
+   "t": 190,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 97,
+   "t": 192,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 98,
+   "t": 194,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 99,
+   "t": 196,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 100,
+   "t": 198,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 101,
+   "t": 200,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 102,
+   "t": 202,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 103,
+   "t": 204,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 104,
+   "t": 206,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 105,
+   "t": 208,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 106,
+   "t": 210,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 107,
+   "t": 212,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 108,
+   "t": 214,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 109,
+   "t": 216,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 110,
+   "t": 218,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 111,
+   "t": 220,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 112,
+   "t": 222,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 113,
+   "t": 224,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 114,
+   "t": 226,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 115,
+   "t": 228,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 116,
+   "t": 230,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 117,
+   "t": 232,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 118,
+   "t": 234,
+   "dur": 2,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 119,
+   "t": 236,
+   "dur": 2,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 120,
+   "t": 238,
+   "dur": 2,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "up"
+  },
+  {
+   "id": 121,
+   "t": 240,
+   "dur": 2,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  }
+ ]
 }
