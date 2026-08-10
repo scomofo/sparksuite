@@ -52,7 +52,9 @@
     }
     this.runtimeUnsubscribe = runtimeSyncEngine.bind("rhythm_gameplay", {
       update: function(state) {
-        self.updateFromRuntimeState(state);
+        // Return the snapshot so the sync engine can merge it into the
+        // emitted runtime state's gameplay slot.
+        return self.updateFromRuntimeState(state);
       }
     });
     return this.runtimeUnsubscribe;

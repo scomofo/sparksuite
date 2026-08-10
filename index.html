@@ -138,6 +138,20 @@
 <script src="js/performance/highway.js"></script>
 <script src="js/performance/midi_backing.js"></script>
 <script src="js/pages/perform.js"></script>
+<!-- Rhythm highway runtime stack: must load before js/pages/rhythm_highway.js,
+     which instantiates SparkRhythmHighwayPageAdapter at script-eval time and
+     otherwise silently degrades to a frozen-clock fallback. Order matters:
+     timing/transport primitives first, then the sync hub, adapters, bridge,
+     controller, page adapter. Pinned by test_rhythm_highway_runtime_wiring.js. -->
+<script src="js/sparksuite/core/timing_core.js"></script>
+<script src="js/sparksuite/core/transport_engine.js"></script>
+<script src="js/sparksuite/core/caption_sync_engine.js"></script>
+<script src="js/sparksuite/core/runtime_sync_engine.js"></script>
+<script src="js/sparksuite/core/metronome_runtime_adapter.js"></script>
+<script src="js/sparksuite/core/waveform_runtime_adapter.js"></script>
+<script src="js/sparksuite/core/rhythm_runtime_bridge.js"></script>
+<script src="js/sparksuite/core/rhythm_highway_runtime_controller.js"></script>
+<script src="js/sparksuite/core/rhythm_highway_page_adapter.js"></script>
 <script src="js/pages/rhythm_highway.js"></script>
 <script src="js/pages/perform_song.js"></script>
 <script src="js/pages/performance_stats.js"></script>
