@@ -30,11 +30,20 @@
     return true;
   }
 
+  function laneColorToRgb(hex) {
+    var match = /^#?([0-9a-f]{6})$/i.exec(String(hex || ""));
+    if (!match) return [255, 255, 255];
+    var n = parseInt(match[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+
   function buildRhythmHighwaySkin(laneCount) {
     var base = SparkHighway.GUITAR_SKIN || {};
-    var baseColors = base.laneColors || [[255, 255, 255]];
+    // Gems use the same lane palette as the buttons and labels — including
+    // the colorblind-safe palette when that accessibility setting is on.
+    var accessibility = getRhythmHighwayAccessibilitySettings();
     var colors = [];
-    for (var i = 0; i < laneCount; i++) colors.push(baseColors[i % baseColors.length]);
+    for (var i = 0; i < laneCount; i++) colors.push(laneColorToRgb(laneColor(i, accessibility)));
     return Object.assign({}, base, { laneCount: laneCount, laneColors: colors });
   }
 
@@ -62,16 +71,31 @@
     var byId = {};
     for (var i = 0; i < states.length; i++) {
       var n = states[i];
-      var evt = {
-        t: n.timeSec,
-        dur: canvasNoteDurSec(n),
-        type: "tap",
-        lane: primaryLaneIndex(n.laneMask),
-        laneMask: n.laneMask,
-        laneLabel: n.label || ""
-      };
-      events.push(evt);
-      byId[n.id] = evt;
+      var dur = canvasNoteDurSec(n);
+      // One renderer event per required lane: the renderer positions gems from
+      // evt.lane alone, while the input judge requires the COMPLETE laneMask —
+      // a chord must show a gem on every lane it demands or players get
+      // wrong_fret misses on lanes they cannot see.
+      var laneEvents = [];
+      for (var lane = 0; lane < 32; lane++) {
+        if (!(n.laneMask & (1 << lane))) continue;
+        var evt = {
+          t: n.timeSec,
+          dur: dur,
+          type: "tap",
+          lane: lane,
+          laneMask: n.laneMask,
+          laneLabel: n.label || ""
+        };
+        events.push(evt);
+        laneEvents.push(evt);
+      }
+      if (!laneEvents.length) {
+        var fallbackEvt = { t: n.timeSec, dur: dur, type: "tap", lane: 0, laneMask: n.laneMask, laneLabel: n.label || "" };
+        events.push(fallbackEvt);
+        laneEvents.push(fallbackEvt);
+      }
+      byId[n.id] = laneEvents;
     }
     _canvasEvents = events;
     _canvasEventsByNoteId = byId;
@@ -101,19 +125,23 @@
     if (!_canvasEventsByNoteId || !runtime.engine || !runtime.engine.noteStates) return;
     var states = runtime.engine.noteStates;
     for (var i = 0; i < states.length; i++) {
-      var evt = _canvasEventsByNoteId[states[i].id];
-      if (!evt) continue;
-      evt._hit = !!states[i].hit;
-      evt._miss = !!states[i].missed;
-      evt._scored = !!(states[i].hit || states[i].missed);
+      var laneEvents = _canvasEventsByNoteId[states[i].id];
+      if (!laneEvents) continue;
+      for (var j = 0; j < laneEvents.length; j++) {
+        laneEvents[j]._hit = !!states[i].hit;
+        laneEvents[j]._miss = !!states[i].missed;
+        laneEvents[j]._scored = !!(states[i].hit || states[i].missed);
+      }
     }
   }
 
   function notifyCanvasHit(noteId) {
-    if (!_canvasHighway || !_canvasEventsByNoteId) return;
-    var evt = _canvasEventsByNoteId[noteId];
-    if (evt && evt._screenX && typeof _canvasHighway.notifyHit === "function") {
-      _canvasHighway.notifyHit(evt._screenX, evt._screenY, 0x4ecdc4);
+    if (!_canvasHighway || !_canvasEventsByNoteId || typeof _canvasHighway.notifyHit !== "function") return;
+    var laneEvents = _canvasEventsByNoteId[noteId] || [];
+    for (var i = 0; i < laneEvents.length; i++) {
+      if (laneEvents[i]._screenX) {
+        _canvasHighway.notifyHit(laneEvents[i]._screenX, laneEvents[i]._screenY, 0x4ecdc4);
+      }
     }
   }
 
@@ -372,6 +400,10 @@
 
   function finalizeRhythmHighway() {
     if (!runtime.engine) return;
+    // Release the PixiJS renderer before the results page replaces the
+    // canvas — finalize is the normal completion path and must not leak the
+    // WebGL resources that stop/exit cleanup releases.
+    destroyRhythmCanvasHighway();
     var result = runtime.engine.finalize();
     var core = getRhythmHighwayCore();
     S.rhythmHighwayResult = result;

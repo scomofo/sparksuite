@@ -198,6 +198,47 @@ test("engine hits mirror onto renderer event flags", function() {
   assert.ok(!hw.events[1]._hit, "other notes untouched");
 });
 
+test("chord notes render one gem per required lane, all mirroring the note's state", function() {
+  var env = makeEnv();
+  var payload = makePayload();
+  // Make n0 a two-lane chord (lanes 0+1) — the judge requires the full mask,
+  // so the renderer must show a gem on every required lane.
+  payload.songChart.tracks.guitar.notes[0].laneMask = 3;
+  global.startRhythmHighwayPayload(payload);
+  env.pump(100);
+  var hw = StubHighway.instances[0];
+  assert.strictEqual(hw.events.length, 9, "8 notes, one of them a 2-lane chord = 9 renderer events");
+  var chordGems = hw.events.filter(function(e) { return e.laneMask === 3; });
+  assert.strictEqual(chordGems.length, 2, "one gem per required lane");
+  assert.strictEqual(chordGems[0].lane + chordGems[1].lane, 1, "gems sit on lanes 0 and 1");
+
+  global.S.rhythmHighwayHeldMask = 3;
+  global._sparkRhythmHighwayStrum();
+  env.pump(16);
+  assert.ok(chordGems[0]._hit && chordGems[1]._hit, "a chord hit flags every lane's gem");
+});
+
+test("the colorblind-safe palette reaches the canvas skin", function() {
+  var env = makeEnv();
+  global.S.settings = { accessibility: { colorblindSafeLanes: true } };
+  global.startRhythmHighwayPayload(makePayload());
+  env.pump(100);
+  var hw = StubHighway.instances[0];
+  assert.deepStrictEqual(hw.skin.laneColors[0], [17, 119, 51], "gem colors come from the accessible lane palette (#117733)");
+});
+
+test("normal completion destroys the renderer (no WebGL leak after a finished run)", function() {
+  var env = makeEnv();
+  global.startRhythmHighwayPayload(makePayload());
+  env.pump(500);
+  var hw = StubHighway.instances[0];
+  assert.ok(!hw.destroyed, "alive mid-run");
+  // Push far past the last note so everything misses and the run finalizes.
+  for (var i = 0; i < 12; i++) env.pump(500);
+  assert.ok(global.S.rhythmHighwayResult, "run finalized");
+  assert.strictEqual(hw.destroyed, true, "finalize must release the renderer");
+});
+
 test("classic flag falls back to per-frame full renders and no renderer instance", function() {
   var env = makeEnv({ classic: true });
   global.startRhythmHighwayPayload(makePayload());
