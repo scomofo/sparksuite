@@ -1,5 +1,22 @@
 # Highway Convergence Plan
 
+## Song-highway assessment — final disposition (2026-08-16)
+
+The 2026-08 song-highway assessment produced six recommendations. All are
+now dispositioned:
+
+| # | Recommendation | Outcome |
+|---|---|---|
+| 1 | Fix the frozen rhythm highway (runtime stack never loaded) | ✅ Fixed + wiring/reachability tests (PR #114) |
+| 2 | Point `chart_io` at the MIDI corpus for real charts | ✅ 33 charts on real tempo maps / time signatures / full durations (PRs #114) |
+| 3 | Converge the two highway implementations | ✅ Phases A–C below (PRs #115–#116) |
+| 4 | Join curriculum to songs | ✅ Engine half (`getSongReadiness`, PR #114); routing the 600 `focus_song` prose placeholders at real song ids remains open content authoring |
+| 5 | MIDI licensing risk | ✅ Resolved as **personal-use**: the project is not commercial and not for distribution. Recorded via a third-party content exclusion in `LICENSE` and `content/songs/midi/README.md`. If distribution intent ever changes, that README is the gate: remove/replace the MIDI corpus first (the repo is public, so making it private is the cleanest further step, owner's choice). |
+| 6 | Housekeeping (orphaned TSX, contract doc, script naming) | ✅ Done (PR #114) |
+
+Remaining engineering follow-up: interactive device verification of the
+canvas highway (Rollout below), then delete the DOM fallback branch.
+
 _Status as of 2026-08-16: phases A, B, and C are all landed. Phase C shipped
 behind the in-page "Classic View" fallback toggle; interactive verification
 of the canvas visuals on a real device remains before deleting the DOM

@@ -19,3 +19,16 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+Third-party content exclusion
+
+The MIT license above applies to the SparkSuite SOFTWARE (code, original
+charts, original exercises, and documentation). It does NOT apply to
+third-party musical content in this repository — in particular the MIDI
+transcriptions of commercial songs under content/songs/midi/, whose
+underlying musical compositions remain the property of their respective
+rights holders. That material is present for the repository owner's
+personal practice use only and is not licensed for reuse, redistribution,
+or any other purpose. See content/songs/midi/README.md.
