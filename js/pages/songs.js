@@ -437,11 +437,20 @@ function _renderSongsList(filtered, D, safeSongFilter){
   var h = '<div class="metric-label" style="margin-bottom:8px">'+filtered.length+' song'+(filtered.length===1?"":"s")+(safeSongFilter?" matching &ldquo;"+escHTML(safeSongFilter)+"&rdquo;":"")+'</div>';
   h += '<div class="flex-col">';
   for(var i=0;i<filtered.length;i++){
-    var s=filtered[i],lk=s.level>S.level;
+    var s=filtered[i];
+    // Engine-owned gate: the CurriculumEngine decides whether a song is
+    // unlocked; the inline level check remains only as a no-service fallback.
+    var _readiness = (typeof SparkCurriculumService !== "undefined" && typeof SparkCurriculumService.getSongReadiness === "function")
+      ? SparkCurriculumService.getSongReadiness(s)
+      : null;
+    var lk = _readiness ? !_readiness.unlocked : s.level > S.level;
     var songTitle = _firstSongsTextToken(s.title, s.songTitle, s.id, "Song");
     var songArtist = _firstSongsTextToken(s.artist, "Unknown Artist");
     var songLibraryIndex = D.SONGS.indexOf(s);
-    h += '<div class="card" style="opacity:'+(lk?0.4:1)+';cursor:'+(lk?"default":"pointer")+'"'+(lk?'':clickableDiv("act(\'openSong\',"+songLibraryIndex+")"))+'">';
+    var _lockHint = lk && _readiness
+      ? ' title="Unlocks at level '+_readiness.requiredLevel+(_readiness.chordsToLearn.length?' &bull; chords to learn: '+escHTML(_readiness.chordsToLearn.join(", ")):'')+'"'
+      : '';
+    h += '<div class="card"'+_lockHint+' style="opacity:'+(lk?0.4:1)+';cursor:'+(lk?"default":"pointer")+'"'+(lk?'':clickableDiv("act(\'openSong\',"+songLibraryIndex+")"))+'">';
     h += '<div class="split-row" style="gap:12px"><div><h3 class="card-section-heading">'+escHTML(songTitle)+'</h3><p class="metric-label" style="margin:2px 0 0">'+escHTML(songArtist)+'</p></div><div style="text-align:right"><div class="metric-value" style="color:'+(D.LC && D.LC[s.level] || '#999')+'">Lvl '+s.level+'</div><div class="metric-label">'+_formatSongsBpm(s.bpm, "--")+' BPM &bull; '+s.chords.length+' chords</div>';
     if(typeof getPerformanceStats==="function"){
       var _songStatsId = typeof resolvePerformanceSongId === "function"
@@ -651,7 +660,11 @@ function strumTab(){
   var D = inst && inst.getData ? inst.getData() : {};
   var h='<div class="text-center mb16"><h2 style="font-size:22px;font-weight:900;color:var(--text-primary)">Strum Patterns &#127932;</h2></div><div class="flex-col">';
   for(var i=0;i<STRUM_PATTERNS.length;i++){
-    var sp=STRUM_PATTERNS[i],lk=sp.level>S.level;
+    var sp=STRUM_PATTERNS[i];
+    var _spReadiness = (typeof SparkCurriculumService !== "undefined" && typeof SparkCurriculumService.getSongReadiness === "function")
+      ? SparkCurriculumService.getSongReadiness(sp)
+      : null;
+    var lk = _spReadiness ? !_spReadiness.unlocked : sp.level > S.level;
     h+='<div class="card" style="opacity:'+(lk?0.4:1)+';cursor:'+(lk?"default":"pointer")+'"'+(lk?'':clickableDiv("act(\'openStrum\',\'"+sp.name+"\')"))+'">';
     h+='<div class="split-row" style="gap:12px"><div><h3 class="card-section-heading">'+sp.name+'</h3><p class="metric-label" style="margin:4px 0 0">'+sp.desc+'</p></div><div style="text-align:right"><div class="metric-value" style="color:'+(D.LC && D.LC[sp.level] || '#999')+'">Lvl '+sp.level+'</div><div class="metric-label">'+_formatSongsBpm(sp.bpm, "--")+' BPM</div></div></div>';
     h+='<div style="display:flex;gap:4px;margin-top:10px">';
