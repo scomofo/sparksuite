@@ -158,7 +158,7 @@
    "id": 23,
    "name": "Section 24",
    "startSec": 234.892,
-   "endSec": 241.315
+   "endSec": 242.552
   }
  ],
  "events": [
@@ -2811,7 +2811,7 @@
   {
    "id": 190,
    "t": 241.275,
-   "dur": 0.04,
+   "dur": 1.277,
    "type": "chord",
    "chord": "Cm",
    "notes": [

@@ -110,7 +110,13 @@
    "id": 15,
    "name": "Section 16",
    "startSec": 264.22,
-   "endSec": 281.795
+   "endSec": 281.835
+  },
+  {
+   "id": 16,
+   "name": "Section 17",
+   "startSec": 281.835,
+   "endSec": 281.841
   }
  ],
  "events": [
@@ -1895,7 +1901,7 @@
   {
    "id": 128,
    "t": 279.633,
-   "dur": 2.162,
+   "dur": 2.202,
    "type": "chord",
    "chord": "G",
    "notes": [
@@ -1905,6 +1911,20 @@
    ],
    "laneLabel": "G",
    "strum": "up"
+  },
+  {
+   "id": 129,
+   "t": 281.835,
+   "dur": 0.006,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "down"
   }
  ]
 }

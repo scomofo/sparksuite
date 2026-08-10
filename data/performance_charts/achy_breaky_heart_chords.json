@@ -92,7 +92,7 @@
    "id": 12,
    "name": "Section 13",
    "startSec": 187.316,
-   "endSec": 200.954
+   "endSec": 201.157
   }
  ],
  "events": [
@@ -1527,7 +1527,21 @@
   {
    "id": 103,
    "t": 199.023,
-   "dur": 1.931,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 104,
+   "t": 200.974,
+   "dur": 0.183,
    "type": "chord",
    "chord": "A",
    "notes": [

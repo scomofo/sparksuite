@@ -92,7 +92,13 @@
    "id": 12,
    "name": "Section 13",
    "startSec": 177.231,
-   "endSec": 191.353
+   "endSec": 192
+  },
+  {
+   "id": 13,
+   "name": "Section 14",
+   "startSec": 192,
+   "endSec": 197.995
   }
  ],
  "events": [
@@ -1541,7 +1547,63 @@
   {
    "id": 104,
    "t": 190.154,
-   "dur": 1.2,
+   "dur": 1.846,
+   "type": "chord",
+   "chord": "Dm",
+   "notes": [
+    "D",
+    "F",
+    "A"
+   ],
+   "laneLabel": "Dm",
+   "strum": "down"
+  },
+  {
+   "id": 105,
+   "t": 192,
+   "dur": 1.846,
+   "type": "chord",
+   "chord": "Dm",
+   "notes": [
+    "D",
+    "F",
+    "A"
+   ],
+   "laneLabel": "Dm",
+   "strum": "down"
+  },
+  {
+   "id": 106,
+   "t": 193.846,
+   "dur": 1.846,
+   "type": "chord",
+   "chord": "Dm",
+   "notes": [
+    "D",
+    "F",
+    "A"
+   ],
+   "laneLabel": "Dm",
+   "strum": "down"
+  },
+  {
+   "id": 107,
+   "t": 195.692,
+   "dur": 1.846,
+   "type": "chord",
+   "chord": "Dm",
+   "notes": [
+    "D",
+    "F",
+    "A"
+   ],
+   "laneLabel": "Dm",
+   "strum": "down"
+  },
+  {
+   "id": 108,
+   "t": 197.538,
+   "dur": 0.457,
    "type": "chord",
    "chord": "Dm",
    "notes": [

@@ -86,7 +86,13 @@
    "id": 11,
    "name": "Section 12",
    "startSec": 177.479,
-   "endSec": 180.498
+   "endSec": 193.613
+  },
+  {
+   "id": 12,
+   "name": "Section 13",
+   "startSec": 193.613,
+   "endSec": 195.876
   }
  ],
  "events": [
@@ -1339,7 +1345,119 @@
   {
    "id": 90,
    "t": 179.496,
-   "dur": 1.002,
+   "dur": 2.017,
+   "type": "chord",
+   "chord": "C",
+   "notes": [
+    "C",
+    "E",
+    "G"
+   ],
+   "laneLabel": "C",
+   "strum": "down"
+  },
+  {
+   "id": 91,
+   "t": 181.513,
+   "dur": 2.017,
+   "type": "chord",
+   "chord": "C",
+   "notes": [
+    "C",
+    "E",
+    "G"
+   ],
+   "laneLabel": "C",
+   "strum": "down"
+  },
+  {
+   "id": 92,
+   "t": 183.529,
+   "dur": 2.017,
+   "type": "chord",
+   "chord": "C",
+   "notes": [
+    "C",
+    "E",
+    "G"
+   ],
+   "laneLabel": "C",
+   "strum": "down"
+  },
+  {
+   "id": 93,
+   "t": 185.546,
+   "dur": 2.017,
+   "type": "chord",
+   "chord": "C",
+   "notes": [
+    "C",
+    "E",
+    "G"
+   ],
+   "laneLabel": "C",
+   "strum": "down"
+  },
+  {
+   "id": 94,
+   "t": 187.563,
+   "dur": 2.017,
+   "type": "chord",
+   "chord": "C",
+   "notes": [
+    "C",
+    "E",
+    "G"
+   ],
+   "laneLabel": "C",
+   "strum": "down"
+  },
+  {
+   "id": 95,
+   "t": 189.58,
+   "dur": 2.017,
+   "type": "chord",
+   "chord": "C",
+   "notes": [
+    "C",
+    "E",
+    "G"
+   ],
+   "laneLabel": "C",
+   "strum": "down"
+  },
+  {
+   "id": 96,
+   "t": 191.597,
+   "dur": 2.017,
+   "type": "chord",
+   "chord": "C",
+   "notes": [
+    "C",
+    "E",
+    "G"
+   ],
+   "laneLabel": "C",
+   "strum": "down"
+  },
+  {
+   "id": 97,
+   "t": 193.613,
+   "dur": 2.017,
+   "type": "chord",
+   "chord": "C",
+   "notes": [
+    "C",
+    "E",
+    "G"
+   ],
+   "laneLabel": "C",
+   "strum": "down"
+  },
+  {
+   "id": 98,
+   "t": 195.63,
+   "dur": 0.246,
    "type": "chord",
    "chord": "C",
    "notes": [

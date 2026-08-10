@@ -62,7 +62,7 @@
    "id": 7,
    "name": "Section 8",
    "startSec": 113.897,
-   "endSec": 122.072
+   "endSec": 124.603
   }
  ],
  "events": [
@@ -895,7 +895,7 @@
   {
    "id": 60,
    "t": 121.981,
-   "dur": 0.091,
+   "dur": 2.623,
    "type": "chord",
    "chord": "E",
    "notes": [

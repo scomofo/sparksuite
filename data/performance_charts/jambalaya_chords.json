@@ -56,7 +56,7 @@
    "id": 6,
    "name": "Section 7",
    "startSec": 96,
-   "endSec": 107.75
+   "endSec": 108
   }
  ],
  "events": [
@@ -805,7 +805,7 @@
   {
    "id": 54,
    "t": 106,
-   "dur": 1.75,
+   "dur": 2,
    "type": "chord",
    "chord": "A",
    "notes": [

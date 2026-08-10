@@ -170,7 +170,13 @@
    "id": 25,
    "name": "Section 26",
    "startSec": 290.909,
-   "endSec": 298.155
+   "endSec": 302.545
+  },
+  {
+   "id": 26,
+   "name": "Section 27",
+   "startSec": 302.545,
+   "endSec": 310.03
   }
  ],
  "events": [
@@ -3033,7 +3039,7 @@
   {
    "id": 205,
    "t": 296.727,
-   "dur": 1.427,
+   "dur": 1.455,
    "type": "chord",
    "chord": "Em",
    "notes": [
@@ -3043,6 +3049,132 @@
    ],
    "laneLabel": "Em",
    "strum": "down"
+  },
+  {
+   "id": 206,
+   "t": 298.182,
+   "dur": 1.455,
+   "type": "chord",
+   "chord": "C",
+   "notes": [
+    "C",
+    "E",
+    "G"
+   ],
+   "laneLabel": "C",
+   "strum": "up"
+  },
+  {
+   "id": 207,
+   "t": 299.636,
+   "dur": 1.455,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "down"
+  },
+  {
+   "id": 208,
+   "t": 301.091,
+   "dur": 1.455,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "up"
+  },
+  {
+   "id": 209,
+   "t": 302.545,
+   "dur": 1.455,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 210,
+   "t": 304,
+   "dur": 1.455,
+   "type": "chord",
+   "chord": "C",
+   "notes": [
+    "C",
+    "E",
+    "G"
+   ],
+   "laneLabel": "C",
+   "strum": "up"
+  },
+  {
+   "id": 211,
+   "t": 305.455,
+   "dur": 1.455,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "down"
+  },
+  {
+   "id": 212,
+   "t": 306.909,
+   "dur": 1.455,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
+   "strum": "up"
+  },
+  {
+   "id": 213,
+   "t": 308.364,
+   "dur": 1.455,
+   "type": "chord",
+   "chord": "Em",
+   "notes": [
+    "E",
+    "G",
+    "B"
+   ],
+   "laneLabel": "Em",
+   "strum": "down"
+  },
+  {
+   "id": 214,
+   "t": 309.818,
+   "dur": 0.212,
+   "type": "chord",
+   "chord": "C",
+   "notes": [
+    "C",
+    "E",
+    "G"
+   ],
+   "laneLabel": "C",
+   "strum": "up"
   }
  ]
 }

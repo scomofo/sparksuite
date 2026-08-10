@@ -90,6 +90,37 @@ test("regenerateChart rebuilds a chart on the real MIDI grid", function() {
   }
 });
 
+test("time-signature changes shape the bar grid instead of the opening meter poisoning it", function() {
+  // smells_like_teen_spirit.mid opens with a 1/4 pickup bar then switches to
+  // 4/4 — the old grid applied 1/4 to the whole song (522 beat-length bars).
+  var chart = {
+    id: "sig_check", title: "Sig Check", artist: "x", bpm: 120, beatsPerBar: 4, offsetSec: 0,
+    audio: { type: "midi", src: "content/songs/midi/smells_like_teen_spirit.mid" },
+    phrases: [],
+    events: [{ id: 1, t: 0, dur: 2, type: "chord", chord: "F5", notes: ["F"], laneLabel: "F5", strum: "down" }]
+  };
+  var midi = fs.readFileSync(path.join(repo, "content", "songs", "midi", "smells_like_teen_spirit.mid"));
+  var result = generator.regenerateChart(chart, midi, io);
+  assert.strictEqual(result.beatsPerBar, 4, "chart-level meter is the dominant signature, not the pickup");
+  assert.ok(result.events.length < 200, "bar-length events, not beat-length (got " + result.events.length + ")");
+  assert.ok(result.events[0].dur < result.events[1].dur, "the 1/4 pickup bar stays shorter than the 4/4 bars");
+});
+
+test("chart duration covers the full MIDI timeline, not just the selected track", function() {
+  // tomorrow_never_knows.mid: the selected melodic track ends ~15s before the
+  // full arrangement the backing player renders.
+  var chart = {
+    id: "dur_check", title: "Dur Check", artist: "x", bpm: 120, beatsPerBar: 4, offsetSec: 0,
+    audio: { type: "midi", src: "content/songs/midi/tomorrow_never_knows.mid" },
+    phrases: [],
+    events: [{ id: 1, t: 0, dur: 2, type: "chord", chord: "C", notes: ["C"], laneLabel: "C", strum: "down" }]
+  };
+  var midi = fs.readFileSync(path.join(repo, "content", "songs", "midi", "tomorrow_never_knows.mid"));
+  var result = generator.regenerateChart(chart, midi, io);
+  var last = result.events[result.events.length - 1];
+  assert.ok(last.t + last.dur > 195, "chart must reach the full arrangement's end (got " + (last.t + last.dur) + ")");
+});
+
 test("committed MIDI-backed charts carry real structure corpus-wide", function() {
   var chartsDir = path.join(repo, "data", "performance_charts");
   var files = fs.readdirSync(chartsDir).filter(function(f) { return f.slice(-5) === ".json"; });

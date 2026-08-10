@@ -62,23 +62,49 @@ function extractProgression(events) {
   return events.slice();
 }
 
-// Walk real bar boundaries in ticks across the tempo map until durationSec.
-function buildBarGrid(tempoMap, ppq, timeSignature, durationSec) {
-  var numerator = timeSignature && timeSignature.numerator ? timeSignature.numerator : 4;
-  var denominator = timeSignature && timeSignature.denominator ? timeSignature.denominator : 4;
-  var barTicks = Math.round(ppq * numerator * (4 / denominator));
-  if (barTicks <= 0) barTicks = ppq * 4;
+// Walk real bar boundaries in ticks across the tempo map until durationSec,
+// honoring every time-signature change (a 1/4 pickup bar followed by 4/4 must
+// not turn the whole song into beat-length bars). A signature change that
+// lands mid-bar cuts the bar short at the change, matching notation practice.
+// The chart-level beatsPerBar scalar is the song's dominant signature.
+function buildBarGrid(tempoMap, ppq, timeSignatures, durationSec) {
+  var sigs = (timeSignatures || []).slice().sort(function(a, b) { return a.tick - b.tick; });
+  if (!sigs.length || sigs[0].tick > 0) sigs.unshift({ tick: 0, numerator: 4, denominator: 4 });
+
   var bars = [];
+  var beatWeight = {};
   var tick = 0;
+  var sigIdx = 0;
   var guard = 0;
   while (guard++ < 5000) {
+    while (sigIdx + 1 < sigs.length && sigs[sigIdx + 1].tick <= tick) sigIdx++;
+    var sig = sigs[sigIdx];
+    var numerator = sig.numerator || 4;
+    var denominator = sig.denominator || 4;
+    var barTicks = Math.round(ppq * numerator * (4 / denominator));
+    if (barTicks <= 0) barTicks = ppq * 4;
+    var barEndTick = tick + barTicks;
+    if (sigIdx + 1 < sigs.length && sigs[sigIdx + 1].tick > tick && sigs[sigIdx + 1].tick < barEndTick) {
+      barEndTick = sigs[sigIdx + 1].tick;
+    }
     var startSec = tempoMap.tickToSeconds(tick);
     if (startSec >= durationSec) break;
-    var endSec = Math.min(tempoMap.tickToSeconds(tick + barTicks), durationSec);
+    var endSec = Math.min(tempoMap.tickToSeconds(barEndTick), durationSec);
     bars.push({ startSec: startSec, endSec: endSec });
-    tick += barTicks;
+    var quarterBeats = numerator * (4 / denominator);
+    beatWeight[quarterBeats] = (beatWeight[quarterBeats] || 0) + (endSec - startSec);
+    tick = barEndTick;
   }
-  return { bars: bars, beatsPerBar: numerator * (4 / denominator) };
+
+  var dominantBeats = 4;
+  var dominantWeight = -1;
+  for (var key in beatWeight) {
+    if (beatWeight[key] > dominantWeight) {
+      dominantWeight = beatWeight[key];
+      dominantBeats = Number(key);
+    }
+  }
+  return { bars: bars, beatsPerBar: dominantBeats };
 }
 
 function round3(value) {
@@ -87,13 +113,19 @@ function round3(value) {
 
 function regenerateChart(chart, midiBuffer, io) {
   var parsed = io.fromMidiBuffer(midiBuffer, null, { title: chart.title });
-  var durationSec = parsed.song.durationSec;
+  var tempoMap = parsed.tempoMap;
+  // The backing player renders every MIDI track, but the parsed chart's
+  // duration reflects only the selected track — take the later of the two so
+  // chart, phrases, and playback share one endpoint.
+  var fullTimelineSec = parsed.metadata && parsed.metadata.midiLastTickEnd
+    ? tempoMap.tickToSeconds(parsed.metadata.midiLastTickEnd)
+    : 0;
+  var durationSec = Math.max(parsed.song.durationSec || 0, fullTimelineSec);
   if (!durationSec || durationSec < 30) return null;
 
-  var tempoMap = parsed.tempoMap;
   var ppq = tempoMap.ppq;
   var timeSignatures = (parsed.metadata && parsed.metadata.timeSignatures) || [];
-  var grid = buildBarGrid(tempoMap, ppq, timeSignatures[0], durationSec);
+  var grid = buildBarGrid(tempoMap, ppq, timeSignatures, durationSec);
   if (grid.bars.length < 8) return null;
 
   var progression = extractProgression(chart.events || []);

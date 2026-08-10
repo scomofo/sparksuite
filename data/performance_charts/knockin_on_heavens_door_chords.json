@@ -158,7 +158,7 @@
    "id": 23,
    "name": "Section 24",
    "startSec": 345,
-   "endSec": 347.261
+   "endSec": 352.905
   }
  ],
  "events": [
@@ -2755,7 +2755,7 @@
   {
    "id": 186,
    "t": 346.875,
-   "dur": 0.386,
+   "dur": 1.875,
    "type": "chord",
    "chord": "D",
    "notes": [
@@ -2764,6 +2764,48 @@
     "A"
    ],
    "laneLabel": "D",
+   "strum": "down"
+  },
+  {
+   "id": 187,
+   "t": 348.75,
+   "dur": 1.875,
+   "type": "chord",
+   "chord": "Am",
+   "notes": [
+    "A",
+    "C",
+    "E"
+   ],
+   "laneLabel": "Am",
+   "strum": "up"
+  },
+  {
+   "id": 188,
+   "t": 350.625,
+   "dur": 1.875,
+   "type": "chord",
+   "chord": "Am",
+   "notes": [
+    "A",
+    "C",
+    "E"
+   ],
+   "laneLabel": "Am",
+   "strum": "up"
+  },
+  {
+   "id": 189,
+   "t": 352.5,
+   "dur": 0.405,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
    "strum": "down"
   }
  ]

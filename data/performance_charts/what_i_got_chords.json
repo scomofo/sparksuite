@@ -68,7 +68,7 @@
    "id": 8,
    "name": "Section 9",
    "startSec": 166.957,
-   "endSec": 174.228
+   "endSec": 179.978
   }
  ],
  "events": [
@@ -999,7 +999,7 @@
   {
    "id": 67,
    "t": 172.174,
-   "dur": 2.054,
+   "dur": 2.609,
    "type": "chord",
    "chord": "G",
    "notes": [
@@ -1008,6 +1008,34 @@
     "D"
    ],
    "laneLabel": "G",
+   "strum": "down"
+  },
+  {
+   "id": 68,
+   "t": 174.783,
+   "dur": 2.609,
+   "type": "chord",
+   "chord": "G",
+   "notes": [
+    "G",
+    "B",
+    "D"
+   ],
+   "laneLabel": "G",
+   "strum": "up"
+  },
+  {
+   "id": 69,
+   "t": 177.391,
+   "dur": 2.587,
+   "type": "chord",
+   "chord": "D",
+   "notes": [
+    "D",
+    "F#",
+    "A"
+   ],
+   "laneLabel": "D",
    "strum": "down"
   }
  ]

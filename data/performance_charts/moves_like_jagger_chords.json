@@ -98,7 +98,7 @@
    "id": 13,
    "name": "Section 14",
    "startSec": 195.021,
-   "endSec": 200.032
+   "endSec": 201.116
   }
  ],
  "events": [
@@ -1589,7 +1589,7 @@
   {
    "id": 107,
    "t": 198.772,
-   "dur": 1.26,
+   "dur": 1.875,
    "type": "chord",
    "chord": "Bm",
    "notes": [
@@ -1599,6 +1599,20 @@
    ],
    "laneLabel": "Bm",
    "strum": "down"
+  },
+  {
+   "id": 108,
+   "t": 200.647,
+   "dur": 0.469,
+   "type": "chord",
+   "chord": "Bm",
+   "notes": [
+    "B",
+    "D",
+    "F#"
+   ],
+   "laneLabel": "Bm",
+   "strum": "up"
   }
  ]
 }

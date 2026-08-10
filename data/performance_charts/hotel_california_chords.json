@@ -92,7 +92,7 @@
    "id": 12,
    "name": "Section 13",
    "startSec": 307.2,
-   "endSec": 313.592
+   "endSec": 313.604
   }
  ],
  "events": [
@@ -1457,7 +1457,7 @@
   {
    "id": 98,
    "t": 310.4,
-   "dur": 3.192,
+   "dur": 3.2,
    "type": "chord",
    "chord": "Am",
    "notes": [
@@ -1467,6 +1467,20 @@
    ],
    "laneLabel": "Am",
    "strum": "down"
+  },
+  {
+   "id": 99,
+   "t": 313.6,
+   "dur": 0.004,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
   }
  ]
 }

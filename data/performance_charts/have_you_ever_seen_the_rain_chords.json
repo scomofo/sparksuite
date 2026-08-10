@@ -74,7 +74,7 @@
    "id": 9,
    "name": "Section 10",
    "startSec": 148.966,
-   "endSec": 157.974
+   "endSec": 159.321
   }
  ],
  "events": [
@@ -1145,7 +1145,7 @@
   {
    "id": 77,
    "t": 157.241,
-   "dur": 0.733,
+   "dur": 2.069,
    "type": "chord",
    "chord": "Am",
    "notes": [
@@ -1155,6 +1155,20 @@
    ],
    "laneLabel": "Am",
    "strum": "down"
+  },
+  {
+   "id": 78,
+   "t": 159.31,
+   "dur": 0.011,
+   "type": "chord",
+   "chord": "F",
+   "notes": [
+    "F",
+    "A",
+    "C"
+   ],
+   "laneLabel": "F",
+   "strum": "up"
   }
  ]
 }

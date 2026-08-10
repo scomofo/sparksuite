@@ -104,7 +104,7 @@
    "id": 14,
    "name": "Section 15",
    "startSec": 218.537,
-   "endSec": 225.117
+   "endSec": 225.849
   }
  ],
  "events": [
@@ -1721,7 +1721,7 @@
   {
    "id": 116,
    "t": 224.39,
-   "dur": 0.727,
+   "dur": 1.458,
    "type": "chord",
    "chord": "Gm",
    "notes": [
