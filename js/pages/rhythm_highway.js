@@ -12,6 +12,153 @@
 
   var currentSongTimeSec = 0;
 
+  // ===== Shared PixiJS renderer (highway convergence, phase C) =====
+  // The rhythm highway renders through the same SparkHighway renderer as
+  // performance mode. The DOM-div renderer below stays as the classic
+  // fallback, used when: the renderer bundle is unavailable, the learner has
+  // reduced motion enabled, or S.rhythmHighwayClassicRenderer is set (the
+  // in-page "Classic view" toggle).
+  var _canvasHighway = null;
+  var _canvasEvents = null;
+  var _canvasEventsByNoteId = null;
+
+  function rhythmHighwayUsesCanvas(accessibility) {
+    if (typeof SparkHighway === "undefined") return false;
+    if (S.rhythmHighwayClassicRenderer) return false;
+    accessibility = accessibility || getRhythmHighwayAccessibilitySettings();
+    if (accessibility && accessibility.reducedMotion) return false;
+    return true;
+  }
+
+  function buildRhythmHighwaySkin(laneCount) {
+    var base = SparkHighway.GUITAR_SKIN || {};
+    var baseColors = base.laneColors || [[255, 255, 255]];
+    var colors = [];
+    for (var i = 0; i < laneCount; i++) colors.push(baseColors[i % baseColors.length]);
+    return Object.assign({}, base, { laneCount: laneCount, laneColors: colors });
+  }
+
+  function primaryLaneIndex(laneMask) {
+    var mask = laneMask || 0;
+    for (var lane = 0; lane < 32; lane++) {
+      if (mask & (1 << lane)) return lane;
+    }
+    return 0;
+  }
+
+  function canvasNoteDurSec(note) {
+    var engine = runtime.engine;
+    if (engine && engine.timingEngine && engine.chart && note.tickLength &&
+        typeof engine.timingEngine.tickToSeconds === "function") {
+      var endSec = engine.timingEngine.tickToSeconds(engine.chart.tempoMap, note.tick + note.tickLength);
+      if (isFinite(endSec) && endSec > note.timeSec) return endSec - note.timeSec;
+    }
+    return 0.22;
+  }
+
+  function buildCanvasEvents() {
+    var states = runtime.engine && runtime.engine.noteStates ? runtime.engine.noteStates : [];
+    var events = [];
+    var byId = {};
+    for (var i = 0; i < states.length; i++) {
+      var n = states[i];
+      var evt = {
+        t: n.timeSec,
+        dur: canvasNoteDurSec(n),
+        type: "tap",
+        lane: primaryLaneIndex(n.laneMask),
+        laneMask: n.laneMask,
+        laneLabel: n.label || ""
+      };
+      events.push(evt);
+      byId[n.id] = evt;
+    }
+    _canvasEvents = events;
+    _canvasEventsByNoteId = byId;
+    return events;
+  }
+
+  function ensureRhythmCanvasHighway(laneCount) {
+    var canvas = document.getElementById("rhythm-highway-canvas");
+    if (!canvas) return null;
+    if (_canvasHighway && _canvasHighway.canvas === canvas) return _canvasHighway;
+    if (_canvasHighway) _canvasHighway.destroy();
+    _canvasHighway = new SparkHighway(canvas, buildRhythmHighwaySkin(laneCount));
+    _canvasHighway._initPromise = _canvasHighway.init();
+    if (_canvasEvents) _canvasHighway.setChart(_canvasEvents, []);
+    return _canvasHighway;
+  }
+
+  function destroyRhythmCanvasHighway() {
+    if (_canvasHighway) { _canvasHighway.destroy(); _canvasHighway = null; }
+    _canvasEvents = null;
+    _canvasEventsByNoteId = null;
+  }
+
+  // Mirror engine note outcomes onto the renderer's event flags (the bundle
+  // reads _hit/_miss/_scored to restyle gems and stamps _screenX for hits).
+  function syncCanvasEventStates() {
+    if (!_canvasEventsByNoteId || !runtime.engine || !runtime.engine.noteStates) return;
+    var states = runtime.engine.noteStates;
+    for (var i = 0; i < states.length; i++) {
+      var evt = _canvasEventsByNoteId[states[i].id];
+      if (!evt) continue;
+      evt._hit = !!states[i].hit;
+      evt._miss = !!states[i].missed;
+      evt._scored = !!(states[i].hit || states[i].missed);
+    }
+  }
+
+  function notifyCanvasHit(noteId) {
+    if (!_canvasHighway || !_canvasEventsByNoteId) return;
+    var evt = _canvasEventsByNoteId[noteId];
+    if (evt && evt._screenX && typeof _canvasHighway.notifyHit === "function") {
+      _canvasHighway.notifyHit(evt._screenX, evt._screenY, 0x4ecdc4);
+    }
+  }
+
+  function syncRhythmLaneButtons() {
+    var accessibility = getRhythmHighwayAccessibilitySettings();
+    var buttons = document.querySelectorAll(".rhythm-lane-btn");
+    for (var i = 0; i < buttons.length; i++) {
+      var active = maskHasLane(S.rhythmHighwayHeldMask, i);
+      buttons[i].style.background = active ? laneColor(i, accessibility) : "var(--input-bg)";
+      buttons[i].style.color = active ? "#fff" : "var(--text-secondary)";
+    }
+  }
+
+  // True while the canvas renderer is live on screen — per-frame updates and
+  // strum/lane feedback are handled with targeted DOM writes, so the action
+  // layer must NOT full-render (a rebuild would replace the canvas element
+  // and force a renderer re-init).
+  function rhythmHighwayHandlesFrameRender() {
+    return !!(rhythmHighwayUsesCanvas(null) && runtime.engine && document.getElementById("rhythm-highway-canvas"));
+  }
+
+  function updateCanvasFrame(positionSec, snapshot) {
+    if (!rhythmHighwayUsesCanvas(null)) return false;
+    var labels = getRhythmHighwayLaneLabels();
+    var highway = ensureRhythmCanvasHighway(labels.length);
+    if (!highway) return false;
+    if (!_canvasEvents) {
+      buildCanvasEvents();
+      highway.setChart(_canvasEvents, []);
+    }
+    syncCanvasEventStates();
+    if (highway._ready) {
+      highway.update(positionSec, snapshot && snapshot.gameplay ? (snapshot.gameplay.combo || 0) : 0);
+    }
+    var statEls = document.querySelectorAll(".rhythm-stat-val");
+    if (statEls.length >= 3 && snapshot && snapshot.gameplay) {
+      statEls[0].textContent = snapshot.gameplay.score;
+      statEls[1].textContent = snapshot.gameplay.maxCombo + "x";
+      statEls[2].textContent = Math.round((snapshot.gameplay.accuracy || 0) * 100) + "%";
+    }
+    var feedbackEl = document.getElementById("rhythm-highway-feedback");
+    if (feedbackEl) feedbackEl.textContent = S.rhythmHighwayFeedback || "";
+    return true;
+  }
+
   var ASSIST_PRESETS = [
     { id: "spark_learning", label: "Guided", hint: "Wider timing windows and extra forgiveness" },
     { id: "spark_balanced", label: "Balanced", hint: "Closer to standard timing" },
@@ -150,6 +297,7 @@
     var instrumentType = normalizeRhythmInstrumentType(
       launchContext.instrument || activePayload.adapterType || payload.adapterType || null
     );
+    destroyRhythmCanvasHighway();
     runtime.engine = new SparkRhythmGameplayEngine({
       chart: activePayload.songChart,
       adapter: createRhythmHighwayAdapter(instrumentType),
@@ -183,7 +331,9 @@
             finalizeRhythmHighway();
             return;
           }
-          render();
+          // Canvas mode: targeted per-frame updates keep the PixiJS canvas
+          // alive; the classic DOM renderer rebuilds the page per frame.
+          if (!updateCanvasFrame(positionSec, S.rhythmHighwaySnapshot)) render();
         },
         onFinalize: function() {
           if (runtime.engine && !S.rhythmHighwayResult) {
@@ -203,6 +353,7 @@
 
   function stopSparkRhythmHighway() {
     if (pageAdapter) pageAdapter.destroy();
+    destroyRhythmCanvasHighway();
     runtime.engine = null;
     currentSongTimeSec = 0;
   }
@@ -259,6 +410,9 @@
     });
     if (outcome && outcome.resolution) {
       S.rhythmHighwayFeedback = feedbackForResolution(outcome.resolution);
+      if (outcome.resolution.note && outcome.resolution.judgement !== "miss") {
+        notifyCanvasHit(outcome.resolution.note.id);
+      }
     }
   }
 
@@ -286,14 +440,30 @@
     h += '<div style="margin-top:6px;font-size:11px;color:var(--text-muted)">' + escHTML(activePreset ? activePreset.hint : "Switching assist mode restarts the run.") + '</div>';
     h += '</div>';
     h += '<div style="display:flex;justify-content:center;gap:18px;margin-bottom:12px">';
-    h += '<div><div class="metric-value" style="font-size:24px;color:#FFE66D">' + snapshot.gameplay.score + '</div><div class="metric-label">Score</div></div>';
-    h += '<div><div class="metric-value" style="font-size:24px;color:#FF6B6B">' + snapshot.gameplay.maxCombo + 'x</div><div class="metric-label">Max Combo</div></div>';
-    h += '<div><div class="metric-value" style="font-size:24px;color:#4ECDC4">' + Math.round((snapshot.gameplay.accuracy || 0) * 100) + '%</div><div class="metric-label">Accuracy</div></div>';
+    h += '<div><div class="metric-value rhythm-stat-val" style="font-size:24px;color:#FFE66D">' + snapshot.gameplay.score + '</div><div class="metric-label">Score</div></div>';
+    h += '<div><div class="metric-value rhythm-stat-val" style="font-size:24px;color:#FF6B6B">' + snapshot.gameplay.maxCombo + 'x</div><div class="metric-label">Max Combo</div></div>';
+    h += '<div><div class="metric-value rhythm-stat-val" style="font-size:24px;color:#4ECDC4">' + Math.round((snapshot.gameplay.accuracy || 0) * 100) + '%</div><div class="metric-label">Accuracy</div></div>';
     h += '</div>';
     if (S.rhythmHighwayLaunchContext && S.rhythmHighwayLaunchContext.label) {
       h += '<div style="margin-bottom:12px;font-size:11px;color:var(--text-muted);font-weight:700">Focused Drill: ' + escHTML(firstRhythmHighwayTextToken(S.rhythmHighwayLaunchContext.label, "current drill")) + '</div>';
     }
 
+    if (rhythmHighwayUsesCanvas(accessibility)) {
+      // Shared PixiJS renderer (same as performance mode). The canvas is
+      // updated per frame by updateCanvasFrame; a full page render replaces
+      // the element and forces a renderer re-init, so frame-path actions do
+      // targeted DOM writes instead.
+      h += '<div style="height:320px;margin:0 auto 8px;position:relative;overflow:hidden;border-radius:14px">';
+      h += '<canvas id="rhythm-highway-canvas" style="width:100%;height:100%;display:block"></canvas>';
+      h += '</div>';
+      if (accessibility.laneLabels) {
+        h += '<div style="display:flex;justify-content:center;gap:26px;margin-bottom:12px">';
+        for (var cl = 0; cl < laneCount; cl++) {
+          h += '<span style="font-size:12px;font-weight:900;color:' + laneColor(cl, accessibility) + '">' + labels[cl] + '</span>';
+        }
+        h += '</div>';
+      }
+    } else {
     h += '<div style="display:grid;grid-template-columns:repeat(' + laneCount + ',56px);gap:8px;justify-content:center;align-items:end;height:320px;margin:0 auto 16px;position:relative">';
     for (var lane = 0; lane < laneCount; lane++) {
       h += '<div style="position:relative;height:320px;border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));border:1px solid var(--border)">';
@@ -310,24 +480,26 @@
       h += '</div>';
     }
     h += '</div>';
+    }
 
     h += '<div class="action-row" style="justify-content:center;margin-bottom:12px">';
     for (var fi = 0; fi < laneCount; fi++) {
       var active = maskHasLane(S.rhythmHighwayHeldMask, fi);
-      h += '<button class="btn" onclick="act(\'rhythmHighwayLane\',' + fi + ')" style="min-width:54px;background:' + (active ? laneColor(fi, accessibility) : "var(--input-bg)") + ';color:' + (active ? "#fff" : "var(--text-secondary)") + ';font-weight:800">' + (accessibility.laneLabels ? labels[fi] : (fi + 1)) + '</button>';
+      h += '<button class="btn rhythm-lane-btn" onclick="act(\'rhythmHighwayLane\',' + fi + ')" style="min-width:54px;background:' + (active ? laneColor(fi, accessibility) : "var(--input-bg)") + ';color:' + (active ? "#fff" : "var(--text-secondary)") + ';font-weight:800">' + (accessibility.laneLabels ? labels[fi] : (fi + 1)) + '</button>';
     }
     h += '</div>';
     h += '<div class="action-row" style="justify-content:center">';
     h += '<button class="btn" onclick="act(\'rhythmHighwayStrum\')" style="background:linear-gradient(135deg,#FF6B6B,#FF8A5C);color:#fff;font-size:18px;padding:14px 28px">Strum</button>';
     h += '<button class="btn" onclick="act(\'' + (S.rhythmHighwayLoop ? "rhythmHighwayClearLoop" : "rhythmHighwayLoopWindow") + '\')" style="background:' + (S.rhythmHighwayLoop ? "#4ECDC4" : "var(--input-bg)") + ';color:' + (S.rhythmHighwayLoop ? "#fff" : "var(--text-secondary)") + '">' + (S.rhythmHighwayLoop ? "Clear Loop" : "Loop Window") + '</button>';
+    if (typeof SparkHighway !== "undefined" && !(accessibility && accessibility.reducedMotion)) {
+      h += '<button class="btn" onclick="act(\'rhythmHighwayToggleRenderer\')" style="background:var(--input-bg);color:var(--text-secondary)">' + (S.rhythmHighwayClassicRenderer ? "Highway View" : "Classic View") + '</button>';
+    }
     h += '<button class="btn" onclick="act(\'back\')" style="background:var(--input-bg);color:var(--text-secondary)">Exit</button>';
     h += '</div>';
     if (S.rhythmHighwayLoop) {
       h += '<div style="margin-top:10px;font-size:11px;color:#4ECDC4;font-weight:800">Looping ' + escHTML(firstRhythmHighwayTextToken(S.rhythmHighwayLoop.label, "current window")) + '</div>';
     }
-    if (S.rhythmHighwayFeedback) {
-      h += '<div style="margin-top:12px;font-size:12px;color:var(--text-muted)">' + escHTML(S.rhythmHighwayFeedback) + '</div>';
-    }
+    h += '<div id="rhythm-highway-feedback" style="margin-top:12px;font-size:12px;color:var(--text-muted);min-height:16px">' + escHTML(S.rhythmHighwayFeedback || "") + '</div>';
     h += '</div>';
     return h;
   }
@@ -634,6 +806,9 @@
   window.startRhythmHighwayPayload = startRhythmHighwayPayload;
   window.stopSparkRhythmHighway = stopSparkRhythmHighway;
   window._sparkRhythmHighwayStrum = sparkRhythmHighwayStrum;
+  window._sparkRhythmHighwayHandlesFrameRender = rhythmHighwayHandlesFrameRender;
+  window._sparkRhythmHighwaySyncLaneButtons = syncRhythmLaneButtons;
+  window._sparkRhythmHighwayDestroyCanvas = destroyRhythmCanvasHighway;
   window._buildRhythmHighwayLoopPayload = buildRhythmHighwayLoopPayload;
   window._createRhythmHighwayLoopSpec = createRhythmHighwayLoopSpec;
   window._getRhythmHighwayLaneLabels = getRhythmHighwayLaneLabels;

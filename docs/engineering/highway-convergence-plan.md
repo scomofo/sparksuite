@@ -1,6 +1,9 @@
 # Highway Convergence Plan
 
-_Status as of 2026-08-16. Phases A and B landed; this doc scopes phase C._
+_Status as of 2026-08-16: phases A, B, and C are all landed. Phase C shipped
+behind the in-page "Classic View" fallback toggle; interactive verification
+of the canvas visuals on a real device remains before deleting the DOM
+renderer (see Rollout below)._
 
 The song-highway assessment found two complete, non-overlapping highway
 implementations. Convergence phases:
@@ -14,9 +17,23 @@ implementations. Convergence phases:
   resolves global + per-input-mode offsets for both performance mode and the
   rhythm gameplay clock. The apparent sign-convention conflict was three
   application points with one consistent effect (documented at the model).
-- **C (planned): one renderer.** Retire the DOM-div highway in
-  `js/pages/rhythm_highway.js` onto the PixiJS `SparkHighway` renderer that
-  performance mode already uses.
+- **C (done, behind fallback): one renderer.** The rhythm highway renders
+  through the PixiJS `SparkHighway` renderer that performance mode uses.
+  The DOM-div renderer remains the classic fallback: reduced-motion
+  accessibility, a missing renderer bundle, or the in-page "Classic View"
+  toggle (`S.rhythmHighwayClassicRenderer`) select it. Canvas mode does
+  targeted per-frame DOM writes (stats, feedback, lane buttons) so the
+  canvas survives; the action layer consults
+  `_sparkRhythmHighwayHandlesFrameRender()` before full renders. Pinned by
+  `tests/test_rhythm_highway_canvas.js` (real page + real stack + real
+  gameplay engine against a stub renderer).
+
+## Rollout
+
+1. Verify canvas visuals interactively on a real device (gem positions,
+   lane colors vs accessibility settings, hit particles).
+2. After a release of parity, delete the DOM renderer branch and the
+   classic toggle (~90 lines of `rhythm_highway.js`).
 
 ## Phase C sketch
 

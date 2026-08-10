@@ -599,12 +599,29 @@
       var laneMask = (1 << parseInt(v, 10));
       var nextHeldMask = (S.rhythmHighwayHeldMask & laneMask) ? (S.rhythmHighwayHeldMask & ~laneMask) : (S.rhythmHighwayHeldMask | laneMask);
       setLegacyFields({ rhythmHighwayHeldMask: nextHeldMask }, false);
-      render();
+      // Canvas renderer mode: a full render would replace the PixiJS canvas
+      // and force a re-init, so update the lane buttons in place instead.
+      if (typeof _sparkRhythmHighwayHandlesFrameRender === "function" && _sparkRhythmHighwayHandlesFrameRender()) {
+        if (typeof _sparkRhythmHighwaySyncLaneButtons === "function") _sparkRhythmHighwaySyncLaneButtons();
+      } else {
+        render();
+      }
       return true;
     }
 
     if (a === "rhythmHighwayStrum") {
       if (typeof _sparkRhythmHighwayStrum === "function") _sparkRhythmHighwayStrum();
+      // Canvas renderer mode: feedback text and gem states are updated by the
+      // per-frame path; a full render would tear down the canvas.
+      if (typeof _sparkRhythmHighwayHandlesFrameRender !== "function" || !_sparkRhythmHighwayHandlesFrameRender()) {
+        render();
+      }
+      return true;
+    }
+
+    if (a === "rhythmHighwayToggleRenderer") {
+      setLegacyFields({ rhythmHighwayClassicRenderer: !S.rhythmHighwayClassicRenderer }, false);
+      if (typeof _sparkRhythmHighwayDestroyCanvas === "function") _sparkRhythmHighwayDestroyCanvas();
       render();
       return true;
     }
