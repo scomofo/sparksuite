@@ -570,9 +570,15 @@ function maybeScorePendingEvents(nowSec) {
   var snapshot = PerformanceInput.getSnapshot(nowSec);
   S.performInputSource = PerformanceInput.activeMode;
   S.performInputNotes = snapshot.pitchClasses.slice();
-  var offsetMs = S.performMode === "midi"
-    ? (S.performMidiOffsetMs || 0)
-    : (typeof getStoredPerformanceMicOffsetMs === "function" ? getStoredPerformanceMicOffsetMs() : (S.performMicOffsetMs || 0));
+  // Single latency model: resolve the active input offset (global +
+  // per-mode) through the shared helper so live scoring honors the global
+  // calibration offset too — the old inline read used only the mode-specific
+  // field. Inline math kept as a no-helper fallback.
+  var offsetMs = typeof getActivePerformanceOffsetMs === "function"
+    ? getActivePerformanceOffsetMs(S.performMode)
+    : (S.performMode === "midi"
+      ? (S.performMidiOffsetMs || 0)
+      : (typeof getStoredPerformanceMicOffsetMs === "function" ? getStoredPerformanceMicOffsetMs() : (S.performMicOffsetMs || 0)));
   var targetTechnique = S.performTargetTechnique || null;
 
   for (var i = 0; i < chart.events.length; i++) {

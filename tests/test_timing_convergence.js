@@ -96,6 +96,27 @@ test("the rhythm gameplay calibration engine resolves through the same model", f
   assert.strictEqual(engine.getOffsetMs("piano"), 0, "capability gate still applies");
 });
 
+test("LIVE performance scoring resolves its offset through the shared helper", function() {
+  var source = loadJS("js/performance/session.js");
+  assert.ok(
+    source.indexOf("getActivePerformanceOffsetMs(S.performMode)") >= 0,
+    "maybeScorePendingEvents must delegate to the shared offset resolution"
+  );
+});
+
+test("LIVE rhythm strum judgment applies the global input offset", function() {
+  var source = loadJS("js/pages/rhythm_highway.js");
+  assert.ok(
+    source.indexOf("getRhythmInputOffsetSec") >= 0 &&
+    source.indexOf("currentSongTimeSec - getRhythmInputOffsetSec()") >= 0,
+    "the strum handler must judge at the calibrated input time"
+  );
+  assert.ok(
+    source.indexOf('getInputOffsetMs("audio")') >= 0,
+    "keyboard/button strums use the global (audio-mode) offset, not the mic offset"
+  );
+});
+
 console.log("");
 console.log(passed + " passed, " + failed + " failed");
 if (failed > 0) process.exit(1);

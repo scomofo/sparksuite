@@ -75,11 +75,12 @@
   };
 
   SparkTimingCore.prototype.applyLatencyCompensation = function(timeSec, inputMode) {
-    // Subtracting the offset from an INPUT timestamp is equivalent to adding
-    // it to the SONG clock (calibration_engine) or to the raw delta at
-    // judgment time (performance session): all three application points yield
-    // the same corrected delta. This model is the single source for the
-    // offset values themselves.
+    // Subtracting the offset from an INPUT timestamp equals subtracting it
+    // from the raw delta at judgment time (performance session). Shifting the
+    // SONG clock instead (calibration_engine.applyOffsetSec) is only
+    // equivalent when inputs are stamped independently of the shifted clock —
+    // never apply both to the same timeline. This model is the single source
+    // for the offset values themselves.
     return Math.max(0, num(timeSec, 0) - this.getInputOffsetMs(inputMode) / 1000);
   };
 
