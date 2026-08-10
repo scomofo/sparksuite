@@ -127,7 +127,22 @@
     for (var i = 0; i < this.bindings.length; i++) {
       var binding = this.bindings[i];
       if (binding.adapter && typeof binding.adapter.update === "function") {
-        try { binding.adapter.update(this.getState()); } catch (err) {}
+        try {
+          // Merge each adapter's derived state into the emitted runtime state
+          // under its binding name — otherwise the gameplay/metronome/waveform
+          // slots stay permanently null and a dumb-renderer UI has nothing to
+          // draw from.
+          var produced = binding.adapter.update(this.getState());
+          if (typeof produced === "undefined" && typeof binding.adapter.getState === "function") {
+            produced = binding.adapter.getState();
+          }
+          if (typeof produced !== "undefined") {
+            this.state[binding.name] = produced;
+            // The gameplay engine binds as "rhythm_gameplay"; mirror it into
+            // the canonical declared slot as well.
+            if (binding.name === "rhythm_gameplay") this.state.gameplay = produced;
+          }
+        } catch (err) {}
       }
     }
 

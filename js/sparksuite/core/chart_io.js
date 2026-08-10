@@ -162,7 +162,10 @@
           availableChannels: selectedTrack.channels,
           sourceTrackCount: midiMeta.tracks.length,
           midiFormat: midiMeta.format,
-          timeSignatures: midiMeta.timeSignatures
+          timeSignatures: midiMeta.timeSignatures,
+          // Last tick across ALL tracks/channels — the selected track can end
+          // earlier than the full arrangement the backing player renders.
+          midiLastTickEnd: midiMeta.lastTickEnd
         }
       });
     });

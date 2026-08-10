@@ -22,7 +22,9 @@
     "curriculum:validate": "node scripts/lint/validate-curriculum.js",
     "curriculum:check-novelty": "node scripts/lint/check-novelty-counts.js",
     "audio:generate-loop-metadata": "node scripts/audio/generate-loop-metadata.js",
-    "performance:generate-chart-data": "node scripts/generate-chart-data.js",
+    "charts:generate-midi": "node scripts/generate-charts-from-midi.js && node scripts/generate-chart-data.js",
+    "performance:bundle-chart-data": "node scripts/generate-chart-data.js",
+    "performance:generate-chart-data": "npm run performance:bundle-chart-data",
     "handoff:phase-gate": "node scripts/lint/check-handoff-phase-gate.js",
     "check:ui-logic": "node scripts/check_ui_business_logic.js",
     "lint:content": "node scripts/check_content_contracts.js",
@@ -31,7 +33,7 @@
     "test:av": "node ci/smoke-av.mjs",
     "test:e2e": "node tests/e2e/session_happy_path.test.js && node tests/e2e/instrument_modularity.test.js",
     "test:browser": "node tests/browser_clickthrough_smoke.js",
-    "test": "npm run performance:generate-chart-data --silent && node tests/run-tests.js && npm run test:e2e && node scripts/check_ui_business_logic.js"
+    "test": "npm run performance:bundle-chart-data --silent && node tests/run-tests.js && npm run test:e2e && node scripts/check_ui_business_logic.js"
   },
   "author": "SparkSuite",
   "license": "MIT",

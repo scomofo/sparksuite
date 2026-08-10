@@ -165,6 +165,39 @@
       return getCurriculumLessonById(lessonId, getActiveCurriculumInstrument());
     },
 
+    // Engine-owned song gate (moved out of js/pages/songs.js, which used to
+    // compute `song.level > S.level` inline). Returns the unlock decision
+    // plus the chord gaps a learner still has for the song, so the UI can
+    // render readiness without deciding it.
+    // song: { level, chords } (strum patterns share the shape: { level }).
+    // userContext: { playerLevel, chordProgress } overrides for headless use.
+    getSongReadiness: function(song, userContext) {
+      song = song || {};
+      userContext = userContext || {};
+
+      var playerLevel = userContext.playerLevel != null
+        ? userContext.playerLevel
+        : ((typeof S !== "undefined" && S && S.level) || 1);
+      var requiredLevel = song.level != null ? song.level : 1;
+
+      var chordProgress = userContext.chordProgress
+        || (typeof SparkChordProgress !== "undefined" ? SparkChordProgress.all() : null)
+        || ((typeof S !== "undefined" && S && S.chordProgress) || {});
+
+      var chordsToLearn = [];
+      var chords = Array.isArray(song.chords) ? song.chords : [];
+      for (var i = 0; i < chords.length; i++) {
+        if ((chordProgress[chords[i]] || 0) < 100) chordsToLearn.push(chords[i]);
+      }
+
+      return {
+        unlocked: requiredLevel <= playerLevel,
+        requiredLevel: requiredLevel,
+        playerLevel: playerLevel,
+        chordsToLearn: chordsToLearn
+      };
+    },
+
     getReviewTargets: function(userContext) {
       userContext = userContext || {};
       var targets = [];

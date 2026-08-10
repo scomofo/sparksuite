@@ -1,370 +1,1556 @@
 {
-  "id": "achy_breaky_heart_chords",
-  "title": "Achy Breaky Heart",
-  "artist": "Billy Ray Cyrus",
-  "bpm": 120,
-  "beatsPerBar": 4,
-  "offsetSec": 0,
-  "audio": {
-    "type": "midi",
-    "src": "content/songs/midi/achy_breaky_heart.mid"
+ "id": "achy_breaky_heart_chords",
+ "title": "Achy Breaky Heart",
+ "artist": "Billy Ray Cyrus",
+ "bpm": 123,
+ "beatsPerBar": 4,
+ "offsetSec": 0,
+ "audio": {
+  "type": "midi",
+  "src": "content/songs/midi/achy_breaky_heart.mid"
+ },
+ "generated": {
+  "by": "scripts/generate-charts-from-midi.js",
+  "from": "content/songs/midi/achy_breaky_heart.mid",
+  "tempoSegments": 1,
+  "progressionLength": 8
+ },
+ "phrases": [
+  {
+   "id": 0,
+   "name": "Section 1",
+   "startSec": 0,
+   "endSec": 15.61
   },
-  "phrases": [
-    {
-      "id": 0,
-      "name": "Verse",
-      "startSec": 0,
-      "endSec": 16
-    },
-    {
-      "id": 1,
-      "name": "Chorus",
-      "startSec": 16,
-      "endSec": 32
-    },
-    {
-      "id": 2,
-      "name": "Outro",
-      "startSec": 32,
-      "endSec": 48
-    }
-  ],
-  "events": [
-    {
-      "id": 1,
-      "t": 0,
-      "dur": 2,
-      "type": "chord",
-      "chord": "A",
-      "notes": [
-        "A",
-        "C#",
-        "E"
-      ],
-      "laneLabel": "A",
-      "strum": "down"
-    },
-    {
-      "id": 2,
-      "t": 2,
-      "dur": 2,
-      "type": "chord",
-      "chord": "A",
-      "notes": [
-        "A",
-        "C#",
-        "E"
-      ],
-      "laneLabel": "A",
-      "strum": "down"
-    },
-    {
-      "id": 3,
-      "t": 4,
-      "dur": 2,
-      "type": "chord",
-      "chord": "E",
-      "notes": [
-        "E",
-        "G#",
-        "B"
-      ],
-      "laneLabel": "E",
-      "strum": "up"
-    },
-    {
-      "id": 4,
-      "t": 6,
-      "dur": 2,
-      "type": "chord",
-      "chord": "E",
-      "notes": [
-        "E",
-        "G#",
-        "B"
-      ],
-      "laneLabel": "E",
-      "strum": "up"
-    },
-    {
-      "id": 5,
-      "t": 8,
-      "dur": 2,
-      "type": "chord",
-      "chord": "E",
-      "notes": [
-        "E",
-        "G#",
-        "B"
-      ],
-      "laneLabel": "E",
-      "strum": "down"
-    },
-    {
-      "id": 6,
-      "t": 10,
-      "dur": 2,
-      "type": "chord",
-      "chord": "E",
-      "notes": [
-        "E",
-        "G#",
-        "B"
-      ],
-      "laneLabel": "E",
-      "strum": "up"
-    },
-    {
-      "id": 7,
-      "t": 12,
-      "dur": 2,
-      "type": "chord",
-      "chord": "A",
-      "notes": [
-        "A",
-        "C#",
-        "E"
-      ],
-      "laneLabel": "A",
-      "strum": "down"
-    },
-    {
-      "id": 8,
-      "t": 14,
-      "dur": 2,
-      "type": "chord",
-      "chord": "A",
-      "notes": [
-        "A",
-        "C#",
-        "E"
-      ],
-      "laneLabel": "A",
-      "strum": "down"
-    },
-    {
-      "id": 9,
-      "t": 16,
-      "dur": 2,
-      "type": "chord",
-      "chord": "A",
-      "notes": [
-        "A",
-        "C#",
-        "E"
-      ],
-      "laneLabel": "A",
-      "strum": "up"
-    },
-    {
-      "id": 10,
-      "t": 18,
-      "dur": 2,
-      "type": "chord",
-      "chord": "A",
-      "notes": [
-        "A",
-        "C#",
-        "E"
-      ],
-      "laneLabel": "A",
-      "strum": "up"
-    },
-    {
-      "id": 11,
-      "t": 20,
-      "dur": 2,
-      "type": "chord",
-      "chord": "E",
-      "notes": [
-        "E",
-        "G#",
-        "B"
-      ],
-      "laneLabel": "E",
-      "strum": "down"
-    },
-    {
-      "id": 12,
-      "t": 22,
-      "dur": 2,
-      "type": "chord",
-      "chord": "E",
-      "notes": [
-        "E",
-        "G#",
-        "B"
-      ],
-      "laneLabel": "E",
-      "strum": "up"
-    },
-    {
-      "id": 13,
-      "t": 24,
-      "dur": 2,
-      "type": "chord",
-      "chord": "E",
-      "notes": [
-        "E",
-        "G#",
-        "B"
-      ],
-      "laneLabel": "E",
-      "strum": "down"
-    },
-    {
-      "id": 14,
-      "t": 26,
-      "dur": 2,
-      "type": "chord",
-      "chord": "E",
-      "notes": [
-        "E",
-        "G#",
-        "B"
-      ],
-      "laneLabel": "E",
-      "strum": "down"
-    },
-    {
-      "id": 15,
-      "t": 28,
-      "dur": 2,
-      "type": "chord",
-      "chord": "A",
-      "notes": [
-        "A",
-        "C#",
-        "E"
-      ],
-      "laneLabel": "A",
-      "strum": "up"
-    },
-    {
-      "id": 16,
-      "t": 30,
-      "dur": 2,
-      "type": "chord",
-      "chord": "A",
-      "notes": [
-        "A",
-        "C#",
-        "E"
-      ],
-      "laneLabel": "A",
-      "strum": "up"
-    },
-    {
-      "id": 17,
-      "t": 32,
-      "dur": 2,
-      "type": "chord",
-      "chord": "A",
-      "notes": [
-        "A",
-        "C#",
-        "E"
-      ],
-      "laneLabel": "A",
-      "strum": "down"
-    },
-    {
-      "id": 18,
-      "t": 34,
-      "dur": 2,
-      "type": "chord",
-      "chord": "A",
-      "notes": [
-        "A",
-        "C#",
-        "E"
-      ],
-      "laneLabel": "A",
-      "strum": "up"
-    },
-    {
-      "id": 19,
-      "t": 36,
-      "dur": 2,
-      "type": "chord",
-      "chord": "E",
-      "notes": [
-        "E",
-        "G#",
-        "B"
-      ],
-      "laneLabel": "E",
-      "strum": "down"
-    },
-    {
-      "id": 20,
-      "t": 38,
-      "dur": 2,
-      "type": "chord",
-      "chord": "E",
-      "notes": [
-        "E",
-        "G#",
-        "B"
-      ],
-      "laneLabel": "E",
-      "strum": "down"
-    },
-    {
-      "id": 21,
-      "t": 40,
-      "dur": 2,
-      "type": "chord",
-      "chord": "E",
-      "notes": [
-        "E",
-        "G#",
-        "B"
-      ],
-      "laneLabel": "E",
-      "strum": "up"
-    },
-    {
-      "id": 22,
-      "t": 42,
-      "dur": 2,
-      "type": "chord",
-      "chord": "E",
-      "notes": [
-        "E",
-        "G#",
-        "B"
-      ],
-      "laneLabel": "E",
-      "strum": "up"
-    },
-    {
-      "id": 23,
-      "t": 44,
-      "dur": 2,
-      "type": "chord",
-      "chord": "A",
-      "notes": [
-        "A",
-        "C#",
-        "E"
-      ],
-      "laneLabel": "A",
-      "strum": "down"
-    },
-    {
-      "id": 24,
-      "t": 46,
-      "dur": 2,
-      "type": "chord",
-      "chord": "A",
-      "notes": [
-        "A",
-        "C#",
-        "E"
-      ],
-      "laneLabel": "A",
-      "strum": "up"
-    }
-  ]
+  {
+   "id": 1,
+   "name": "Section 2",
+   "startSec": 15.61,
+   "endSec": 31.219
+  },
+  {
+   "id": 2,
+   "name": "Section 3",
+   "startSec": 31.219,
+   "endSec": 46.829
+  },
+  {
+   "id": 3,
+   "name": "Section 4",
+   "startSec": 46.829,
+   "endSec": 62.439
+  },
+  {
+   "id": 4,
+   "name": "Section 5",
+   "startSec": 62.439,
+   "endSec": 78.048
+  },
+  {
+   "id": 5,
+   "name": "Section 6",
+   "startSec": 78.048,
+   "endSec": 93.658
+  },
+  {
+   "id": 6,
+   "name": "Section 7",
+   "startSec": 93.658,
+   "endSec": 109.267
+  },
+  {
+   "id": 7,
+   "name": "Section 8",
+   "startSec": 109.267,
+   "endSec": 124.877
+  },
+  {
+   "id": 8,
+   "name": "Section 9",
+   "startSec": 124.877,
+   "endSec": 140.487
+  },
+  {
+   "id": 9,
+   "name": "Section 10",
+   "startSec": 140.487,
+   "endSec": 156.096
+  },
+  {
+   "id": 10,
+   "name": "Section 11",
+   "startSec": 156.096,
+   "endSec": 171.706
+  },
+  {
+   "id": 11,
+   "name": "Section 12",
+   "startSec": 171.706,
+   "endSec": 187.316
+  },
+  {
+   "id": 12,
+   "name": "Section 13",
+   "startSec": 187.316,
+   "endSec": 201.157
+  }
+ ],
+ "events": [
+  {
+   "id": 1,
+   "t": 0,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 2,
+   "t": 1.951,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 3,
+   "t": 3.902,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 4,
+   "t": 5.854,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 5,
+   "t": 7.805,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "down"
+  },
+  {
+   "id": 6,
+   "t": 9.756,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 7,
+   "t": 11.707,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 8,
+   "t": 13.658,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 9,
+   "t": 15.61,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 10,
+   "t": 17.561,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 11,
+   "t": 19.512,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 12,
+   "t": 21.463,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 13,
+   "t": 23.414,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "down"
+  },
+  {
+   "id": 14,
+   "t": 25.366,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 15,
+   "t": 27.317,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 16,
+   "t": 29.268,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 17,
+   "t": 31.219,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 18,
+   "t": 33.17,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 19,
+   "t": 35.122,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 20,
+   "t": 37.073,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 21,
+   "t": 39.024,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "down"
+  },
+  {
+   "id": 22,
+   "t": 40.975,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 23,
+   "t": 42.926,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 24,
+   "t": 44.878,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 25,
+   "t": 46.829,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 26,
+   "t": 48.78,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 27,
+   "t": 50.731,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 28,
+   "t": 52.682,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 29,
+   "t": 54.634,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "down"
+  },
+  {
+   "id": 30,
+   "t": 56.585,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 31,
+   "t": 58.536,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 32,
+   "t": 60.487,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 33,
+   "t": 62.439,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 34,
+   "t": 64.39,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 35,
+   "t": 66.341,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 36,
+   "t": 68.292,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 37,
+   "t": 70.243,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "down"
+  },
+  {
+   "id": 38,
+   "t": 72.195,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 39,
+   "t": 74.146,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 40,
+   "t": 76.097,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 41,
+   "t": 78.048,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 42,
+   "t": 79.999,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 43,
+   "t": 81.951,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 44,
+   "t": 83.902,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 45,
+   "t": 85.853,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "down"
+  },
+  {
+   "id": 46,
+   "t": 87.804,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 47,
+   "t": 89.755,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 48,
+   "t": 91.707,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 49,
+   "t": 93.658,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 50,
+   "t": 95.609,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 51,
+   "t": 97.56,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 52,
+   "t": 99.511,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 53,
+   "t": 101.463,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "down"
+  },
+  {
+   "id": 54,
+   "t": 103.414,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 55,
+   "t": 105.365,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 56,
+   "t": 107.316,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 57,
+   "t": 109.267,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 58,
+   "t": 111.219,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 59,
+   "t": 113.17,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 60,
+   "t": 115.121,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 61,
+   "t": 117.072,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "down"
+  },
+  {
+   "id": 62,
+   "t": 119.023,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 63,
+   "t": 120.975,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 64,
+   "t": 122.926,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 65,
+   "t": 124.877,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 66,
+   "t": 126.828,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 67,
+   "t": 128.779,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 68,
+   "t": 130.731,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 69,
+   "t": 132.682,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "down"
+  },
+  {
+   "id": 70,
+   "t": 134.633,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 71,
+   "t": 136.584,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 72,
+   "t": 138.535,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 73,
+   "t": 140.487,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 74,
+   "t": 142.438,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 75,
+   "t": 144.389,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 76,
+   "t": 146.34,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 77,
+   "t": 148.291,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "down"
+  },
+  {
+   "id": 78,
+   "t": 150.243,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 79,
+   "t": 152.194,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 80,
+   "t": 154.145,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 81,
+   "t": 156.096,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 82,
+   "t": 158.047,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 83,
+   "t": 159.999,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 84,
+   "t": 161.95,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 85,
+   "t": 163.901,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "down"
+  },
+  {
+   "id": 86,
+   "t": 165.852,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 87,
+   "t": 167.804,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 88,
+   "t": 169.755,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 89,
+   "t": 171.706,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 90,
+   "t": 173.657,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 91,
+   "t": 175.608,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 92,
+   "t": 177.56,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 93,
+   "t": 179.511,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "down"
+  },
+  {
+   "id": 94,
+   "t": 181.462,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 95,
+   "t": 183.413,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 96,
+   "t": 185.364,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 97,
+   "t": 187.316,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 98,
+   "t": 189.267,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 99,
+   "t": 191.218,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 100,
+   "t": 193.169,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 101,
+   "t": 195.12,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "down"
+  },
+  {
+   "id": 102,
+   "t": 197.072,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "E",
+   "notes": [
+    "E",
+    "G#",
+    "B"
+   ],
+   "laneLabel": "E",
+   "strum": "up"
+  },
+  {
+   "id": 103,
+   "t": 199.023,
+   "dur": 1.951,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  },
+  {
+   "id": 104,
+   "t": 200.974,
+   "dur": 0.183,
+   "type": "chord",
+   "chord": "A",
+   "notes": [
+    "A",
+    "C#",
+    "E"
+   ],
+   "laneLabel": "A",
+   "strum": "down"
+  }
+ ]
 }
