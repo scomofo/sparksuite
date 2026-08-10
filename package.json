@@ -91,6 +91,7 @@
       "assets/audio/**/*",
       "data/**/*",
       "content/**/*",
+      "!content/songs/midi/**",
       "sparkgame/**/*",
       "desktop/**/*",
       "resources/instruments/**/*"
