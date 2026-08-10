@@ -18,7 +18,15 @@
 
   CalibrationEngine.prototype.getOffsetMs = function(instrumentType) {
     if (!supportsMicCalibration(instrumentType)) return 0;
-    if (typeof S.performMicOffsetMs === "number" && isFinite(S.performMicOffsetMs)) return S.performMicOffsetMs;
+    // Single latency model: resolve through SparkTimingCore so mic-driven
+    // gameplay clocks (timing_engine.createClock consumers) get the same
+    // global + mic offsets as performance mode. Keyboard/button input paths
+    // use the model's "audio" (global-only) offset at judgment time instead
+    // — see the rhythm highway strum handler.
+    if (typeof SparkTimingCore !== "undefined" && typeof SparkTimingCore.fromPerformanceState === "function" && typeof S !== "undefined") {
+      return SparkTimingCore.fromPerformanceState(S).getInputOffsetMs("mic");
+    }
+    if (typeof S !== "undefined" && typeof S.performMicOffsetMs === "number" && isFinite(S.performMicOffsetMs)) return S.performMicOffsetMs;
     return 0;
   };
 

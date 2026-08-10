@@ -241,12 +241,21 @@
     render();
   }
 
+  // Rhythm strums come from keyboard/buttons, so the relevant latency is the
+  // learner's measured GLOBAL calibration offset ("audio" mode in the shared
+  // model) — not the mic offset, which applies to mic-detected input paths.
+  // Applied at input-judgment time only; the display clock stays raw.
+  function getRhythmInputOffsetSec() {
+    if (typeof SparkTimingCore === "undefined" || typeof SparkTimingCore.fromPerformanceState !== "function" || typeof S === "undefined") return 0;
+    return SparkTimingCore.fromPerformanceState(S).getInputOffsetMs("audio") / 1000;
+  }
+
   function sparkRhythmHighwayStrum() {
     if (!runtime.engine) return;
     var outcome = runtime.engine.handleInput({
       kind: "strum",
       laneMask: S.rhythmHighwayHeldMask || 0,
-      atSec: currentSongTimeSec
+      atSec: Math.max(0, currentSongTimeSec - getRhythmInputOffsetSec())
     });
     if (outcome && outcome.resolution) {
       S.rhythmHighwayFeedback = feedbackForResolution(outcome.resolution);

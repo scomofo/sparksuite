@@ -6,6 +6,11 @@
   }
 
   function getActivePerformanceOffsetMs(mode){
+    // Single latency model: SparkTimingCore owns offset resolution
+    // (global + per-input-mode). Inline math kept only as a no-core fallback.
+    if (typeof SparkTimingCore !== "undefined" && typeof SparkTimingCore.fromPerformanceState === "function") {
+      return SparkTimingCore.fromPerformanceState(S).getInputOffsetMs(mode === "midi" || mode === "mic" ? mode : "audio");
+    }
     var globalOffset = S.performTimingOffsetMs || 0;
     if(mode==="midi") return globalOffset + (S.performMidiOffsetMs || 0);
     if(mode==="mic") return globalOffset + getStoredPerformanceMicOffsetMs();
