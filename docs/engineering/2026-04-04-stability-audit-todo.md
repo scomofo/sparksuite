@@ -16,14 +16,25 @@
 - **Highway adapter**: Instrument param for piano skin selection
 - **Tab stubs**: gamesTab/toolsTab defined
 
+### Closed since audit (verified 2026-08-12)
+- **P1 — Rhythm highway authored charts**: libraries grew well past audit counts —
+  guitar 11 (`guitar_chart_library.js`), ukulele 6 (`ukulele_module.js`),
+  piano 6 (`piano_chart_library.js`), bass 5 (`bass_module.js`); vocals (6)
+  and drums chart libraries added since the audit
+- **P1 — Bass exercises expansion**: `BASS_EXERCISES` now has 16 entries (was 8),
+  covering slap/pop, legato, syncopation, walking, and funk grooves
+- **P1 — Ukulele performance chart depth**: 7 ukulele entries in the performance
+  chart manifest (was 3) — Stand By Me plus 6 package-backed charts
+- **P3 — Cloud sync UX**: syncing spinner/status and last-synced display in
+  `js/cloud/ui.js`; per-category conflict detection with Keep Local / Keep
+  Cloud / Newest-per-category resolution in `js/cloud/sync.js`
+- **MIDI import parser**: `parseMidiFile` no longer depends on an external
+  @tonejs/midi bundle — it falls back to the core `SparkChartIO` parser
+  (`js/import/midi_parse.js`, `SparkChartIO.parseMidiRaw`)
+
 ---
 
 ## TODO — Remaining
-
-### P1 — Content (still gaps vs guitar)
-- [ ] More rhythm highway authored charts (guitar has 4, bass 4, ukulele 3, piano 2)
-- [ ] Bass exercises expansion (only 8 vs guitar/piano depth)
-- [ ] Ukulele performance chart depth (3 charts, could use more)
 
 ### P2 — Architectural (Phase 2)
 - [ ] Reduce S.* dependence — flows should read core state first
@@ -32,5 +43,4 @@
 - [ ] Pages core-first — utility/tool screens still mostly shell-owned
 
 ### P3 — Polish (remaining)
-- [ ] Cloud sync UX — no progress indicator, no conflict resolution
 - [ ] Imported chart edge cases in shared rendering
