@@ -1265,7 +1265,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "\"Mad World\" intro",
-      "focus_song_id": null,
+      "focus_song_id": "mad_world",
       "copy": {
         "setup": "The Dm chord. warm engine block.",
         "success": "Nice. The Dm chord.",
@@ -1280,7 +1280,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "\"Mad World\" intro",
-      "focus_song_id": null,
+      "focus_song_id": "mad_world",
       "copy": {
         "setup": "The Dm chord. drill block.",
         "success": "Nice. The Dm chord.",
@@ -1295,7 +1295,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "\"Mad World\" intro",
-      "focus_song_id": null,
+      "focus_song_id": "mad_world",
       "copy": {
         "setup": "The Dm chord. song block.",
         "success": "Nice. The Dm chord.",
@@ -1316,7 +1316,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "\"Mad World\" intro",
-      "focus_song_id": null,
+      "focus_song_id": "mad_world",
       "copy": {
         "setup": "The Dm chord. cooldown block.",
         "success": "Nice. The Dm chord.",

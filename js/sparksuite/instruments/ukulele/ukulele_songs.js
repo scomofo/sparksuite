@@ -47,6 +47,8 @@
     { title: "Can't Help Falling in Love", artist: "Elvis", progression: ["C", "Em", "Am", "F", "G"], bpm: 72, focus: "slow waltz feel" },
     { title: "Count on Me", artist: "Bruno Mars", progression: ["C", "Em", "Am", "G"], bpm: 88, focus: "happy fingerpick" },
     { title: "Lava", artist: "Disney", progression: ["C", "G7", "F"], bpm: 76, focus: "simple 3-chord island" },
-    { title: "Stand By Me", artist: "Ben E. King", progression: ["C", "Am", "F", "G"], bpm: 120, focus: "steady bass strum" }
+    { title: "Stand By Me", artist: "Ben E. King", progression: ["C", "Am", "F", "G"], bpm: 120, focus: "steady bass strum" },
+    { title: "Three Little Birds", artist: "Bob Marley", progression: ["C", "F", "G7"], bpm: 76, focus: "relaxed reggae chuck" },
+    { title: "You Are My Sunshine", artist: "Traditional country", progression: ["C", "F", "G7"], bpm: 100, focus: "steady down-strum sing-along" }
   ];
 })();

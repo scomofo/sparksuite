@@ -838,7 +838,7 @@
           ],
           "target_duration_min": 10,
           "focus_song": "\"Mad World\" intro",
-          "focus_song_id": null,
+          "focus_song_id": "mad_world",
           "blocks": [
             {
               "type": "warm_engine",
@@ -3912,7 +3912,7 @@
           ],
           "target_duration_min": 10,
           "focus_song": "\"Three Little Birds\" chorus",
-          "focus_song_id": null,
+          "focus_song_id": "three_little_birds",
           "blocks": [
             {
               "type": "warm_engine",
@@ -4293,7 +4293,7 @@
           ],
           "target_duration_min": 10,
           "focus_song": "\"You Are My Sunshine\"",
-          "focus_song_id": null,
+          "focus_song_id": "you_are_my_sunshine",
           "blocks": [
             {
               "type": "warm_engine",
@@ -4336,7 +4336,7 @@
           ],
           "target_duration_min": 10,
           "focus_song": "the song",
-          "focus_song_id": null,
+          "focus_song_id": "you_are_my_sunshine",
           "blocks": [
             {
               "type": "warm_engine",
@@ -4630,7 +4630,7 @@
           ],
           "target_duration_min": 10,
           "focus_song": "\"Three Little Birds\" full",
-          "focus_song_id": null,
+          "focus_song_id": "three_little_birds",
           "blocks": [
             {
               "type": "warm_engine",
@@ -4672,7 +4672,7 @@
           ],
           "target_duration_min": 10,
           "focus_song": "the song",
-          "focus_song_id": null,
+          "focus_song_id": "three_little_birds",
           "blocks": [
             {
               "type": "warm_engine",
@@ -6344,7 +6344,7 @@
           "block_type": "warm_engine",
           "duration_sec": 90,
           "focus_song": "\"Mad World\" intro",
-          "focus_song_id": null,
+          "focus_song_id": "mad_world",
           "copy": {
             "setup": "The Dm chord. warm engine block.",
             "success": "Nice. The Dm chord.",
@@ -6359,7 +6359,7 @@
           "block_type": "drill",
           "duration_sec": 180,
           "focus_song": "\"Mad World\" intro",
-          "focus_song_id": null,
+          "focus_song_id": "mad_world",
           "copy": {
             "setup": "The Dm chord. drill block.",
             "success": "Nice. The Dm chord.",
@@ -6374,7 +6374,7 @@
           "block_type": "song",
           "duration_sec": 240,
           "focus_song": "\"Mad World\" intro",
-          "focus_song_id": null,
+          "focus_song_id": "mad_world",
           "copy": {
             "setup": "The Dm chord. song block.",
             "success": "Nice. The Dm chord.",
@@ -6395,7 +6395,7 @@
           "block_type": "cooldown",
           "duration_sec": 90,
           "focus_song": "\"Mad World\" intro",
-          "focus_song_id": null,
+          "focus_song_id": "mad_world",
           "copy": {
             "setup": "The Dm chord. cooldown block.",
             "success": "Nice. The Dm chord.",
@@ -11180,7 +11180,7 @@
           "block_type": "warm_engine",
           "duration_sec": 90,
           "focus_song": "\"Three Little Birds\" chorus",
-          "focus_song_id": null,
+          "focus_song_id": "three_little_birds",
           "copy": {
             "setup": "The C chord. warm engine block.",
             "success": "Nice. The C chord.",
@@ -11195,7 +11195,7 @@
           "block_type": "drill",
           "duration_sec": 180,
           "focus_song": "\"Three Little Birds\" chorus",
-          "focus_song_id": null,
+          "focus_song_id": "three_little_birds",
           "copy": {
             "setup": "The C chord. drill block.",
             "success": "Nice. The C chord.",
@@ -11210,7 +11210,7 @@
           "block_type": "song",
           "duration_sec": 240,
           "focus_song": "\"Three Little Birds\" chorus",
-          "focus_song_id": null,
+          "focus_song_id": "three_little_birds",
           "copy": {
             "setup": "The C chord. song block.",
             "success": "Nice. The C chord.",
@@ -11231,7 +11231,7 @@
           "block_type": "cooldown",
           "duration_sec": 90,
           "focus_song": "\"Three Little Birds\" chorus",
-          "focus_song_id": null,
+          "focus_song_id": "three_little_birds",
           "copy": {
             "setup": "The C chord. cooldown block.",
             "success": "Nice. The C chord.",
@@ -11774,7 +11774,7 @@
           "block_type": "warm_engine",
           "duration_sec": 90,
           "focus_song": "\"You Are My Sunshine\"",
-          "focus_song_id": null,
+          "focus_song_id": "you_are_my_sunshine",
           "copy": {
             "setup": "The G chord. warm engine block.",
             "success": "Nice. The G chord.",
@@ -11789,7 +11789,7 @@
           "block_type": "drill",
           "duration_sec": 180,
           "focus_song": "\"You Are My Sunshine\"",
-          "focus_song_id": null,
+          "focus_song_id": "you_are_my_sunshine",
           "copy": {
             "setup": "The G chord. drill block.",
             "success": "Nice. The G chord.",
@@ -11804,7 +11804,7 @@
           "block_type": "song",
           "duration_sec": 240,
           "focus_song": "\"You Are My Sunshine\"",
-          "focus_song_id": null,
+          "focus_song_id": "you_are_my_sunshine",
           "copy": {
             "setup": "The G chord. song block.",
             "success": "Nice. The G chord.",
@@ -11825,7 +11825,7 @@
           "block_type": "cooldown",
           "duration_sec": 90,
           "focus_song": "\"You Are My Sunshine\"",
-          "focus_song_id": null,
+          "focus_song_id": "you_are_my_sunshine",
           "copy": {
             "setup": "The G chord. cooldown block.",
             "success": "Nice. The G chord.",
@@ -11840,7 +11840,7 @@
           "block_type": "warm_engine",
           "duration_sec": 90,
           "focus_song": "the song",
-          "focus_song_id": null,
+          "focus_song_id": "you_are_my_sunshine",
           "copy": {
             "setup": "\"Sunshine\" on uke. warm engine block.",
             "success": "Nice. \"Sunshine\" on uke.",
@@ -11855,7 +11855,7 @@
           "block_type": "drill",
           "duration_sec": 180,
           "focus_song": "the song",
-          "focus_song_id": null,
+          "focus_song_id": "you_are_my_sunshine",
           "copy": {
             "setup": "\"Sunshine\" on uke. drill block.",
             "success": "Nice. \"Sunshine\" on uke.",
@@ -11870,7 +11870,7 @@
           "block_type": "song",
           "duration_sec": 240,
           "focus_song": "the song",
-          "focus_song_id": null,
+          "focus_song_id": "you_are_my_sunshine",
           "copy": {
             "setup": "\"Sunshine\" on uke. song block.",
             "success": "Nice. \"Sunshine\" on uke.",
@@ -11891,7 +11891,7 @@
           "block_type": "cooldown",
           "duration_sec": 90,
           "focus_song": "the song",
-          "focus_song_id": null,
+          "focus_song_id": "you_are_my_sunshine",
           "copy": {
             "setup": "\"Sunshine\" on uke. cooldown block.",
             "success": "Nice. \"Sunshine\" on uke.",
@@ -12302,7 +12302,7 @@
           "block_type": "warm_engine",
           "duration_sec": 90,
           "focus_song": "\"Three Little Birds\" full",
-          "focus_song_id": null,
+          "focus_song_id": "three_little_birds",
           "copy": {
             "setup": "Reggae chuck. warm engine block.",
             "success": "Nice. Reggae chuck.",
@@ -12317,7 +12317,7 @@
           "block_type": "drill",
           "duration_sec": 180,
           "focus_song": "\"Three Little Birds\" full",
-          "focus_song_id": null,
+          "focus_song_id": "three_little_birds",
           "copy": {
             "setup": "Reggae chuck. drill block.",
             "success": "Nice. Reggae chuck.",
@@ -12332,7 +12332,7 @@
           "block_type": "song",
           "duration_sec": 240,
           "focus_song": "\"Three Little Birds\" full",
-          "focus_song_id": null,
+          "focus_song_id": "three_little_birds",
           "copy": {
             "setup": "Reggae chuck. song block.",
             "success": "Nice. Reggae chuck.",
@@ -12353,7 +12353,7 @@
           "block_type": "cooldown",
           "duration_sec": 90,
           "focus_song": "\"Three Little Birds\" full",
-          "focus_song_id": null,
+          "focus_song_id": "three_little_birds",
           "copy": {
             "setup": "Reggae chuck. cooldown block.",
             "success": "Nice. Reggae chuck.",
@@ -12368,7 +12368,7 @@
           "block_type": "warm_engine",
           "duration_sec": 90,
           "focus_song": "the song",
-          "focus_song_id": null,
+          "focus_song_id": "three_little_birds",
           "copy": {
             "setup": "\"Three Little Birds\" full. warm engine block.",
             "success": "Nice. \"Three Little Birds\" full.",
@@ -12383,7 +12383,7 @@
           "block_type": "drill",
           "duration_sec": 180,
           "focus_song": "the song",
-          "focus_song_id": null,
+          "focus_song_id": "three_little_birds",
           "copy": {
             "setup": "\"Three Little Birds\" full. drill block.",
             "success": "Nice. \"Three Little Birds\" full.",
@@ -12398,7 +12398,7 @@
           "block_type": "song",
           "duration_sec": 240,
           "focus_song": "the song",
-          "focus_song_id": null,
+          "focus_song_id": "three_little_birds",
           "copy": {
             "setup": "\"Three Little Birds\" full. song block.",
             "success": "Nice. \"Three Little Birds\" full.",
@@ -12419,7 +12419,7 @@
           "block_type": "cooldown",
           "duration_sec": 90,
           "focus_song": "the song",
-          "focus_song_id": null,
+          "focus_song_id": "three_little_birds",
           "copy": {
             "setup": "\"Three Little Birds\" full. cooldown block.",
             "success": "Nice. \"Three Little Birds\" full.",

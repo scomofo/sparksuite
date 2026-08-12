@@ -24,6 +24,14 @@ licensed this material.
 Provenance: sequencer files of unrecorded origin, collected for personal
 practice. No attribution data is available.
 
+Two files are generated in-repo rather than collected, but sit under the
+same personal-use posture because their compositions are still
+copyrighted: `mad_world.mid` and `you_are_my_sunshine.mid`
+(`scripts/songs/generate_personal_use_backings.js`). They are
+deliberately chords-only — block triads over root notes, no melody — so
+they carry only the songs' harmonic skeleton for backing playback and
+chart-timing generation.
+
 ## Public-domain exceptions (MIT-licensed)
 
 Two files in this directory are NOT personal-use transcriptions and are

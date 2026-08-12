@@ -163,6 +163,10 @@ test("known curriculum-to-song joins are stamped", function() {
     ["bass", "bass-d07", "seven_nation_army"],
     ["piano", "pno-d15", "let_it_be"],
     ["ukulele", "uke-d15", "riptide"],
+    ["guitar", "gtr-d20", "mad_world"],
+    ["piano", "pno-d02", "ode_to_joy"],
+    ["ukulele", "uke-d21", "three_little_birds"],
+    ["ukulele", "uke-d13", "you_are_my_sunshine"],
     ["guitar", "gtr-d12", null] // "user picks" stays unresolved
   ];
   expectations.forEach(([instrument, sessionId, expected]) => {

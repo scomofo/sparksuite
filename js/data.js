@@ -283,6 +283,7 @@ var SONGS=[
   {title:"Jambalaya",artist:"Hank Williams",chords:["A","D","E"],level:3,pattern:["D","U","D","U","D","U","D","U"],bpm:120,midi:"content/songs/midi/jambalaya.mid",progression:["A","A","D","D","A","A","E","A"]},
   {title:"Achy Breaky Heart",artist:"Billy Ray Cyrus",chords:["A","E"],level:3,pattern:["D","D","U","U","D","U"],bpm:120,midi:"content/songs/midi/achy_breaky_heart.mid",progression:["A","A","E","E","E","E","A","A"]},
   {title:"Bad Moon Rising",artist:"CCR",chords:["D","A","G"],level:4,pattern:["D","D","U","U","D","U"],bpm:176,midi:"content/songs/midi/bad_moon_rising.mid",progression:["D","D","A","G","D","D","A","G"]},
+  {title:"Mad World",artist:"Tears for Fears",chords:["Dm","F","C","G"],level:4,pattern:["D","D","U","U","D","U"],bpm:88,midi:"content/songs/midi/mad_world.mid",progression:["Dm","F","C","G","Dm","F","C","G"]},
   {title:"Brown Eyed Girl",artist:"Van Morrison",chords:["G","C","D","Em"],level:4,pattern:["D","D","U","U","D","U"],bpm:150,midi:"content/songs/midi/brown_eyed_girl.mid",progression:["G","C","G","D","G","C","G","D"]},
   {title:"Riptide",artist:"Vance Joy",chords:["Am","G","C"],level:4,pattern:["D","x","D","U","x","U","D","U"],bpm:102,progression:["Am","G","C","C","Am","G","C","C"]},
   {title:"Leaving on a Jet Plane",artist:"John Denver",chords:["G","C","D"],level:4,pattern:["D","D","U","U","D","U"],bpm:136,progression:["G","C","G","C","G","C","D","D"]},

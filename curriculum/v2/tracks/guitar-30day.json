@@ -820,7 +820,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "\"Mad World\" intro",
-      "focus_song_id": null,
+      "focus_song_id": "mad_world",
       "blocks": [
         {
           "type": "warm_engine",
