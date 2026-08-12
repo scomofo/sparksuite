@@ -16,6 +16,7 @@
       "prerequisites": [],
       "target_duration_min": 10,
       "focus_song": "rock drums at 80 BPM",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -58,6 +59,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "tuner",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -99,6 +101,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "drums at 70",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -141,6 +144,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "drums",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -183,6 +187,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "rock loop",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -224,6 +229,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "pulse loop",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -266,6 +272,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "the song",
+      "focus_song_id": "seven_nation_army",
       "blocks": [
         {
           "type": "warm_engine",
@@ -307,6 +314,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "same riff doubled",
+      "focus_song_id": "seven_nation_army",
       "blocks": [
         {
           "type": "warm_engine",
@@ -349,6 +357,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "4-string pulse",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -390,6 +399,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "jazz-ish drum",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -430,6 +440,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -471,6 +482,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "drills",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -512,6 +524,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "the song",
+      "focus_song_id": "come_as_you_are",
       "blocks": [
         {
           "type": "warm_engine",
@@ -553,6 +566,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "I-V in E",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -595,6 +609,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "12-bar in E",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -636,6 +651,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "E-min vamp",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -678,6 +694,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "the song",
+      "focus_song_id": "sunshine_of_your_love",
       "blocks": [
         {
           "type": "warm_engine",
@@ -719,6 +736,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "12-bar blues",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -759,6 +777,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -800,6 +819,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "slide drills",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -841,6 +861,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "the song",
+      "focus_song_id": "another_one_bites_the_dust",
       "blocks": [
         {
           "type": "warm_engine",
@@ -882,6 +903,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "funk loop",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -924,6 +946,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "funk groove",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -964,6 +987,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1005,6 +1029,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "funk",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1046,6 +1071,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "I-IV-V in A",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1088,6 +1114,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "E-min vamp",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1128,6 +1155,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1167,6 +1195,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user's song",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1208,6 +1237,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user's song",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",

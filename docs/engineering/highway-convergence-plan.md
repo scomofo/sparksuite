@@ -10,7 +10,7 @@ now dispositioned:
 | 1 | Fix the frozen rhythm highway (runtime stack never loaded) | ✅ Fixed + wiring/reachability tests (PR #114) |
 | 2 | Point `chart_io` at the MIDI corpus for real charts | ✅ 33 charts on real tempo maps / time signatures / full durations (PRs #114) |
 | 3 | Converge the two highway implementations | ✅ Phases A–C below (PRs #115–#116) |
-| 4 | Join curriculum to songs | ✅ Engine half (`getSongReadiness`, PR #114); routing the 600 `focus_song` prose placeholders at real song ids remains open content authoring |
+| 4 | Join curriculum to songs | ✅ Engine half (`getSongReadiness`, PR #114). Data half (2026-08-12): curriculum v2 sessions/activities now carry `focus_song_id` — a canonical title-slug join into each instrument's song library, validated at generation time and surfaced as `songIds` by the legacy adapter. 25 sessions across the four tracks resolve to real songs; loops, drills, and user-choice days stay `null` by design. Still open: songs the curriculum references but no library carries (guitar "Mad World"; piano "Ode to Joy", "Amazing Grace"; ukulele "Three Little Birds", "You Are My Sunshine") — add the songs, then stamp their ids in `scripts/curriculum/generate_phase1_curriculum.js`. |
 | 5 | MIDI licensing risk | ✅ Resolved as **personal-use**: the project is not commercial and not for distribution. Recorded via a third-party content exclusion in `LICENSE` and `content/songs/midi/README.md`. If distribution intent ever changes, that README is the gate: remove/replace the MIDI corpus first (the repo is public, so making it private is the cleanest further step, owner's choice). |
 | 6 | Housekeeping (orphaned TSX, contract doc, script naming) | ✅ Done (PR #114) |
 

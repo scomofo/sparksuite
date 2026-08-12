@@ -16,6 +16,7 @@
       "prerequisites": [],
       "target_duration_min": 10,
       "focus_song": "\"Horse\" intro, open strings only",
+      "focus_song_id": "horse_with_no_name",
       "blocks": [
         {
           "type": "warm_engine",
@@ -57,6 +58,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "same",
+      "focus_song_id": "horse_with_no_name",
       "blocks": [
         {
           "type": "warm_engine",
@@ -98,6 +100,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "1-chord reggae",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -140,6 +143,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "1-chord pop",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -182,6 +186,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "A loop",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -224,6 +229,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "D-A-D-A over drums",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -266,6 +272,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "E jam",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -308,6 +315,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "simple blues loop",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -350,6 +358,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "\"Horse\" full (Em-D6add9)",
+      "focus_song_id": "horse_with_no_name",
       "blocks": [
         {
           "type": "warm_engine",
@@ -391,6 +400,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "\"Stand By Me\" (transposed)",
+      "focus_song_id": "stand_by_me",
       "blocks": [
         {
           "type": "warm_engine",
@@ -432,6 +442,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "full verse loop",
+      "focus_song_id": "stand_by_me",
       "blocks": [
         {
           "type": "warm_engine",
@@ -471,6 +482,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -512,6 +524,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "any prior song",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -554,6 +567,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "same",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -596,6 +610,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "\"Stand By Me\"",
+      "focus_song_id": "stand_by_me",
       "blocks": [
         {
           "type": "warm_engine",
@@ -637,6 +652,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "\"Knockin'\" intro",
+      "focus_song_id": "knockin_on_heavens_door",
       "blocks": [
         {
           "type": "warm_engine",
@@ -679,6 +695,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "\"Knockin'\" full (G-D-Am-C)",
+      "focus_song_id": "knockin_on_heavens_door",
       "blocks": [
         {
           "type": "warm_engine",
@@ -718,6 +735,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -759,6 +777,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "metronome-only",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -801,6 +820,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "\"Mad World\" intro",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -842,6 +862,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "song of choice",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -884,6 +905,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "any prior song",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -923,6 +945,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -964,6 +987,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "jam over Em loop",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1006,6 +1030,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "A-blues loop",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1048,6 +1073,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "\"Let It Be\" intro",
+      "focus_song_id": "let_it_be",
       "blocks": [
         {
           "type": "warm_engine",
@@ -1089,6 +1115,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "prior song",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1128,6 +1155,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1167,6 +1195,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user's chosen song",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1208,6 +1237,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user's chosen song",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",

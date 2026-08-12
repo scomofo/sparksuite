@@ -125,6 +125,52 @@ TRACKS.forEach((instrument) => {
     assert.strictEqual(activityBundle.activity_count, 120);
     assert.strictEqual(activityBundle.activities.length, 120);
   });
+
+  test(`${instrument}: focus_song_id is present, well-formed, and mirrored onto activities`, function() {
+    const track = readJson(`tracks/${instrument}-30day.json`);
+    const activityBundle = readJson(`activities/${instrument}-30day.activities.json`);
+    const sessionSongIds = {};
+
+    track.sessions.forEach((session) => {
+      assert.ok(
+        Object.prototype.hasOwnProperty.call(session, "focus_song_id"),
+        `${session.id} missing focus_song_id field`
+      );
+      if (session.focus_song_id !== null) {
+        assert.strictEqual(typeof session.focus_song_id, "string");
+        assert.ok(
+          /^[a-z0-9]+(_[a-z0-9]+)*$/.test(session.focus_song_id),
+          `${session.id} focus_song_id "${session.focus_song_id}" is not a canonical song slug`
+        );
+      }
+      sessionSongIds[session.id] = session.focus_song_id;
+    });
+
+    activityBundle.activities.forEach((activity) => {
+      assert.strictEqual(
+        activity.focus_song_id,
+        sessionSongIds[activity.session_id],
+        `${activity.id} focus_song_id diverges from its session`
+      );
+    });
+  });
+});
+
+test("known curriculum-to-song joins are stamped", function() {
+  const expectations = [
+    ["guitar", "gtr-d16", "knockin_on_heavens_door"],
+    ["guitar", "gtr-d02", "horse_with_no_name"], // "same" carries day 1's song forward
+    ["bass", "bass-d07", "seven_nation_army"],
+    ["piano", "pno-d15", "let_it_be"],
+    ["ukulele", "uke-d15", "riptide"],
+    ["guitar", "gtr-d12", null] // "user picks" stays unresolved
+  ];
+  expectations.forEach(([instrument, sessionId, expected]) => {
+    const track = readJson(`tracks/${instrument}-30day.json`);
+    const session = track.sessions.find((row) => row.id === sessionId);
+    assert.ok(session, `${sessionId} not found`);
+    assert.strictEqual(session.focus_song_id, expected, `${sessionId} focus_song_id`);
+  });
 });
 
 if (process.exitCode) process.exit(process.exitCode);

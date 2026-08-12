@@ -11,6 +11,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "C 5-finger RH",
+      "focus_song_id": null,
       "copy": {
         "setup": "Find middle C. warm engine block.",
         "success": "Nice. Find middle C.",
@@ -25,6 +26,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "C 5-finger RH",
+      "focus_song_id": null,
       "copy": {
         "setup": "Find middle C. drill block.",
         "success": "Nice. Find middle C.",
@@ -39,6 +41,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "C 5-finger RH",
+      "focus_song_id": null,
       "copy": {
         "setup": "Find middle C. song block.",
         "success": "Nice. Find middle C.",
@@ -59,6 +62,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "C 5-finger RH",
+      "focus_song_id": null,
       "copy": {
         "setup": "Find middle C. cooldown block.",
         "success": "Nice. Find middle C.",
@@ -73,6 +77,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "Ode intro",
+      "focus_song_id": null,
       "copy": {
         "setup": "\"Ode to Joy\" (first 4 bars, RH). warm engine block.",
         "success": "Nice. \"Ode to Joy\" (first 4 bars, RH).",
@@ -87,6 +92,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "Ode intro",
+      "focus_song_id": null,
       "copy": {
         "setup": "\"Ode to Joy\" (first 4 bars, RH). drill block.",
         "success": "Nice. \"Ode to Joy\" (first 4 bars, RH).",
@@ -101,6 +107,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "Ode intro",
+      "focus_song_id": null,
       "copy": {
         "setup": "\"Ode to Joy\" (first 4 bars, RH). song block.",
         "success": "Nice. \"Ode to Joy\" (first 4 bars, RH).",
@@ -121,6 +128,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "Ode intro",
+      "focus_song_id": null,
       "copy": {
         "setup": "\"Ode to Joy\" (first 4 bars, RH). cooldown block.",
         "success": "Nice. \"Ode to Joy\" (first 4 bars, RH).",
@@ -135,6 +143,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "same, with rhythm",
+      "focus_song_id": null,
       "copy": {
         "setup": "Quarter, half, whole. warm engine block.",
         "success": "Nice. Quarter, half, whole.",
@@ -149,6 +158,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "same, with rhythm",
+      "focus_song_id": null,
       "copy": {
         "setup": "Quarter, half, whole. drill block.",
         "success": "Nice. Quarter, half, whole.",
@@ -163,6 +173,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "same, with rhythm",
+      "focus_song_id": null,
       "copy": {
         "setup": "Quarter, half, whole. song block.",
         "success": "Nice. Quarter, half, whole.",
@@ -183,6 +194,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "same, with rhythm",
+      "focus_song_id": null,
       "copy": {
         "setup": "Quarter, half, whole. cooldown block.",
         "success": "Nice. Quarter, half, whole.",
@@ -197,6 +209,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "C-position LH",
+      "focus_song_id": null,
       "copy": {
         "setup": "LH 5-finger in C. warm engine block.",
         "success": "Nice. LH 5-finger in C.",
@@ -211,6 +224,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "C-position LH",
+      "focus_song_id": null,
       "copy": {
         "setup": "LH 5-finger in C. drill block.",
         "success": "Nice. LH 5-finger in C.",
@@ -225,6 +239,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "C-position LH",
+      "focus_song_id": null,
       "copy": {
         "setup": "LH 5-finger in C. song block.",
         "success": "Nice. LH 5-finger in C.",
@@ -245,6 +260,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "C-position LH",
+      "focus_song_id": null,
       "copy": {
         "setup": "LH 5-finger in C. cooldown block.",
         "success": "Nice. LH 5-finger in C.",
@@ -259,6 +275,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "Ode full A-section",
+      "focus_song_id": null,
       "copy": {
         "setup": "\"Ode to Joy\" hands-together. warm engine block.",
         "success": "Nice. \"Ode to Joy\" hands-together.",
@@ -273,6 +290,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "Ode full A-section",
+      "focus_song_id": null,
       "copy": {
         "setup": "\"Ode to Joy\" hands-together. drill block.",
         "success": "Nice. \"Ode to Joy\" hands-together.",
@@ -287,6 +305,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "Ode full A-section",
+      "focus_song_id": null,
       "copy": {
         "setup": "\"Ode to Joy\" hands-together. song block.",
         "success": "Nice. \"Ode to Joy\" hands-together.",
@@ -307,6 +326,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "Ode full A-section",
+      "focus_song_id": null,
       "copy": {
         "setup": "\"Ode to Joy\" hands-together. cooldown block.",
         "success": "Nice. \"Ode to Joy\" hands-together.",
@@ -321,6 +341,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. warm engine block.",
         "success": "Nice. Review and free play.",
@@ -335,6 +356,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. drill block.",
         "success": "Nice. Review and free play.",
@@ -349,6 +371,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. song block.",
         "success": "Nice. Review and free play.",
@@ -369,6 +392,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. cooldown block.",
         "success": "Nice. Review and free play.",
@@ -383,6 +407,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "C as a triad",
+      "focus_song_id": null,
       "copy": {
         "setup": "C-major triad (RH). warm engine block.",
         "success": "Nice. C-major triad (RH).",
@@ -397,6 +422,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "C as a triad",
+      "focus_song_id": null,
       "copy": {
         "setup": "C-major triad (RH). drill block.",
         "success": "Nice. C-major triad (RH).",
@@ -411,6 +437,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "C as a triad",
+      "focus_song_id": null,
       "copy": {
         "setup": "C-major triad (RH). song block.",
         "success": "Nice. C-major triad (RH).",
@@ -431,6 +458,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "C as a triad",
+      "focus_song_id": null,
       "copy": {
         "setup": "C-major triad (RH). cooldown block.",
         "success": "Nice. C-major triad (RH).",
@@ -445,6 +473,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "Amazing Grace A",
+      "focus_song_id": null,
       "copy": {
         "setup": "\"Amazing Grace\" RH melody. warm engine block.",
         "success": "Nice. \"Amazing Grace\" RH melody.",
@@ -459,6 +488,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "Amazing Grace A",
+      "focus_song_id": null,
       "copy": {
         "setup": "\"Amazing Grace\" RH melody. drill block.",
         "success": "Nice. \"Amazing Grace\" RH melody.",
@@ -473,6 +503,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "Amazing Grace A",
+      "focus_song_id": null,
       "copy": {
         "setup": "\"Amazing Grace\" RH melody. song block.",
         "success": "Nice. \"Amazing Grace\" RH melody.",
@@ -493,6 +524,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "Amazing Grace A",
+      "focus_song_id": null,
       "copy": {
         "setup": "\"Amazing Grace\" RH melody. cooldown block.",
         "success": "Nice. \"Amazing Grace\" RH melody.",
@@ -507,6 +539,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "C to F switching",
+      "focus_song_id": null,
       "copy": {
         "setup": "F-major triad (RH). warm engine block.",
         "success": "Nice. F-major triad (RH).",
@@ -521,6 +554,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "C to F switching",
+      "focus_song_id": null,
       "copy": {
         "setup": "F-major triad (RH). drill block.",
         "success": "Nice. F-major triad (RH).",
@@ -535,6 +569,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "C to F switching",
+      "focus_song_id": null,
       "copy": {
         "setup": "F-major triad (RH). song block.",
         "success": "Nice. F-major triad (RH).",
@@ -555,6 +590,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "C to F switching",
+      "focus_song_id": null,
       "copy": {
         "setup": "F-major triad (RH). cooldown block.",
         "success": "Nice. F-major triad (RH).",
@@ -569,6 +605,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "C-F-G7 loop",
+      "focus_song_id": null,
       "copy": {
         "setup": "G7 chord (RH). warm engine block.",
         "success": "Nice. G7 chord (RH).",
@@ -583,6 +620,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "C-F-G7 loop",
+      "focus_song_id": null,
       "copy": {
         "setup": "G7 chord (RH). drill block.",
         "success": "Nice. G7 chord (RH).",
@@ -597,6 +635,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "C-F-G7 loop",
+      "focus_song_id": null,
       "copy": {
         "setup": "G7 chord (RH). song block.",
         "success": "Nice. G7 chord (RH).",
@@ -617,6 +656,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "C-F-G7 loop",
+      "focus_song_id": null,
       "copy": {
         "setup": "G7 chord (RH). cooldown block.",
         "success": "Nice. G7 chord (RH).",
@@ -631,6 +671,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "over drum loop",
+      "focus_song_id": null,
       "copy": {
         "setup": "I-IV-V7 in C. warm engine block.",
         "success": "Nice. I-IV-V7 in C.",
@@ -645,6 +686,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "over drum loop",
+      "focus_song_id": null,
       "copy": {
         "setup": "I-IV-V7 in C. drill block.",
         "success": "Nice. I-IV-V7 in C.",
@@ -659,6 +701,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "over drum loop",
+      "focus_song_id": null,
       "copy": {
         "setup": "I-IV-V7 in C. song block.",
         "success": "Nice. I-IV-V7 in C.",
@@ -679,6 +722,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "over drum loop",
+      "focus_song_id": null,
       "copy": {
         "setup": "I-IV-V7 in C. cooldown block.",
         "success": "Nice. I-IV-V7 in C.",
@@ -693,6 +737,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. warm engine block.",
         "success": "Nice. Review and free play.",
@@ -707,6 +752,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. drill block.",
         "success": "Nice. Review and free play.",
@@ -721,6 +767,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. song block.",
         "success": "Nice. Review and free play.",
@@ -741,6 +788,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. cooldown block.",
         "success": "Nice. Review and free play.",
@@ -755,6 +803,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "same progression",
+      "focus_song_id": null,
       "copy": {
         "setup": "LH root-notes under chords. warm engine block.",
         "success": "Nice. LH root-notes under chords.",
@@ -769,6 +818,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "same progression",
+      "focus_song_id": null,
       "copy": {
         "setup": "LH root-notes under chords. drill block.",
         "success": "Nice. LH root-notes under chords.",
@@ -783,6 +833,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "same progression",
+      "focus_song_id": null,
       "copy": {
         "setup": "LH root-notes under chords. song block.",
         "success": "Nice. LH root-notes under chords.",
@@ -803,6 +854,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "same progression",
+      "focus_song_id": null,
       "copy": {
         "setup": "LH root-notes under chords. cooldown block.",
         "success": "Nice. LH root-notes under chords.",
@@ -817,6 +869,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "\"Let It Be\" intro",
+      "focus_song_id": "let_it_be",
       "copy": {
         "setup": "Broken-chord LH pattern. warm engine block.",
         "success": "Nice. Broken-chord LH pattern.",
@@ -831,6 +884,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "\"Let It Be\" intro",
+      "focus_song_id": "let_it_be",
       "copy": {
         "setup": "Broken-chord LH pattern. drill block.",
         "success": "Nice. Broken-chord LH pattern.",
@@ -845,6 +899,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "\"Let It Be\" intro",
+      "focus_song_id": "let_it_be",
       "copy": {
         "setup": "Broken-chord LH pattern. song block.",
         "success": "Nice. Broken-chord LH pattern.",
@@ -865,6 +920,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "\"Let It Be\" intro",
+      "focus_song_id": "let_it_be",
       "copy": {
         "setup": "Broken-chord LH pattern. cooldown block.",
         "success": "Nice. Broken-chord LH pattern.",
@@ -879,6 +935,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "LB intro",
+      "focus_song_id": "let_it_be",
       "copy": {
         "setup": "\"Let It Be\" full intro. warm engine block.",
         "success": "Nice. \"Let It Be\" full intro.",
@@ -893,6 +950,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "LB intro",
+      "focus_song_id": "let_it_be",
       "copy": {
         "setup": "\"Let It Be\" full intro. drill block.",
         "success": "Nice. \"Let It Be\" full intro.",
@@ -907,6 +965,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "LB intro",
+      "focus_song_id": "let_it_be",
       "copy": {
         "setup": "\"Let It Be\" full intro. song block.",
         "success": "Nice. \"Let It Be\" full intro.",
@@ -927,6 +986,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "LB intro",
+      "focus_song_id": "let_it_be",
       "copy": {
         "setup": "\"Let It Be\" full intro. cooldown block.",
         "success": "Nice. \"Let It Be\" full intro.",
@@ -941,6 +1001,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "G 5-finger position",
+      "focus_song_id": null,
       "copy": {
         "setup": "F sharp and the black keys. warm engine block.",
         "success": "Nice. F sharp and the black keys.",
@@ -955,6 +1016,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "G 5-finger position",
+      "focus_song_id": null,
       "copy": {
         "setup": "F sharp and the black keys. drill block.",
         "success": "Nice. F sharp and the black keys.",
@@ -969,6 +1031,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "G 5-finger position",
+      "focus_song_id": null,
       "copy": {
         "setup": "F sharp and the black keys. song block.",
         "success": "Nice. F sharp and the black keys.",
@@ -989,6 +1052,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "G 5-finger position",
+      "focus_song_id": null,
       "copy": {
         "setup": "F sharp and the black keys. cooldown block.",
         "success": "Nice. F sharp and the black keys.",
@@ -1003,6 +1067,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "G I-IV-V7",
+      "focus_song_id": null,
       "copy": {
         "setup": "Moving to G position. warm engine block.",
         "success": "Nice. Moving to G position.",
@@ -1017,6 +1082,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "G I-IV-V7",
+      "focus_song_id": null,
       "copy": {
         "setup": "Moving to G position. drill block.",
         "success": "Nice. Moving to G position.",
@@ -1031,6 +1097,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "G I-IV-V7",
+      "focus_song_id": null,
       "copy": {
         "setup": "Moving to G position. song block.",
         "success": "Nice. Moving to G position.",
@@ -1051,6 +1118,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "G I-IV-V7",
+      "focus_song_id": null,
       "copy": {
         "setup": "Moving to G position. cooldown block.",
         "success": "Nice. Moving to G position.",
@@ -1065,6 +1133,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. warm engine block.",
         "success": "Nice. Review and free play.",
@@ -1079,6 +1148,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. drill block.",
         "success": "Nice. Review and free play.",
@@ -1093,6 +1163,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. song block.",
         "success": "Nice. Review and free play.",
@@ -1113,6 +1184,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. cooldown block.",
         "success": "Nice. Review and free play.",
@@ -1127,6 +1199,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "sight-read 4 bars",
+      "focus_song_id": null,
       "copy": {
         "setup": "Reading treble clef. warm engine block.",
         "success": "Nice. Reading treble clef.",
@@ -1141,6 +1214,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "sight-read 4 bars",
+      "focus_song_id": null,
       "copy": {
         "setup": "Reading treble clef. drill block.",
         "success": "Nice. Reading treble clef.",
@@ -1155,6 +1229,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "sight-read 4 bars",
+      "focus_song_id": null,
       "copy": {
         "setup": "Reading treble clef. song block.",
         "success": "Nice. Reading treble clef.",
@@ -1175,6 +1250,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "sight-read 4 bars",
+      "focus_song_id": null,
       "copy": {
         "setup": "Reading treble clef. cooldown block.",
         "success": "Nice. Reading treble clef.",
@@ -1189,6 +1265,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "sight-read 4 bars",
+      "focus_song_id": null,
       "copy": {
         "setup": "Reading bass clef. warm engine block.",
         "success": "Nice. Reading bass clef.",
@@ -1203,6 +1280,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "sight-read 4 bars",
+      "focus_song_id": null,
       "copy": {
         "setup": "Reading bass clef. drill block.",
         "success": "Nice. Reading bass clef.",
@@ -1217,6 +1295,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "sight-read 4 bars",
+      "focus_song_id": null,
       "copy": {
         "setup": "Reading bass clef. song block.",
         "success": "Nice. Reading bass clef.",
@@ -1237,6 +1316,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "sight-read 4 bars",
+      "focus_song_id": null,
       "copy": {
         "setup": "Reading bass clef. cooldown block.",
         "success": "Nice. Reading bass clef.",
@@ -1251,6 +1331,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "Imagine intro",
+      "focus_song_id": "imagine",
       "copy": {
         "setup": "\"Imagine\" intro (RH). warm engine block.",
         "success": "Nice. \"Imagine\" intro (RH).",
@@ -1265,6 +1346,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "Imagine intro",
+      "focus_song_id": "imagine",
       "copy": {
         "setup": "\"Imagine\" intro (RH). drill block.",
         "success": "Nice. \"Imagine\" intro (RH).",
@@ -1279,6 +1361,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "Imagine intro",
+      "focus_song_id": "imagine",
       "copy": {
         "setup": "\"Imagine\" intro (RH). song block.",
         "success": "Nice. \"Imagine\" intro (RH).",
@@ -1299,6 +1382,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "Imagine intro",
+      "focus_song_id": "imagine",
       "copy": {
         "setup": "\"Imagine\" intro (RH). cooldown block.",
         "success": "Nice. \"Imagine\" intro (RH).",
@@ -1313,6 +1397,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "same, H-T",
+      "focus_song_id": "imagine",
       "copy": {
         "setup": "\"Imagine\" hands-together. warm engine block.",
         "success": "Nice. \"Imagine\" hands-together.",
@@ -1327,6 +1412,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "same, H-T",
+      "focus_song_id": "imagine",
       "copy": {
         "setup": "\"Imagine\" hands-together. drill block.",
         "success": "Nice. \"Imagine\" hands-together.",
@@ -1341,6 +1427,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "same, H-T",
+      "focus_song_id": "imagine",
       "copy": {
         "setup": "\"Imagine\" hands-together. song block.",
         "success": "Nice. \"Imagine\" hands-together.",
@@ -1361,6 +1448,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "same, H-T",
+      "focus_song_id": "imagine",
       "copy": {
         "setup": "\"Imagine\" hands-together. cooldown block.",
         "success": "Nice. \"Imagine\" hands-together.",
@@ -1375,6 +1463,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. warm engine block.",
         "success": "Nice. Review and free play.",
@@ -1389,6 +1478,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. drill block.",
         "success": "Nice. Review and free play.",
@@ -1403,6 +1493,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. song block.",
         "success": "Nice. Review and free play.",
@@ -1423,6 +1514,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. cooldown block.",
         "success": "Nice. Review and free play.",
@@ -1437,6 +1529,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "apply to known piece",
+      "focus_song_id": null,
       "copy": {
         "setup": "Dotted quarter-eighth. warm engine block.",
         "success": "Nice. Dotted quarter-eighth.",
@@ -1451,6 +1544,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "apply to known piece",
+      "focus_song_id": null,
       "copy": {
         "setup": "Dotted quarter-eighth. drill block.",
         "success": "Nice. Dotted quarter-eighth.",
@@ -1465,6 +1559,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "apply to known piece",
+      "focus_song_id": null,
       "copy": {
         "setup": "Dotted quarter-eighth. song block.",
         "success": "Nice. Dotted quarter-eighth.",
@@ -1485,6 +1580,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "apply to known piece",
+      "focus_song_id": null,
       "copy": {
         "setup": "Dotted quarter-eighth. cooldown block.",
         "success": "Nice. Dotted quarter-eighth.",
@@ -1499,6 +1595,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "smoother progression",
+      "focus_song_id": null,
       "copy": {
         "setup": "Inversions of C and F. warm engine block.",
         "success": "Nice. Inversions of C and F.",
@@ -1513,6 +1610,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "smoother progression",
+      "focus_song_id": null,
       "copy": {
         "setup": "Inversions of C and F. drill block.",
         "success": "Nice. Inversions of C and F.",
@@ -1527,6 +1625,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "smoother progression",
+      "focus_song_id": null,
       "copy": {
         "setup": "Inversions of C and F. song block.",
         "success": "Nice. Inversions of C and F.",
@@ -1547,6 +1646,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "smoother progression",
+      "focus_song_id": null,
       "copy": {
         "setup": "Inversions of C and F. cooldown block.",
         "success": "Nice. Inversions of C and F.",
@@ -1561,6 +1661,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "apply to Ode or LB",
+      "focus_song_id": null,
       "copy": {
         "setup": "Dynamics. warm engine block.",
         "success": "Nice. Dynamics.",
@@ -1575,6 +1676,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "apply to Ode or LB",
+      "focus_song_id": null,
       "copy": {
         "setup": "Dynamics. drill block.",
         "success": "Nice. Dynamics.",
@@ -1589,6 +1691,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "apply to Ode or LB",
+      "focus_song_id": null,
       "copy": {
         "setup": "Dynamics. song block.",
         "success": "Nice. Dynamics.",
@@ -1609,6 +1712,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "apply to Ode or LB",
+      "focus_song_id": null,
       "copy": {
         "setup": "Dynamics. cooldown block.",
         "success": "Nice. Dynamics.",
@@ -1623,6 +1727,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "apply to Imagine",
+      "focus_song_id": "imagine",
       "copy": {
         "setup": "Pedaling (sustain). warm engine block.",
         "success": "Nice. Pedaling (sustain).",
@@ -1637,6 +1742,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "apply to Imagine",
+      "focus_song_id": "imagine",
       "copy": {
         "setup": "Pedaling (sustain). drill block.",
         "success": "Nice. Pedaling (sustain).",
@@ -1651,6 +1757,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "apply to Imagine",
+      "focus_song_id": "imagine",
       "copy": {
         "setup": "Pedaling (sustain). song block.",
         "success": "Nice. Pedaling (sustain).",
@@ -1671,6 +1778,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "apply to Imagine",
+      "focus_song_id": "imagine",
       "copy": {
         "setup": "Pedaling (sustain). cooldown block.",
         "success": "Nice. Pedaling (sustain).",
@@ -1685,6 +1793,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. warm engine block.",
         "success": "Nice. Review and free play.",
@@ -1699,6 +1808,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. drill block.",
         "success": "Nice. Review and free play.",
@@ -1713,6 +1823,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. song block.",
         "success": "Nice. Review and free play.",
@@ -1733,6 +1844,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "copy": {
         "setup": "Review and free play. cooldown block.",
         "success": "Nice. Review and free play.",
@@ -1747,6 +1859,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "user's piece",
+      "focus_song_id": null,
       "copy": {
         "setup": "Showcase prep. warm engine block.",
         "success": "Nice. Showcase prep.",
@@ -1761,6 +1874,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "user's piece",
+      "focus_song_id": null,
       "copy": {
         "setup": "Showcase prep. drill block.",
         "success": "Nice. Showcase prep.",
@@ -1775,6 +1889,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "user's piece",
+      "focus_song_id": null,
       "copy": {
         "setup": "Showcase prep. song block.",
         "success": "Nice. Showcase prep.",
@@ -1795,6 +1910,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "user's piece",
+      "focus_song_id": null,
       "copy": {
         "setup": "Showcase prep. cooldown block.",
         "success": "Nice. Showcase prep.",
@@ -1809,6 +1925,7 @@
       "block_type": "warm_engine",
       "duration_sec": 90,
       "focus_song": "user's piece",
+      "focus_song_id": null,
       "copy": {
         "setup": "Showcase day. warm engine block.",
         "success": "Nice. Showcase day.",
@@ -1823,6 +1940,7 @@
       "block_type": "drill",
       "duration_sec": 180,
       "focus_song": "user's piece",
+      "focus_song_id": null,
       "copy": {
         "setup": "Showcase day. drill block.",
         "success": "Nice. Showcase day.",
@@ -1837,6 +1955,7 @@
       "block_type": "song",
       "duration_sec": 240,
       "focus_song": "user's piece",
+      "focus_song_id": null,
       "copy": {
         "setup": "Showcase day. song block.",
         "success": "Nice. Showcase day.",
@@ -1857,6 +1976,7 @@
       "block_type": "cooldown",
       "duration_sec": 90,
       "focus_song": "user's piece",
+      "focus_song_id": null,
       "copy": {
         "setup": "Showcase day. cooldown block.",
         "success": "Nice. Showcase day.",

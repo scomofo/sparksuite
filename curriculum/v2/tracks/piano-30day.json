@@ -16,6 +16,7 @@
       "prerequisites": [],
       "target_duration_min": 10,
       "focus_song": "C 5-finger RH",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -57,6 +58,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "Ode intro",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -98,6 +100,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "same, with rhythm",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -140,6 +143,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "C-position LH",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -181,6 +185,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "Ode full A-section",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -220,6 +225,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -261,6 +267,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "C as a triad",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -302,6 +309,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "Amazing Grace A",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -343,6 +351,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "C to F switching",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -385,6 +394,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "C-F-G7 loop",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -426,6 +436,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "over drum loop",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -466,6 +477,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -507,6 +519,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "same progression",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -548,6 +561,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "\"Let It Be\" intro",
+      "focus_song_id": "let_it_be",
       "blocks": [
         {
           "type": "warm_engine",
@@ -589,6 +603,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "LB intro",
+      "focus_song_id": "let_it_be",
       "blocks": [
         {
           "type": "warm_engine",
@@ -630,6 +645,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "G 5-finger position",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -671,6 +687,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "G I-IV-V7",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -710,6 +727,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -751,6 +769,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "sight-read 4 bars",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -793,6 +812,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "sight-read 4 bars",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -835,6 +855,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "Imagine intro",
+      "focus_song_id": "imagine",
       "blocks": [
         {
           "type": "warm_engine",
@@ -876,6 +897,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "same, H-T",
+      "focus_song_id": "imagine",
       "blocks": [
         {
           "type": "warm_engine",
@@ -915,6 +937,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -956,6 +979,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "apply to known piece",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -997,6 +1021,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "smoother progression",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1038,6 +1063,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "apply to Ode or LB",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1079,6 +1105,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "apply to Imagine",
+      "focus_song_id": "imagine",
       "blocks": [
         {
           "type": "warm_engine",
@@ -1118,6 +1145,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1157,6 +1185,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user's piece",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1198,6 +1227,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user's piece",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",

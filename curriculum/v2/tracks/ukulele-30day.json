@@ -16,6 +16,7 @@
       "prerequisites": [],
       "target_duration_min": 10,
       "focus_song": "freeplay over reggae loop",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -57,6 +58,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "tuner",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -98,6 +100,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "\"Three Little Birds\" chorus",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -140,6 +143,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "reggae at 90",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -182,6 +186,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "C to Am drill",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -224,6 +229,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "C-Am-F loop",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -266,6 +272,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "the song",
+      "focus_song_id": "i_m_yours",
       "blocks": [
         {
           "type": "warm_engine",
@@ -307,6 +314,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "C-Am-F-G7",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -349,6 +357,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "the song",
+      "focus_song_id": "stand_by_me",
       "blocks": [
         {
           "type": "warm_engine",
@@ -388,6 +397,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -429,6 +439,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "\"Stand By Me\"",
+      "focus_song_id": "stand_by_me",
       "blocks": [
         {
           "type": "warm_engine",
@@ -470,6 +481,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "\"You Are My Sunshine\"",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -512,6 +524,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "the song",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -553,6 +566,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "\"Riptide\" intro",
+      "focus_song_id": "riptide",
       "blocks": [
         {
           "type": "warm_engine",
@@ -594,6 +608,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "the song",
+      "focus_song_id": "riptide",
       "blocks": [
         {
           "type": "warm_engine",
@@ -635,6 +650,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "D-Em-G switching",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -677,6 +693,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "Key-of-G song",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -716,6 +733,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -757,6 +775,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "metronome",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -799,6 +818,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "\"Three Little Birds\" full",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -840,6 +860,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "the song",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -881,6 +902,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "in context",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -920,6 +942,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -961,6 +984,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "blues-ish vamp",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1002,6 +1026,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "blues loop",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1044,6 +1069,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "C arpeggio",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1086,6 +1112,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "\"Over the Rainbow\" intro",
+      "focus_song_id": "somewhere_over_the_rainbow",
       "blocks": [
         {
           "type": "warm_engine",
@@ -1125,6 +1152,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user picks",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1164,6 +1192,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user's song",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",
@@ -1205,6 +1234,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "user's song",
+      "focus_song_id": null,
       "blocks": [
         {
           "type": "warm_engine",

@@ -21,6 +21,54 @@ function slugify(value) {
     .replace(/--+/g, "-");
 }
 
+// Canonical song id rule — must match sanitizePerformanceSongId in
+// js/performance/adapters.js so focus_song_id joins the same id space as
+// performance charts, content assets, and the session engine's toSongId.
+function toSongId(title) {
+  return String(title || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+// Per-instrument song libraries a focus_song_id must resolve against.
+// A session may only carry an id for a song its own instrument app can
+// actually open; songs referenced in prose but absent from the library
+// (e.g. "Mad World", "Ode to Joy") stay prose-only until content lands.
+const SONG_LIBRARY_SOURCES = {
+  guitar: "js/data.js",
+  bass: path.join("js", "instruments", "bass", "data.js"),
+  piano: path.join("js", "instruments", "piano", "data.js"),
+  ukulele: path.join("js", "sparksuite", "instruments", "ukulele", "ukulele_songs.js")
+};
+
+function loadLibrarySongIds(instrument) {
+  const source = fs.readFileSync(path.join(ROOT, SONG_LIBRARY_SOURCES[instrument]), "utf8");
+  const ids = new Set();
+  const titleRe = /title\s*:\s*"([^"]+)"/g;
+  let match;
+  while ((match = titleRe.exec(source))) ids.add(toSongId(match[1]));
+  if (!ids.size) {
+    throw new Error(`No song titles extracted from ${SONG_LIBRARY_SOURCES[instrument]} — extraction regex broken?`);
+  }
+  return ids;
+}
+
+function assertFocusSongIdsResolve(trackList) {
+  trackList.forEach((track) => {
+    const libraryIds = loadLibrarySongIds(track.instrument);
+    track.sessions.forEach((sessionRow) => {
+      if (!sessionRow.focus_song_id) return;
+      if (!libraryIds.has(sessionRow.focus_song_id)) {
+        throw new Error(
+          `${sessionRow.id}: focus_song_id "${sessionRow.focus_song_id}" does not resolve ` +
+          `in the ${track.instrument} song library (${SONG_LIBRARY_SOURCES[track.instrument]})`
+        );
+      }
+    });
+  });
+}
+
 function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
 }
@@ -98,7 +146,7 @@ function completion(type, detail) {
   return payload;
 }
 
-function session(prefix, instrument, day, title, newElement, songChunk, completionCriteria) {
+function session(prefix, instrument, day, title, newElement, songChunk, completionCriteria, focusSongId) {
   const sessionId = `${prefix}-d${String(day).padStart(2, "0")}`;
   const newElements = newElement && newElement !== "none" ? [slugify(newElement)] : [];
   const sessionObj = {
@@ -111,6 +159,10 @@ function session(prefix, instrument, day, title, newElement, songChunk, completi
     prerequisites: day > 1 ? [`${prefix}-d${String(day - 1).padStart(2, "0")}`] : [],
     target_duration_min: 10,
     focus_song: songChunk,
+    // Machine-readable join to the instrument's song library (canonical
+    // title-slug id space); null when the prose chunk is a loop, drill,
+    // user choice, or a song the library does not carry yet.
+    focus_song_id: focusSongId || null,
     blocks: buildBlocks(sessionId),
     completion_criteria: completionCriteria
   };
@@ -145,6 +197,7 @@ function buildActivities(track) {
         block_type: block.type,
         duration_sec: block.duration_sec,
         focus_song: sessionRow.focus_song,
+        focus_song_id: sessionRow.focus_song_id || null,
         copy: {
           setup: `${sessionRow.title}. ${block.type.replace(/_/g, " ")} block.`,
           success: `Nice. ${sessionRow.title}.`,
@@ -160,23 +213,23 @@ function buildActivities(track) {
 }
 
 const guitarRows = [
-  [1, "First sound in 2 minutes", "open-string strum", "\"Horse\" intro, open strings only", completion("self_report")],
-  [2, "How guitars get tuned", "use the tuner", "same", completion("self_report")],
+  [1, "First sound in 2 minutes", "open-string strum", "\"Horse\" intro, open strings only", completion("self_report"), "horse_with_no_name"],
+  [2, "How guitars get tuned", "use the tuner", "same", completion("self_report"), "horse_with_no_name"],
   [3, "The D chord", "D chord shape", "1-chord reggae", completion("count", "8 clean")],
   [4, "D with a drum loop", "D in rhythm", "1-chord pop", completion("timed", "3 min")],
   [5, "The A chord", "A chord shape", "A loop", completion("count", "8 clean")],
   [6, "D to A, slowly", "chord change", "D-A-D-A over drums", completion("count", "4 changes")],
   [7, "The E chord", "E chord shape", "E jam", completion("count", "8 clean")],
   [8, "A-D-E 12-bar blues", "3-chord blues", "simple blues loop", completion("timed", "4 min")],
-  [9, "The Em chord", "Em shape", "\"Horse\" full (Em-D6add9)", completion("self_report")],
-  [10, "The Am chord", "Am shape", "\"Stand By Me\" (transposed)", completion("self_report")],
-  [11, "\"Stand By Me\" full", "put it together", "full verse loop", completion("self_report")],
+  [9, "The Em chord", "Em shape", "\"Horse\" full (Em-D6add9)", completion("self_report"), "horse_with_no_name"],
+  [10, "The Am chord", "Am shape", "\"Stand By Me\" (transposed)", completion("self_report"), "stand_by_me"],
+  [11, "\"Stand By Me\" full", "put it together", "full verse loop", completion("self_report"), "stand_by_me"],
   [12, "Review and free play", "none", "user picks", completion("self_report")],
   [13, "Down-down-down-down strum", "first strum pattern", "any prior song", completion("timed", "3 min")],
   [14, "The and: downs and ups", "DU alternation", "same", completion("timed", "3 min")],
-  [15, "DDU UDU pattern", "classic strum", "\"Stand By Me\"", completion("self_report")],
-  [16, "The G chord", "G shape", "\"Knockin'\" intro", completion("count", "8 clean")],
-  [17, "The C chord", "C shape", "\"Knockin'\" full (G-D-Am-C)", completion("self_report")],
+  [15, "DDU UDU pattern", "classic strum", "\"Stand By Me\"", completion("self_report"), "stand_by_me"],
+  [16, "The G chord", "G shape", "\"Knockin'\" intro", completion("count", "8 clean"), "knockin_on_heavens_door"],
+  [17, "The C chord", "C shape", "\"Knockin'\" full (G-D-Am-C)", completion("self_report"), "knockin_on_heavens_door"],
   [18, "Review and free play", "none", "user picks", completion("self_report")],
   [19, "1-minute changes", "chord-change speed", "metronome-only", completion("count", "30 in 60s")],
   [20, "The Dm chord", "Dm shape", "\"Mad World\" intro", completion("self_report")],
@@ -185,7 +238,7 @@ const guitarRows = [
   [23, "Review and free play", "none", "user picks", completion("self_report")],
   [24, "E minor pentatonic pos. 1", "first scale", "jam over Em loop", completion("timed", "3 min")],
   [25, "Noodle over the blues", "improvise with 6 notes", "A-blues loop", completion("timed", "4 min")],
-  [26, "The F cheat chord", "small F", "\"Let It Be\" intro", completion("self_report")],
+  [26, "The F cheat chord", "small F", "\"Let It Be\" intro", completion("self_report"), "let_it_be"],
   [27, "Dynamics: loud and soft", "pick-hand control", "prior song", completion("self_report")],
   [28, "Review and free play", "none", "user picks", completion("self_report")],
   [29, "Prep for showcase", "none", "user's chosen song", completion("self_report")],
@@ -199,21 +252,21 @@ const bassRows = [
   [4, "Open A too", "2-string pulse", "drums", completion("timed", "3 min")],
   [5, "E-A groove", "alternating two strings", "rock loop", completion("self_report")],
   [6, "Fretting F on the E string", "first fretted note", "pulse loop", completion("count", "8 clean")],
-  [7, "\"Seven Nation Army\" riff (simplified)", "whole-step shape", "the song", completion("self_report")],
-  [8, "Eighth notes", "rhythmic subdivision", "same riff doubled", completion("timed", "3 min")],
+  [7, "\"Seven Nation Army\" riff (simplified)", "whole-step shape", "the song", completion("self_report"), "seven_nation_army"],
+  [8, "Eighth notes", "rhythmic subdivision", "same riff doubled", completion("timed", "3 min"), "seven_nation_army"],
   [9, "D and G strings", "all 4 strings open", "4-string pulse", completion("self_report")],
   [10, "Walking bassline on opens", "moving pulse", "jazz-ish drum", completion("timed", "3 min")],
   [11, "Review and free play", "none", "user picks", completion("self_report")],
   [12, "The moveable anchor", "right-hand floating thumb", "drills", completion("self_report")],
-  [13, "\"Come As You Are\" riff", "chromatic run", "the song", completion("self_report")],
+  [13, "\"Come As You Are\" riff", "chromatic run", "the song", completion("self_report"), "come_as_you_are"],
   [14, "Root-5th shape", "interval shape", "I-V in E", completion("timed", "3 min")],
   [15, "Root-5-octave shape", "upper octave", "12-bar in E", completion("self_report")],
   [16, "Minor pentatonic (first 3 notes)", "scale fragment", "E-min vamp", completion("timed", "3 min")],
-  [17, "\"Sunshine of Your Love\" intro", "pentatonic in action", "the song", completion("self_report")],
+  [17, "\"Sunshine of Your Love\" intro", "pentatonic in action", "the song", completion("self_report"), "sunshine_of_your_love"],
   [18, "Blues scale (6 notes)", "added b5", "12-bar blues", completion("timed", "3 min")],
   [19, "Review and free play", "none", "user picks", completion("self_report")],
   [20, "Sliding between notes", "legato LH", "slide drills", completion("self_report")],
-  [21, "\"Another One Bites the Dust\" riff", "iconic disco", "the song", completion("self_report")],
+  [21, "\"Another One Bites the Dust\" riff", "iconic disco", "the song", completion("self_report"), "another_one_bites_the_dust"],
   [22, "Muting with the picking hand", "right-hand mute", "funk loop", completion("timed", "3 min")],
   [23, "Syncopation basics", "off-beat emphasis", "funk groove", completion("timed", "3 min")],
   [24, "Review and free play", "none", "user picks", completion("self_report")],
@@ -239,20 +292,20 @@ const pianoRows = [
   [11, "I-IV-V7 in C", "full progression", "over drum loop", completion("timed", "4 min")],
   [12, "Review and free play", "none", "user picks", completion("self_report")],
   [13, "LH root-notes under chords", "bass with chords", "same progression", completion("self_report")],
-  [14, "Broken-chord LH pattern", "Alberti-lite", "\"Let It Be\" intro", completion("self_report")],
-  [15, "\"Let It Be\" full intro", "application", "LB intro", completion("self_report")],
+  [14, "Broken-chord LH pattern", "Alberti-lite", "\"Let It Be\" intro", completion("self_report"), "let_it_be"],
+  [15, "\"Let It Be\" full intro", "application", "LB intro", completion("self_report"), "let_it_be"],
   [16, "F sharp and the black keys", "first accidental", "G 5-finger position", completion("self_report")],
   [17, "Moving to G position", "key change", "G I-IV-V7", completion("self_report")],
   [18, "Review and free play", "none", "user picks", completion("self_report")],
   [19, "Reading treble clef", "staff reading intro", "sight-read 4 bars", completion("timed", "4 min")],
   [20, "Reading bass clef", "LH staff", "sight-read 4 bars", completion("timed", "4 min")],
-  [21, "\"Imagine\" intro (RH)", "classic pop", "Imagine intro", completion("self_report")],
-  [22, "\"Imagine\" hands-together", "application", "same, H-T", completion("self_report")],
+  [21, "\"Imagine\" intro (RH)", "classic pop", "Imagine intro", completion("self_report"), "imagine"],
+  [22, "\"Imagine\" hands-together", "application", "same, H-T", completion("self_report"), "imagine"],
   [23, "Review and free play", "none", "user picks", completion("self_report")],
   [24, "Dotted quarter-eighth", "new rhythm", "apply to known piece", completion("self_report")],
   [25, "Inversions of C and F", "voice leading", "smoother progression", completion("self_report")],
   [26, "Dynamics", "piano vs forte", "apply to Ode or LB", completion("self_report")],
-  [27, "Pedaling (sustain)", "right-foot intro", "apply to Imagine", completion("self_report")],
+  [27, "Pedaling (sustain)", "right-foot intro", "apply to Imagine", completion("self_report"), "imagine"],
   [28, "Review and free play", "none", "user picks", completion("self_report")],
   [29, "Showcase prep", "none", "user's piece", completion("self_report")],
   [30, "Showcase day", "record yourself", "user's piece", completion("record_save")]
@@ -265,15 +318,15 @@ const ukuleleRows = [
   [4, "C with a reggae loop", "C in rhythm", "reggae at 90", completion("timed", "3 min")],
   [5, "The Am chord", "two-finger chord", "C to Am drill", completion("count", "4 changes")],
   [6, "The F chord", "two-finger chord", "C-Am-F loop", completion("count", "8 clean")],
-  [7, "\"I'm Yours\" simplified", "C-Am-F", "the song", completion("self_report")],
+  [7, "\"I'm Yours\" simplified", "C-Am-F", "the song", completion("self_report"), "i_m_yours"],
   [8, "The G7 chord", "three-finger", "C-Am-F-G7", completion("count", "8 clean")],
-  [9, "\"Stand By Me\" on uke", "full C-Am-F-G7", "the song", completion("self_report")],
+  [9, "\"Stand By Me\" on uke", "full C-Am-F-G7", "the song", completion("self_report"), "stand_by_me"],
   [10, "Review and free play", "none", "user picks", completion("self_report")],
-  [11, "Island strum (D-DU-UDU)", "strum pattern", "\"Stand By Me\"", completion("self_report")],
+  [11, "Island strum (D-DU-UDU)", "strum pattern", "\"Stand By Me\"", completion("self_report"), "stand_by_me"],
   [12, "The G chord", "three-finger triangle", "\"You Are My Sunshine\"", completion("count", "8 clean")],
   [13, "\"Sunshine\" on uke", "C-F-G", "the song", completion("self_report")],
-  [14, "The Em chord", "two-finger", "\"Riptide\" intro", completion("self_report")],
-  [15, "\"Riptide\" simplified", "Am-G-C-F", "the song", completion("self_report")],
+  [14, "The Em chord", "two-finger", "\"Riptide\" intro", completion("self_report"), "riptide"],
+  [15, "\"Riptide\" simplified", "Am-G-C-F", "the song", completion("self_report"), "riptide"],
   [16, "The D chord", "two-finger on 2nd fret", "D-Em-G switching", completion("count", "4 changes")],
   [17, "D7 chord", "variant", "Key-of-G song", completion("self_report")],
   [18, "Review and free play", "none", "user picks", completion("self_report")],
@@ -285,7 +338,7 @@ const ukuleleRows = [
   [24, "The C7 chord", "dominant variant", "blues-ish vamp", completion("self_report")],
   [25, "Basic 12-bar blues (C7-F7-G7)", "form", "blues loop", completion("timed", "4 min")],
   [26, "Fingerpicking: thumb and index", "RH pattern", "C arpeggio", completion("timed", "3 min")],
-  [27, "Fingerpicking 4-pattern", "classic pluck", "\"Over the Rainbow\" intro", completion("self_report")],
+  [27, "Fingerpicking 4-pattern", "classic pluck", "\"Over the Rainbow\" intro", completion("self_report"), "somewhere_over_the_rainbow"],
   [28, "Review and free play", "none", "user picks", completion("self_report")],
   [29, "Showcase prep", "none", "user's song", completion("self_report")],
   [30, "Showcase day", "record yourself", "user's song", completion("record_save")]
@@ -299,7 +352,7 @@ const tracks = [
     required_chords: ["A", "Am", "D", "Dm", "E", "Em", "G", "C", "F-easy", "F-full", "A7", "D7", "E7", "G7"],
     required_scales: ["E-minor-pentatonic-pos-1", "A-minor-pentatonic-pos-1", "C-major-scale-open"],
     required_songs: ["Horse With No Name", "Stand By Me", "Knockin' on Heaven's Door", "Mad World", "Let It Be intro", "Seven Nation Army"],
-    sessions: guitarRows.map((row) => session("gtr", "guitar", row[0], row[1], row[2], row[3], row[4]))
+    sessions: guitarRows.map((row) => session("gtr", "guitar", row[0], row[1], row[2], row[3], row[4], row[5]))
   },
   {
     instrument: "bass",
@@ -313,7 +366,7 @@ const tracks = [
       "Root-5-octave movable pattern"
     ],
     required_songs: ["Seven Nation Army", "Come As You Are", "Sunshine of Your Love", "Another One Bites the Dust", "12-bar blues in E", "funk vamp in E"],
-    sessions: bassRows.map((row) => session("bass", "bass", row[0], row[1], row[2], row[3], row[4]))
+    sessions: bassRows.map((row) => session("bass", "bass", row[0], row[1], row[2], row[3], row[4], row[5]))
   },
   {
     instrument: "piano",
@@ -321,7 +374,7 @@ const tracks = [
     title: "Piano 30-Day ADHD-First Track",
     required_chords: ["C-major", "F-major", "G7", "Am", "Dm", "Em", "C-major-first-inversion", "F-major-first-inversion"],
     required_pieces: ["Ode to Joy", "Amazing Grace", "Let It Be intro", "Imagine intro", "Twinkle Twinkle"],
-    sessions: pianoRows.map((row) => session("pno", "piano", row[0], row[1], row[2], row[3], row[4]))
+    sessions: pianoRows.map((row) => session("pno", "piano", row[0], row[1], row[2], row[3], row[4], row[5]))
   },
   {
     instrument: "ukulele",
@@ -329,7 +382,7 @@ const tracks = [
     title: "Ukulele 30-Day ADHD-First Track",
     required_chords: ["C", "Am", "F", "G7", "G", "Em", "D", "Dm", "D7", "A7", "C7", "F7"],
     required_songs: ["Three Little Birds", "Stand By Me", "I'm Yours", "You Are My Sunshine", "Riptide", "Over the Rainbow"],
-    sessions: ukuleleRows.map((row) => session("uke", "ukulele", row[0], row[1], row[2], row[3], row[4]))
+    sessions: ukuleleRows.map((row) => session("uke", "ukulele", row[0], row[1], row[2], row[3], row[4], row[5]))
   }
 ];
 
@@ -353,6 +406,8 @@ const catalog = {
     activity_file: `activities/${track.instrument}-30day.activities.json`
   }))
 };
+
+assertFocusSongIdsResolve(tracks);
 
 const runtimeTracks = [];
 const runtimeActivityBundles = [];

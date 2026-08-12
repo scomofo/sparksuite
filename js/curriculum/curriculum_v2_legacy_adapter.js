@@ -22,6 +22,10 @@
         sessions: String(session.day),
         desc: session.focus_song ? ("Song focus: " + session.focus_song) : "",
         songs: session.focus_song ? [session.focus_song] : [],
+        // Canonical library join (same id space as performance charts and
+        // the session engine's toSongId); empty when the focus is a loop,
+        // drill, or user choice rather than a library song.
+        songIds: session.focus_song_id ? [session.focus_song_id] : [],
         blocks: Array.isArray(session.blocks) ? session.blocks.slice() : [],
         completion: session.completion_criteria || null,
         source: "curriculum-v2"
