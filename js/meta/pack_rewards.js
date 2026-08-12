@@ -37,7 +37,8 @@
   }
 
   function getPackCompletionRatio(packId){
-    var row = S.packCompletion.packs[packId];
+    var packs = S.packCompletion && S.packCompletion.packs;
+    var row = packs ? packs[packId] : null;
     return row ? row.progress || 0 : 0;
   }
 

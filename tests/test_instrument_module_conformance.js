@@ -112,14 +112,10 @@ INSTRUMENTS.forEach(function(spec) {
   test(spec.key + ": core contract (id, skill tree, lessons, exercises)", function() {
     assert.strictEqual(mod.id, spec.key);
     var skillTree = mod.getSkillTree();
-    if (spec.key === "bass") {
-      // Known divergence: bass returns BASS_SKILL_TREE as a keyed object
-      // while every other module returns an array. Ratcheted here so it
-      // can't regress further; aligning bass to an array (and consuming
-      // code with it) is a candidate cleanup.
-      assert.ok(skillTree && typeof skillTree === "object", "getSkillTree() must return the skill tree object");
-    } else {
-      assert.ok(Array.isArray(skillTree), "getSkillTree() must return an array");
+    assert.ok(Array.isArray(skillTree), "getSkillTree() must return an array of skill nodes");
+    for (var n = 0; n < skillTree.length; n++) {
+      assert.ok(typeof skillTree[n].id === "string" && skillTree[n].id.length,
+        "skill tree node " + n + " must carry a string id");
     }
     var lessons = mod.getLessons();
     assert.ok(Array.isArray(lessons) && lessons.length > 0, "getLessons() must return a non-empty array");
@@ -138,6 +134,23 @@ INSTRUMENTS.forEach(function(spec) {
       seen[id] = true;
     }
   });
+
+  if (spec.key === "bass") {
+    // Regression guard for the flattened bass skill tree: the shared dev
+    // tooling (curriculum validator, highlighter) cross-references
+    // lesson.skill and lesson.prerequisites against skill-tree node ids,
+    // which the old category-keyed object shape broke silently.
+    test("bass: every lesson skill and prerequisite resolves in the skill tree", function() {
+      var ids = {};
+      mod.getSkillTree().forEach(function(node) { ids[node.id] = true; });
+      mod.getLessons().forEach(function(lesson) {
+        assert.ok(ids[lesson.skill], "lesson " + lesson.id + " skill '" + lesson.skill + "' missing from tree");
+        (lesson.prerequisites || []).forEach(function(prereq) {
+          assert.ok(ids[prereq], "lesson " + lesson.id + " prerequisite '" + prereq + "' missing from tree");
+        });
+      });
+    });
+  }
 
   test(spec.key + ": at least one lesson resolves to concrete exercises", function() {
     var lessons = mod.getLessons();

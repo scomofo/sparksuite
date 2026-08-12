@@ -193,5 +193,10 @@ test("getPackCompletionRatio reports stored progress", function() {
   assert.strictEqual(getPackCompletionRatio("unknown"), 0);
 });
 
+test("getPackCompletionRatio is safe before any pack progress exists", function() {
+  assert.strictEqual(getPackCompletionRatio("starter"), 0,
+    "fresh state (no S.packCompletion) must read as zero progress, not throw");
+});
+
 console.log("\n" + passed + " passed, " + failed + " failed");
 if (failed > 0) process.exit(1);

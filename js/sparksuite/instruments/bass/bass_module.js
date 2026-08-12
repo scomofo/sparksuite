@@ -491,7 +491,31 @@
     name: "Bass",
 
     getSkillTree: function() {
-      return window.BASS_SKILL_TREE || {};
+      // BASS_SKILL_TREE (js/instruments/bass/data.js) is an object of
+      // category -> skill-name arrays, kept in that shape for the legacy
+      // bass app. Every other module's getSkillTree() returns an array of
+      // { id, name, category, prerequisites } nodes, and shared tooling
+      // (curriculum validator, dev highlighter) collects skill ids from
+      // that node shape — so flatten here at the module boundary.
+      var tree = window.BASS_SKILL_TREE || {};
+      var nodes = [];
+      var seen = {};
+      for (var category in tree) {
+        if (!Object.prototype.hasOwnProperty.call(tree, category)) continue;
+        var skills = Array.isArray(tree[category]) ? tree[category] : [];
+        for (var i = 0; i < skills.length; i++) {
+          var id = skills[i];
+          if (seen[id]) continue; // e.g. "octaves" is listed under two categories
+          seen[id] = true;
+          nodes.push({
+            id: id,
+            name: id.replace(/_/g, " ").replace(/\b[a-z]/g, function(c) { return c.toUpperCase(); }),
+            category: category,
+            prerequisites: []
+          });
+        }
+      }
+      return nodes;
     },
 
     getLessons: function() {
