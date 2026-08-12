@@ -91,13 +91,68 @@
   }
 
   async function parseMidiBufferWithLibrary(buffer){
-    // Adapter placeholder - integrate chosen MIDI parser library here.
-    // Must return raw parsed MIDI object compatible with @tonejs/midi format.
-    // Example: const midi = new Midi(buffer); return midi;
+    // Prefer a bundled @tonejs/midi-compatible library when one is loaded.
     if(typeof Midi !== "undefined"){
       return new Midi(buffer);
     }
+    if(typeof SparkChartIO !== "undefined" && typeof SparkTempoMap !== "undefined"){
+      return adaptCoreMidiParse(new SparkChartIO().parseMidiRaw(buffer));
+    }
     throw new Error("MIDI parser library adapter not implemented");
+  }
+
+  // Adapts the core SparkChartIO raw MIDI parse to the @tonejs/midi shape
+  // that normalizeParsedMidi consumes.
+  function adaptCoreMidiParse(raw){
+    var ppq = raw.ppq || 480;
+    var segments = raw.tempoSegments && raw.tempoSegments.length ? raw.tempoSegments : [{ tick: 0, bpm: 120 }];
+    var tempoMap = new SparkTempoMap({ ppq: ppq, segments: segments });
+    var tempos = [];
+    for(var s=0;s<segments.length;s++){
+      tempos.push({ ticks: segments[s].tick || 0, bpm: segments[s].bpm || 120 });
+    }
+    var timeSignatures = [];
+    var srcSignatures = Array.isArray(raw.timeSignatures) ? raw.timeSignatures : [];
+    for(var g=0;g<srcSignatures.length;g++){
+      timeSignatures.push({
+        ticks: srcSignatures[g].tick || 0,
+        timeSignature: [srcSignatures[g].numerator || 4, srcSignatures[g].denominator || 4]
+      });
+    }
+    var tracks = [];
+    var srcTracks = Array.isArray(raw.tracks) ? raw.tracks : [];
+    for(var t=0;t<srcTracks.length;t++){
+      tracks.push(adaptCoreMidiTrack(srcTracks[t], tempoMap));
+    }
+    return {
+      header: { ppq: ppq, tempos: tempos, timeSignatures: timeSignatures },
+      tracks: tracks
+    };
+  }
+
+  function adaptCoreMidiTrack(track, tempoMap){
+    var notes = [];
+    var src = Array.isArray(track.notes) ? track.notes : [];
+    for(var i=0;i<src.length;i++){
+      var startTick = src[i].tick || 0;
+      var durationTicks = src[i].tickLength || 0;
+      var startSec = tempoMap.tickToSeconds(startTick);
+      var endSec = tempoMap.tickToSeconds(startTick + durationTicks);
+      notes.push({
+        midi: src[i].midi != null ? src[i].midi : null,
+        ticks: startTick,
+        durationTicks: durationTicks,
+        time: startSec,
+        duration: Math.max(0, endSec - startSec),
+        velocity: (src[i].velocity != null ? src[i].velocity : 96) / 127
+      });
+    }
+    var channels = Array.isArray(track.channels) ? track.channels : [];
+    return {
+      name: track.name || "",
+      channel: channels.length === 1 ? channels[0] : (src.length && src[0].channel != null ? src[0].channel : null),
+      notes: notes
+    };
   }
 
   window.parseMidiFile = parseMidiFile;

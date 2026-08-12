@@ -171,6 +171,13 @@
     });
   };
 
+  // Raw multi-track parse for callers (e.g. the MIDI import flow) that need
+  // every track's notes, tempo segments, and time signatures rather than a
+  // built SongChart for a single selected track.
+  ChartIO.prototype.parseMidiRaw = function(buffer) {
+    return parseMidiBuffer(buffer);
+  };
+
   ChartIO.prototype.fromPackage = function(pkg, adapter, options) {
     var self = this;
     return this.measureChartLoad("chart.load.package", function() {
