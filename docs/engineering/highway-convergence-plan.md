@@ -75,7 +75,7 @@ Reuse performance mode's integration pattern (`js/performance/highway.js`:
 
 | Concern | Rhythm | Performance | Convergence target |
 |---|---|---|---|
-| Judge | `input_judge.js` (lane-aware nearest) | `session.js maybeScorePendingEvents` | `input_judge` (it fixed a lane-stealing bug the performance scanner still has) |
+| Judge | `input_judge.js` (lane-aware nearest) | ✅ Converged (2026-08-12): `maybeScorePendingEvents` collects in-window candidates and delegates target selection to `SparkInputJudge.selectSnapshotTarget` — closest full note-match wins over a fractionally-closer partial match, one event per frame's input. Pinned by `tests/test_performance_judge_convergence.js`. | `input_judge` ✅ |
 | Score model | integer + combo multiplier | 0–1 weighted → grade | Needs a product decision — different feels, same engine possible |
 | Note model | tick-based `SparkNoteEvent` | seconds-based events | Tick-based domain model, flattened at the renderer boundary (the MIDI chart generator already produces real tempo maps) |
 

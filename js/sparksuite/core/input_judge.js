@@ -61,6 +61,35 @@
     };
   };
 
+  // Snapshot-model twin of resolve(): performance mode polls a continuous
+  // input snapshot instead of consuming discrete input events, but target
+  // selection follows the same rule — prefer the closest candidate whose
+  // expected notes the input fully covers, and only fall back to the
+  // closest partial match when nothing in the window matches fully.
+  // candidates: [{ absDiffMs, fullMatch, ... }], pre-filtered to in-window
+  // scorable events. Returns the chosen candidate, or null.
+  InputJudge.prototype.selectSnapshotTarget = function(candidates) {
+    if (!Array.isArray(candidates) || !candidates.length) return null;
+    var best = null;
+    var bestDiff = Infinity;
+    var bestMatch = null;
+    var bestMatchDiff = Infinity;
+    for (var i = 0; i < candidates.length; i++) {
+      var candidate = candidates[i];
+      if (!candidate) continue;
+      var absDiff = typeof candidate.absDiffMs === "number" ? candidate.absDiffMs : Infinity;
+      if (absDiff < bestDiff) {
+        best = candidate;
+        bestDiff = absDiff;
+      }
+      if (candidate.fullMatch && absDiff < bestMatchDiff) {
+        bestMatch = candidate;
+        bestMatchDiff = absDiff;
+      }
+    }
+    return bestMatch || best;
+  };
+
   function laneMaskMatches(expected, actual, allowExtraFretTolerance) {
     if (expected === actual) return true;
     if (!allowExtraFretTolerance) return false;

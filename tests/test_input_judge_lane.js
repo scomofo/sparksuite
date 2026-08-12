@@ -51,3 +51,32 @@ test("no target when nothing is in the miss window", function() {
   assert.strictEqual(res.matched, false);
   assert.strictEqual(res.reason, "no_target");
 });
+
+console.log("\n--- Snapshot target selection (performance mode) ---");
+
+test("prefers the closest full-match candidate over a closer partial match", function() {
+  var judge = new window.SparkInputJudge();
+  var partial = { absDiffMs: 40, fullMatch: false };
+  var full = { absDiffMs: 200, fullMatch: true };
+  assert.strictEqual(judge.selectSnapshotTarget([partial, full]), full);
+});
+
+test("falls back to the closest partial match when nothing matches fully", function() {
+  var judge = new window.SparkInputJudge();
+  var far = { absDiffMs: 250, fullMatch: false };
+  var near = { absDiffMs: 50, fullMatch: false };
+  assert.strictEqual(judge.selectSnapshotTarget([far, near]), near);
+});
+
+test("closest full match wins among multiple full matches", function() {
+  var judge = new window.SparkInputJudge();
+  var farFull = { absDiffMs: 300, fullMatch: true };
+  var nearFull = { absDiffMs: 60, fullMatch: true };
+  assert.strictEqual(judge.selectSnapshotTarget([farFull, nearFull, { absDiffMs: 10, fullMatch: false }]), nearFull);
+});
+
+test("returns null for an empty or missing candidate list", function() {
+  var judge = new window.SparkInputJudge();
+  assert.strictEqual(judge.selectSnapshotTarget([]), null);
+  assert.strictEqual(judge.selectSnapshotTarget(null), null);
+});

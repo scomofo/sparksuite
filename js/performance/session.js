@@ -564,6 +564,14 @@ function _updatePerformDisplay() {
   }
 }
 
+var _performInputJudge = null;
+function getPerformanceInputJudge() {
+  if (!_performInputJudge && typeof SparkInputJudge !== "undefined") {
+    _performInputJudge = new SparkInputJudge();
+  }
+  return _performInputJudge;
+}
+
 function maybeScorePendingEvents(nowSec) {
   var chart = S.performChart;
   if (!chart) return;
@@ -581,6 +589,9 @@ function maybeScorePendingEvents(nowSec) {
       : (typeof getStoredPerformanceMicOffsetMs === "function" ? getStoredPerformanceMicOffsetMs() : (S.performMicOffsetMs || 0)));
   var targetTechnique = S.performTargetTechnique || null;
 
+  // Sweep past-window misses and collect the in-window events this frame's
+  // input could score, with their prospective results.
+  var candidates = [];
   for (var i = 0; i < chart.events.length; i++) {
     var evt = chart.events[i];
     if (evt._scored) continue;
@@ -608,30 +619,57 @@ function maybeScorePendingEvents(nowSec) {
     // In scoring window — check snapshot
     if (performanceSnapshotHasActivity(snapshot, evt, S.performMode)) {
       var result = scorePerformanceEvent(evt, snapshot, deltaMs, S.performDifficulty, S.performMode);
-
       if (result.grade !== "miss") {
-        evt._scored = true;
-        evt._hit = true;
-        evt._result = result;
-        evt._score = result.score;
-        if (typeof notifyHighwayHit === "function") notifyHighwayHit(evt);
-        updatePhraseStats(S.performPhraseStats, evt, result);
-
-        S.performCombo++;
-        if (S.performCombo > S.performMaxCombo) S.performMaxCombo = S.performCombo;
-
-        var comboMult = Math.min(1 + S.performCombo * 0.1, 4);
-        S.performScore += Math.round(100 * result.score * comboMult);
-
-        S.performLastHitLabel = typeof buildPerformanceFeedbackLabel === "function"
-          ? buildPerformanceFeedbackLabel(evt, result, targetTechnique)
-          : (result.grade.toUpperCase() + "!");
-        S.performLastHitTime = Date.now();
-
-        _updatePerformanceAccuracy(chart);
+        candidates.push({
+          evt: evt,
+          result: result,
+          absDiffMs: Math.abs(deltaMs),
+          fullMatch: result.noteScore >= 1
+        });
       }
     }
   }
+
+  if (!candidates.length) return;
+
+  // One input, one note: the shared judge picks the single event this
+  // frame's input is for — the closest fully-matching event wins over a
+  // fractionally-closer partial match, so a neighboring event can no
+  // longer steal input intended for the chord actually being played
+  // (the same lane-stealing fix input_judge applies in rhythm mode).
+  var judge = getPerformanceInputJudge();
+  if (judge) {
+    var target = judge.selectSnapshotTarget(candidates);
+    if (target) applyPerformanceEventHit(chart, target.evt, target.result, targetTechnique);
+    return;
+  }
+
+  // Judge unavailable — score every in-window candidate (legacy scanner).
+  for (var c = 0; c < candidates.length; c++) {
+    applyPerformanceEventHit(chart, candidates[c].evt, candidates[c].result, targetTechnique);
+  }
+}
+
+function applyPerformanceEventHit(chart, evt, result, targetTechnique) {
+  evt._scored = true;
+  evt._hit = true;
+  evt._result = result;
+  evt._score = result.score;
+  if (typeof notifyHighwayHit === "function") notifyHighwayHit(evt);
+  updatePhraseStats(S.performPhraseStats, evt, result);
+
+  S.performCombo++;
+  if (S.performCombo > S.performMaxCombo) S.performMaxCombo = S.performCombo;
+
+  var comboMult = Math.min(1 + S.performCombo * 0.1, 4);
+  S.performScore += Math.round(100 * result.score * comboMult);
+
+  S.performLastHitLabel = typeof buildPerformanceFeedbackLabel === "function"
+    ? buildPerformanceFeedbackLabel(evt, result, targetTechnique)
+    : (result.grade.toUpperCase() + "!");
+  S.performLastHitTime = Date.now();
+
+  _updatePerformanceAccuracy(chart);
 }
 
 function _updatePerformanceAccuracy(chart) {
