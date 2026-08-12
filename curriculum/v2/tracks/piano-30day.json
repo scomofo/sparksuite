@@ -58,7 +58,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "Ode intro",
-      "focus_song_id": null,
+      "focus_song_id": "ode_to_joy",
       "blocks": [
         {
           "type": "warm_engine",
@@ -100,7 +100,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "same, with rhythm",
-      "focus_song_id": null,
+      "focus_song_id": "ode_to_joy",
       "blocks": [
         {
           "type": "warm_engine",
@@ -185,7 +185,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "Ode full A-section",
-      "focus_song_id": null,
+      "focus_song_id": "ode_to_joy",
       "blocks": [
         {
           "type": "warm_engine",
@@ -309,7 +309,7 @@
       ],
       "target_duration_min": 10,
       "focus_song": "Amazing Grace A",
-      "focus_song_id": null,
+      "focus_song_id": "amazing_grace",
       "blocks": [
         {
           "type": "warm_engine",

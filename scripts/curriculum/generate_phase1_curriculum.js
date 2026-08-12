@@ -280,13 +280,13 @@ const bassRows = [
 
 const pianoRows = [
   [1, "Find middle C", "keyboard geography", "C 5-finger RH", completion("self_report")],
-  [2, "\"Ode to Joy\" (first 4 bars, RH)", "RH melody", "Ode intro", completion("self_report")],
-  [3, "Quarter, half, whole", "note durations", "same, with rhythm", completion("timed", "3 min")],
+  [2, "\"Ode to Joy\" (first 4 bars, RH)", "RH melody", "Ode intro", completion("self_report"), "ode_to_joy"],
+  [3, "Quarter, half, whole", "note durations", "same, with rhythm", completion("timed", "3 min"), "ode_to_joy"],
   [4, "LH 5-finger in C", "left hand alone", "C-position LH", completion("self_report")],
-  [5, "\"Ode to Joy\" hands-together", "coordinating hands", "Ode full A-section", completion("self_report")],
+  [5, "\"Ode to Joy\" hands-together", "coordinating hands", "Ode full A-section", completion("self_report"), "ode_to_joy"],
   [6, "Review and free play", "none", "user picks", completion("self_report")],
   [7, "C-major triad (RH)", "chord shape", "C as a triad", completion("self_report")],
-  [8, "\"Amazing Grace\" RH melody", "new melody", "Amazing Grace A", completion("self_report")],
+  [8, "\"Amazing Grace\" RH melody", "new melody", "Amazing Grace A", completion("self_report"), "amazing_grace"],
   [9, "F-major triad (RH)", "second chord", "C to F switching", completion("count", "4 changes")],
   [10, "G7 chord (RH)", "4-note chord", "C-F-G7 loop", completion("self_report")],
   [11, "I-IV-V7 in C", "full progression", "over drum loop", completion("timed", "4 min")],

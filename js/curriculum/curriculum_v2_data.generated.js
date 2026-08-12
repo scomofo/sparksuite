@@ -2612,7 +2612,7 @@
           ],
           "target_duration_min": 10,
           "focus_song": "Ode intro",
-          "focus_song_id": null,
+          "focus_song_id": "ode_to_joy",
           "blocks": [
             {
               "type": "warm_engine",
@@ -2654,7 +2654,7 @@
           ],
           "target_duration_min": 10,
           "focus_song": "same, with rhythm",
-          "focus_song_id": null,
+          "focus_song_id": "ode_to_joy",
           "blocks": [
             {
               "type": "warm_engine",
@@ -2739,7 +2739,7 @@
           ],
           "target_duration_min": 10,
           "focus_song": "Ode full A-section",
-          "focus_song_id": null,
+          "focus_song_id": "ode_to_joy",
           "blocks": [
             {
               "type": "warm_engine",
@@ -2863,7 +2863,7 @@
           ],
           "target_duration_min": 10,
           "focus_song": "Amazing Grace A",
-          "focus_song_id": null,
+          "focus_song_id": "amazing_grace",
           "blocks": [
             {
               "type": "warm_engine",
@@ -9128,7 +9128,7 @@
           "block_type": "warm_engine",
           "duration_sec": 90,
           "focus_song": "Ode intro",
-          "focus_song_id": null,
+          "focus_song_id": "ode_to_joy",
           "copy": {
             "setup": "\"Ode to Joy\" (first 4 bars, RH). warm engine block.",
             "success": "Nice. \"Ode to Joy\" (first 4 bars, RH).",
@@ -9143,7 +9143,7 @@
           "block_type": "drill",
           "duration_sec": 180,
           "focus_song": "Ode intro",
-          "focus_song_id": null,
+          "focus_song_id": "ode_to_joy",
           "copy": {
             "setup": "\"Ode to Joy\" (first 4 bars, RH). drill block.",
             "success": "Nice. \"Ode to Joy\" (first 4 bars, RH).",
@@ -9158,7 +9158,7 @@
           "block_type": "song",
           "duration_sec": 240,
           "focus_song": "Ode intro",
-          "focus_song_id": null,
+          "focus_song_id": "ode_to_joy",
           "copy": {
             "setup": "\"Ode to Joy\" (first 4 bars, RH). song block.",
             "success": "Nice. \"Ode to Joy\" (first 4 bars, RH).",
@@ -9179,7 +9179,7 @@
           "block_type": "cooldown",
           "duration_sec": 90,
           "focus_song": "Ode intro",
-          "focus_song_id": null,
+          "focus_song_id": "ode_to_joy",
           "copy": {
             "setup": "\"Ode to Joy\" (first 4 bars, RH). cooldown block.",
             "success": "Nice. \"Ode to Joy\" (first 4 bars, RH).",
@@ -9194,7 +9194,7 @@
           "block_type": "warm_engine",
           "duration_sec": 90,
           "focus_song": "same, with rhythm",
-          "focus_song_id": null,
+          "focus_song_id": "ode_to_joy",
           "copy": {
             "setup": "Quarter, half, whole. warm engine block.",
             "success": "Nice. Quarter, half, whole.",
@@ -9209,7 +9209,7 @@
           "block_type": "drill",
           "duration_sec": 180,
           "focus_song": "same, with rhythm",
-          "focus_song_id": null,
+          "focus_song_id": "ode_to_joy",
           "copy": {
             "setup": "Quarter, half, whole. drill block.",
             "success": "Nice. Quarter, half, whole.",
@@ -9224,7 +9224,7 @@
           "block_type": "song",
           "duration_sec": 240,
           "focus_song": "same, with rhythm",
-          "focus_song_id": null,
+          "focus_song_id": "ode_to_joy",
           "copy": {
             "setup": "Quarter, half, whole. song block.",
             "success": "Nice. Quarter, half, whole.",
@@ -9245,7 +9245,7 @@
           "block_type": "cooldown",
           "duration_sec": 90,
           "focus_song": "same, with rhythm",
-          "focus_song_id": null,
+          "focus_song_id": "ode_to_joy",
           "copy": {
             "setup": "Quarter, half, whole. cooldown block.",
             "success": "Nice. Quarter, half, whole.",
@@ -9326,7 +9326,7 @@
           "block_type": "warm_engine",
           "duration_sec": 90,
           "focus_song": "Ode full A-section",
-          "focus_song_id": null,
+          "focus_song_id": "ode_to_joy",
           "copy": {
             "setup": "\"Ode to Joy\" hands-together. warm engine block.",
             "success": "Nice. \"Ode to Joy\" hands-together.",
@@ -9341,7 +9341,7 @@
           "block_type": "drill",
           "duration_sec": 180,
           "focus_song": "Ode full A-section",
-          "focus_song_id": null,
+          "focus_song_id": "ode_to_joy",
           "copy": {
             "setup": "\"Ode to Joy\" hands-together. drill block.",
             "success": "Nice. \"Ode to Joy\" hands-together.",
@@ -9356,7 +9356,7 @@
           "block_type": "song",
           "duration_sec": 240,
           "focus_song": "Ode full A-section",
-          "focus_song_id": null,
+          "focus_song_id": "ode_to_joy",
           "copy": {
             "setup": "\"Ode to Joy\" hands-together. song block.",
             "success": "Nice. \"Ode to Joy\" hands-together.",
@@ -9377,7 +9377,7 @@
           "block_type": "cooldown",
           "duration_sec": 90,
           "focus_song": "Ode full A-section",
-          "focus_song_id": null,
+          "focus_song_id": "ode_to_joy",
           "copy": {
             "setup": "\"Ode to Joy\" hands-together. cooldown block.",
             "success": "Nice. \"Ode to Joy\" hands-together.",
@@ -9524,7 +9524,7 @@
           "block_type": "warm_engine",
           "duration_sec": 90,
           "focus_song": "Amazing Grace A",
-          "focus_song_id": null,
+          "focus_song_id": "amazing_grace",
           "copy": {
             "setup": "\"Amazing Grace\" RH melody. warm engine block.",
             "success": "Nice. \"Amazing Grace\" RH melody.",
@@ -9539,7 +9539,7 @@
           "block_type": "drill",
           "duration_sec": 180,
           "focus_song": "Amazing Grace A",
-          "focus_song_id": null,
+          "focus_song_id": "amazing_grace",
           "copy": {
             "setup": "\"Amazing Grace\" RH melody. drill block.",
             "success": "Nice. \"Amazing Grace\" RH melody.",
@@ -9554,7 +9554,7 @@
           "block_type": "song",
           "duration_sec": 240,
           "focus_song": "Amazing Grace A",
-          "focus_song_id": null,
+          "focus_song_id": "amazing_grace",
           "copy": {
             "setup": "\"Amazing Grace\" RH melody. song block.",
             "success": "Nice. \"Amazing Grace\" RH melody.",
@@ -9575,7 +9575,7 @@
           "block_type": "cooldown",
           "duration_sec": 90,
           "focus_song": "Amazing Grace A",
-          "focus_song_id": null,
+          "focus_song_id": "amazing_grace",
           "copy": {
             "setup": "\"Amazing Grace\" RH melody. cooldown block.",
             "success": "Nice. \"Amazing Grace\" RH melody.",

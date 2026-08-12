@@ -23,3 +23,22 @@ licensed this material.
 
 Provenance: sequencer files of unrecorded origin, collected for personal
 practice. No attribution data is available.
+
+## Public-domain exceptions (MIT-licensed)
+
+Two files in this directory are NOT personal-use transcriptions and are
+covered by the repository's MIT license:
+
+- `ode_to_joy.mid` — original arrangement of the "Ode to Joy" theme from
+  Beethoven's Symphony No. 9 (1824). Composition in the public domain.
+- `amazing_grace.mid` — original arrangement of "Amazing Grace" to the
+  traditional NEW BRITAIN tune (first published 1829). Composition in the
+  public domain.
+
+Both are generated deterministically by
+`scripts/songs/generate_public_domain_midis.js` (regenerate with
+`node scripts/songs/generate_public_domain_midis.js`) and pinned by
+`tests/test_public_domain_midis.js`. They may be freely redistributed;
+note however that packaged builds currently exclude this entire directory
+(`content/songs/midi/**`), so shipping them in installers would require
+narrowing that packaging exclusion first.
