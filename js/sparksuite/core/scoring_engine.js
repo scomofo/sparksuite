@@ -1,6 +1,16 @@
 (function() {
-  function ScoringEngine(preset) {
+  // One scoring engine, two skins:
+  // - "tiered" (default, rhythm highway): arcade feel — tiered base points
+  //   (perfect 100 / good 70 / ok 40), a stepped combo multiplier that
+  //   jumps every comboStep hits, and a special-phrase bonus.
+  // - "quality" (performance mode): musicianship feel — each hit carries a
+  //   continuous 0-1 quality (note overlap x timing blend) worth
+  //   100 x quality, with a smooth +10%-per-hit combo ramp.
+  // Both share the same combo/accuracy state machine underneath.
+  function ScoringEngine(preset, options) {
     this.preset = preset || SparkEnginePresetRegistry.get("spark_learning");
+    options = options || {};
+    this.profile = options.profile === "quality" ? "quality" : "tiered";
     this.eventBus = null;
     this.performanceMonitor = null;
     this.state = {
@@ -9,6 +19,8 @@
       maxCombo: 0,
       hits: 0,
       misses: 0,
+      noteMisses: 0,
+      inputMisses: 0,
       total: 0,
       specialPhraseHits: 0,
       weakReasons: {},
@@ -43,6 +55,7 @@
     var note = resolution.note;
     if (!note) {
       this.state.misses++;
+      this.state.inputMisses++;
       bump(this.state.weakReasons, resolution.reason || "miss");
       return { scoreDelta: 0, multiplier: this.getMultiplier(), special: false };
     }
@@ -50,6 +63,7 @@
     if (judgement === "miss") {
       this.state.combo = 0;
       this.state.misses++;
+      this.state.noteMisses++;
       bump(this.state.weakReasons, resolution.reason || "miss");
       bump(this.state.laneErrors, maskLabel(note.laneMask));
       return { scoreDelta: 0, multiplier: this.getMultiplier(), special: false };
@@ -60,12 +74,27 @@
     if (this.state.combo > this.state.maxCombo) this.state.maxCombo = this.state.combo;
     if (note.skillId) bump(this.state.skillHits, note.skillId);
 
-    var base = judgement === "perfect" ? 100 : judgement === "good" ? 70 : 40;
     var multiplier = this.getMultiplier();
-    var bonus = note.flags && note.flags.specialPhrase ? 25 : 0;
-    this.state.score += (base * multiplier) + bonus;
-    if (note.flags && note.flags.specialPhrase) this.state.specialPhraseHits++;
-    var applied = { scoreDelta: (base * multiplier) + bonus, multiplier: multiplier, special: !!(note.flags && note.flags.specialPhrase) };
+    var scoreDelta;
+    var special = false;
+    if (this.profile === "quality") {
+      // Performance skin: continuous quality (0-1) x 100 under a smooth
+      // combo ramp. Falls back to the judgement tier when no quality rides
+      // on the resolution.
+      var quality = typeof resolution.quality === "number"
+        ? Math.max(0, Math.min(1, resolution.quality))
+        : (judgement === "perfect" ? 1 : judgement === "good" ? 0.7 : 0.4);
+      scoreDelta = Math.round(100 * quality * multiplier);
+    } else {
+      // Rhythm skin: tiered arcade points plus special-phrase bonus.
+      var base = judgement === "perfect" ? 100 : judgement === "good" ? 70 : 40;
+      var bonus = note.flags && note.flags.specialPhrase ? 25 : 0;
+      scoreDelta = (base * multiplier) + bonus;
+      special = !!(note.flags && note.flags.specialPhrase);
+      if (special) this.state.specialPhraseHits++;
+    }
+    this.state.score += scoreDelta;
+    var applied = { scoreDelta: scoreDelta, multiplier: multiplier, special: special };
     if (this.eventBus && typeof this.eventBus.emit === "function") {
       this.eventBus.emit("runtime.score.applied", {
         judgement: judgement,
@@ -79,16 +108,26 @@
   };
 
   ScoringEngine.prototype.getMultiplier = function() {
+    if (this.profile === "quality") {
+      return Math.min(this.preset.maxMultiplier || 4, 1 + this.state.combo * 0.1);
+    }
     return Math.min(this.preset.maxMultiplier || 4, 1 + Math.floor(this.state.combo / (this.preset.comboStep || 10)));
   };
 
   ScoringEngine.prototype.toSummary = function() {
-    var accuracy = this.state.total > 0 ? this.state.hits / this.state.total : 0;
+    // Note accuracy counts chart note events only (hits vs judged/expired
+    // notes) so it means the same thing here as in performance mode.
+    // Input accuracy additionally counts spurious no-target inputs — the
+    // old summary semantics, kept for telemetry and adaptive difficulty.
+    var noteTotal = this.state.hits + this.state.noteMisses;
+    var noteAccuracy = noteTotal > 0 ? this.state.hits / noteTotal : 0;
+    var inputAccuracy = this.state.total > 0 ? this.state.hits / this.state.total : 0;
     return {
       gameplay: {
         score: this.state.score,
         maxCombo: this.state.maxCombo,
-        accuracy: Number(accuracy.toFixed(2)),
+        accuracy: Number(noteAccuracy.toFixed(2)),
+        inputAccuracy: Number(inputAccuracy.toFixed(2)),
         starPowerUses: 0,
         specialPhraseHits: this.state.specialPhraseHits
       },

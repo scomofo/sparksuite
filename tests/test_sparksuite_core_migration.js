@@ -6711,14 +6711,16 @@ test("completeSession routes performance completion rewards through core", funct
   });
 
   assert.strictEqual(result.planCompleted, true);
-  assert.strictEqual(result.xpAwarded, 9);
+  // Normalized cross-mode completion XP: 20 + round(88 / 5) = 38 (the
+  // shared SparkCompletionXp policy, replacing the old max(5, acc/10)).
+  assert.strictEqual(result.xpAwarded, 38);
   assert.strictEqual(result.performanceSummary.songId, "night_drive");
   assert.strictEqual(result.performanceSummary.arrangementType, "rhythm_chords");
   assert.strictEqual(result.performanceSummary.difficultyId, "hard");
   assert.strictEqual(result.performanceSummary.accuracy, 88);
   assert.strictEqual(result.performanceSummary.stars, 4);
-  assert.strictEqual(S.xp, 9);
-  assert.strictEqual(S.xpToast.amount, 9);
+  assert.strictEqual(S.xp, 38);
+  assert.strictEqual(S.xpToast.amount, 38);
 });
 
 test("completeSession can carry focused bass rhythm drill progress into bass skill state", function() {

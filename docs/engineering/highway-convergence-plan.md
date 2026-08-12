@@ -76,7 +76,7 @@ Reuse performance mode's integration pattern (`js/performance/highway.js`:
 | Concern | Rhythm | Performance | Convergence target |
 |---|---|---|---|
 | Judge | `input_judge.js` (lane-aware nearest) | ✅ Converged (2026-08-12): `maybeScorePendingEvents` collects in-window candidates and delegates target selection to `SparkInputJudge.selectSnapshotTarget` — closest full note-match wins over a fractionally-closer partial match, one event per frame's input. Pinned by `tests/test_performance_judge_convergence.js`. | `input_judge` ✅ |
-| Score model | integer + combo multiplier | 0–1 weighted → grade | Needs a product decision — different feels, same engine possible |
+| Score model | integer + combo multiplier | ✅ Converged (2026-08-12) as "same engine, two skins": `SparkScoringEngine` gained a `quality` profile (continuous 0–1 quality, smooth +10%/hit combo ramp) alongside the default `tiered` arcade profile; performance mode's combo/score arithmetic now runs through it (`getPerformanceScoringEngine` in `performance/session.js`) with byte-identical numbers. The per-mode feels stay deliberate. Completion XP is normalized across modes via `SparkCompletionXp` (base 20 + accuracy/5 — performance moved up from its old 5–10 formula, the legacy tap game off raw score/10), and the engine summary now separates note accuracy (chart events, comparable with performance) from input accuracy (old semantics, kept for telemetry). Pinned by `tests/test_score_model_convergence.js`. | `input_judge`-style shared core ✅ |
 | Note model | tick-based `SparkNoteEvent` | seconds-based events | Tick-based domain model, flattened at the renderer boundary (the MIDI chart generator already produces real tempo maps) |
 
 ## Risks

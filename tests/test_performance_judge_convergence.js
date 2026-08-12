@@ -42,6 +42,7 @@ function loadJS(file) {
 }
 
 eval(loadJS("js/sparksuite/core/input_judge.js"));
+eval(loadJS("js/sparksuite/core/scoring_engine.js"));
 eval(loadJS("js/performance/scoring.js"));
 eval(loadJS("js/performance/session.js"));
 
@@ -68,6 +69,7 @@ function startChart(events) {
   S.performScore = 0;
   S.performAccuracy = 0;
   S.performTargetTechnique = null;
+  resetPerformanceScoringEngine();
   return chart;
 }
 

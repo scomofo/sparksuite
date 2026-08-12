@@ -263,6 +263,7 @@ function startPerformance(chartIdOrChart, opts) {
       if (opts.preset) S.performPracticePreset = opts.preset;
       S.performInputSource = S.performMode;
     }
+    resetPerformanceScoringEngine();
     var core = getPerformanceSessionCore();
     if (core && typeof core.syncPerformanceRuntimeState === "function") {
       core.syncPerformanceRuntimeState("start", {
@@ -572,6 +573,27 @@ function getPerformanceInputJudge() {
   return _performInputJudge;
 }
 
+// Score-model convergence: performance mode's combo/score arithmetic runs
+// through the shared core SparkScoringEngine under its "quality" profile
+// (continuous 0-1 quality, smooth combo ramp) — the same engine the rhythm
+// highway uses with its "tiered" arcade profile. S.performScore/Combo stay
+// as mirrors for the dumb-renderer HUD.
+var _performScoringEngine = null;
+function getPerformanceScoringEngine() {
+  if (!_performScoringEngine && typeof SparkScoringEngine !== "undefined") {
+    _performScoringEngine = new SparkScoringEngine({ maxMultiplier: 4 }, { profile: "quality" });
+    // Seed from state so a resumed run keeps its running score.
+    _performScoringEngine.state.score = S.performScore || 0;
+    _performScoringEngine.state.combo = S.performCombo || 0;
+    _performScoringEngine.state.maxCombo = S.performMaxCombo || 0;
+  }
+  return _performScoringEngine;
+}
+
+function resetPerformanceScoringEngine() {
+  _performScoringEngine = null;
+}
+
 function maybeScorePendingEvents(nowSec) {
   var chart = S.performChart;
   if (!chart) return;
@@ -607,6 +629,8 @@ function maybeScorePendingEvents(nowSec) {
       evt._result = { score: 0, grade: "miss", noteScore: 0, timingScore: 0 };
       evt._score = 0;
       updatePhraseStats(S.performPhraseStats, evt, evt._result);
+      var missEngine = getPerformanceScoringEngine();
+      if (missEngine) missEngine.apply({ judgement: "miss", reason: "late", note: { laneMask: 0 } });
       S.performCombo = 0;
       if (evt.sourceFlags && targetTechnique && evt.sourceFlags[targetTechnique] && typeof buildPerformanceFeedbackLabel === "function") {
         S.performLastHitLabel = buildPerformanceFeedbackLabel(evt, evt._result, targetTechnique);
@@ -658,11 +682,19 @@ function applyPerformanceEventHit(chart, evt, result, targetTechnique) {
   if (typeof notifyHighwayHit === "function") notifyHighwayHit(evt);
   updatePhraseStats(S.performPhraseStats, evt, result);
 
-  S.performCombo++;
-  if (S.performCombo > S.performMaxCombo) S.performMaxCombo = S.performCombo;
-
-  var comboMult = Math.min(1 + S.performCombo * 0.1, 4);
-  S.performScore += Math.round(100 * result.score * comboMult);
+  var engine = getPerformanceScoringEngine();
+  if (engine) {
+    engine.apply({ judgement: result.grade, quality: result.score, note: { laneMask: 0, flags: {} } });
+    S.performCombo = engine.state.combo;
+    S.performMaxCombo = engine.state.maxCombo;
+    S.performScore = engine.state.score;
+  } else {
+    // Inline fallback mirroring the quality profile (engine bundle absent).
+    S.performCombo++;
+    if (S.performCombo > S.performMaxCombo) S.performMaxCombo = S.performCombo;
+    var comboMult = Math.min(1 + S.performCombo * 0.1, 4);
+    S.performScore += Math.round(100 * result.score * comboMult);
+  }
 
   S.performLastHitLabel = typeof buildPerformanceFeedbackLabel === "function"
     ? buildPerformanceFeedbackLabel(evt, result, targetTechnique)
@@ -796,7 +828,12 @@ function finishPerformance() {
     });
   }
 
-  var xpAward = Math.max(5, Math.round(S.performResults.accuracy / 10));
+  // Normalized completion XP: the shared cross-mode policy (base 20 plus
+  // accuracy-scaled bonus) instead of the old 5-10 formula that undervalued
+  // performance runs relative to rhythm sessions.
+  var xpAward = typeof SparkCompletionXp !== "undefined"
+    ? SparkCompletionXp.forAccuracy(S.performResults.accuracy)
+    : Math.max(5, Math.round(S.performResults.accuracy / 10));
   var corePerformanceResult = null;
   if (finishCore && typeof finishCore.completeSession === "function") {
     var completionRequest = typeof finishCore.buildPerformanceCompletionRequest === "function"

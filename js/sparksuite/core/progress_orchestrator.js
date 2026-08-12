@@ -103,10 +103,20 @@
     return activityOutcome(xp);
   }
 
-  // Rhythm game completion: XP is score/10; zero score awards nothing.
+  // Rhythm game completion: the shared cross-mode completion-XP policy
+  // (base 20 + accuracy-scaled bonus) when the result carries accuracy;
+  // the legacy score/10 only for callers that never report accuracy.
   function driveRhythmCompletion(sessionResult) {
     var score = (sessionResult.meta && typeof sessionResult.meta.score === "number") ? sessionResult.meta.score : 0;
-    var xp = Math.round(score / 10);
+    var accuracy = typeof sessionResult.accuracy === "number" ? sessionResult.accuracy : null;
+    var xp;
+    if (accuracy != null) {
+      xp = typeof SparkCompletionXp !== "undefined"
+        ? SparkCompletionXp.forAccuracy(accuracy * 100)
+        : 20 + Math.max(0, Math.min(20, Math.round(accuracy * 20)));
+    } else {
+      xp = Math.round(score / 10);
+    }
     if (xp > 0) {
       runActivityCompletion({
         xpDelta: xp,

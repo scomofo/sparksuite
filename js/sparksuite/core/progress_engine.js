@@ -306,7 +306,12 @@
         xpToast: { amount: 20, time: Date.now() }
       };
       if (payload.gameplayResult) {
-        xpAwarded += Math.max(0, Math.round(((payload.gameplayResult.gameplay && payload.gameplayResult.gameplay.accuracy) || 0) * 20));
+        // Shared cross-mode completion-XP policy (base 20 + accuracy/5,
+        // same curve the previous inline 20 + accuracy*20 expressed).
+        var gameplayAccuracyPct = ((payload.gameplayResult.gameplay && payload.gameplayResult.gameplay.accuracy) || 0) * 100;
+        xpAwarded = typeof SparkCompletionXp !== "undefined"
+          ? SparkCompletionXp.forAccuracy(gameplayAccuracyPct)
+          : 20 + Math.max(0, Math.round(gameplayAccuracyPct / 5));
         sessionStatePatch = mergeSessionStatePatch(sessionStatePatch, buildGameplayLearningPatch(payload.gameplayResult.learning, payload.gameplayContext, payload.gameplayResult.gameplay));
         sessionStatePatch.xpToast.amount = xpAwarded;
       }
@@ -440,7 +445,9 @@
       var performanceResults = payload.performanceResults || {};
       var xpAwarded = typeof payload.xpAwarded === "number"
         ? payload.xpAwarded
-        : Math.max(5, Math.round((performanceResults.accuracy || 0) / 10));
+        : (typeof SparkCompletionXp !== "undefined"
+          ? SparkCompletionXp.forAccuracy(performanceResults.accuracy || 0)
+          : 20 + Math.max(0, Math.min(20, Math.round((performanceResults.accuracy || 0) / 5))));
       SparkProgressBridge.applyLegacyReward({
         xpDelta: xpAwarded,
         toastAmount: xpAwarded
