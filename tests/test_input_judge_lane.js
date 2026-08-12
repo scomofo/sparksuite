@@ -7,7 +7,7 @@ var fs = require("fs");
 var path = require("path");
 
 global.window = global;
-global.eval(fs.readFileSync(path.join(__dirname, "..", "js/sparksuite/core/input_judge.js"), "utf8"));
+require("vm").runInThisContext(fs.readFileSync(path.join(__dirname, "..", "js/sparksuite/core/input_judge.js"), "utf8"), { filename: path.join(__dirname, "..", "js/sparksuite/core/input_judge.js") });
 
 var PRESET = { hitWindowMs: { perfect: 70, good: 140, miss: 220 }, extraFretTolerance: false };
 function note(timeSec, laneMask) { return { timeSec: timeSec, laneMask: laneMask, hit: false, missed: false }; }

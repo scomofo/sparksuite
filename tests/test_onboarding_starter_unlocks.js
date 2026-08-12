@@ -9,6 +9,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function test(name, fn) {
   try {
     resetEnv();
@@ -41,7 +46,7 @@ function resetEnv() {
 console.log("\n--- Onboarding Starter Unlocks ---");
 
 test("applyStarterUnlocksFromOnboarding seeds bass beginner content", function() {
-  global.eval(loadJS("js/onboarding/actions.js"));
+  loadVM("js/onboarding/actions.js");
   applyStarterUnlocksFromOnboarding();
 
   var unlockedIds = unlockCalls.map(function(call) { return call.id; });
@@ -52,7 +57,7 @@ test("applyStarterUnlocksFromOnboarding seeds bass beginner content", function()
 
 test("applyStarterUnlocksFromOnboarding seeds bass early intermediate content", function() {
   S.onboarding.skillLevel = "early_intermediate";
-  global.eval(loadJS("js/onboarding/actions.js"));
+  loadVM("js/onboarding/actions.js");
   applyStarterUnlocksFromOnboarding();
 
   var unlockedIds = unlockCalls.map(function(call) { return call.id; });

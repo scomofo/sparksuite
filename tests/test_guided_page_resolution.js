@@ -6,6 +6,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 // Load shared SparkNormalize helper used by page modules below.
 // js/utils/normalize.js attaches to window.SparkNormalize, so bootstrap
 // the window alias first (resetEnv() also sets it but runs per-test).
@@ -61,7 +66,7 @@ function resetEnv() {
 function test(name, fn) {
   try {
     resetEnv();
-    global.eval(loadJS("js/pages/guided.js"));
+    loadVM("js/pages/guided.js");
     fn();
     console.log("  PASS: " + name);
   } catch (err) {
@@ -953,7 +958,7 @@ test("guided confirmation action opens an in-app confirmation without native con
   global.registerSparkActionFamily = function(name, handler) {
     global.runSparkActionFamilies = handler;
   };
-  global.eval(loadJS("js/actions/system_family.js"));
+  loadVM("js/actions/system_family.js");
   handled = global.runSparkActionFamilies("guidedConfirmStop");
   assert.strictEqual(handled, true);
   assert.deepStrictEqual(acted, []);
@@ -971,7 +976,7 @@ test("guided cancel stop closes the in-app confirmation", function() {
   global.registerSparkActionFamily = function(name, handler) {
     global.runSparkActionFamilies = handler;
   };
-  global.eval(loadJS("js/actions/system_family.js"));
+  loadVM("js/actions/system_family.js");
   handled = global.runSparkActionFamilies("guidedCancelStop");
   assert.strictEqual(handled, true);
   assert.strictEqual(global.S.guidedStopConfirm, false);
@@ -1084,7 +1089,7 @@ test("guided actions can resolve sparkCore from the global binding", function() 
     }
   };
 
-  global.eval(loadJS("js/actions/system_family.js"));
+  loadVM("js/actions/system_family.js");
 
   handled = global.runSparkActionFamilies("guidedNext");
   assert.strictEqual(handled, true);
@@ -1177,7 +1182,7 @@ test("openPracticePlan resumes the guided screen when a guided session is alread
       };
     }
   };
-  global.eval(loadJS("js/actions/system_family.js"));
+  loadVM("js/actions/system_family.js");
 
   var handled = global.runSparkActionFamilies("openPracticePlan");
   assert.strictEqual(handled, true);
@@ -1192,7 +1197,7 @@ test("openPracticeTemplate opens a selected 10-minute practice plan", function()
     return payload || {};
   };
   global.sparkCore = null;
-  global.eval(loadJS("js/actions/system_family.js"));
+  loadVM("js/actions/system_family.js");
 
   var handled = global.runSparkActionFamilies("openPracticeTemplate", "quick_win");
   assert.strictEqual(handled, true);
@@ -1233,7 +1238,7 @@ test("start_guided_session resumes the active guided shell when no new session i
       return null;
     }
   };
-  global.eval(loadJS("js/actions/system_family.js"));
+  loadVM("js/actions/system_family.js");
 
   var handled = global.runSparkActionFamilies("start_guided_session");
   assert.strictEqual(handled, true);
@@ -1275,7 +1280,7 @@ test("resume_guided_session reopens the active guided shell without restarting i
       return null;
     }
   };
-  global.eval(loadJS("js/actions/system_family.js"));
+  loadVM("js/actions/system_family.js");
 
   var handled = global.runSparkActionFamilies("resume_guided_session");
   assert.strictEqual(handled, true);
@@ -1332,7 +1337,7 @@ test("guided pause and resume actions sync the shared session runtime transport"
       return true;
     }
   };
-  global.eval(loadJS("js/actions/system_family.js"));
+  loadVM("js/actions/system_family.js");
 
   assert.strictEqual(global.runSparkActionFamilies("guidedPauseBlock"), true);
   assert.strictEqual(global.runSparkActionFamilies("guidedResumeBlock"), true);
@@ -1363,7 +1368,7 @@ test("guided actions prefer sparkCore.syncSessionRuntime when it is available", 
   global.window.sparkCore = global.sparkCore;
   global.window.SparkSessionRuntime = null;
 
-  global.eval(loadJS("js/actions/system_family.js"));
+  loadVM("js/actions/system_family.js");
 
   assert.strictEqual(global.runSparkActionFamilies("guidedPauseBlock"), true);
   assert.strictEqual(global.runSparkActionFamilies("guidedResumeBlock"), true);

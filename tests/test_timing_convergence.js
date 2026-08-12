@@ -33,12 +33,17 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 global.window = global;
 global.S = { performTimingOffsetMs: 12, performMidiOffsetMs: 5, performMicOffsetMs: 30 };
-global.eval(loadJS("js/sparksuite/domain/engine_preset.js"));
-global.eval(loadJS("js/performance/difficulties.js"));
-global.eval(loadJS("js/sparksuite/core/timing_core.js"));
-global.eval(loadJS("js/performance/calibration.js"));
+loadVM("js/sparksuite/domain/engine_preset.js");
+loadVM("js/performance/difficulties.js");
+loadVM("js/sparksuite/core/timing_core.js");
+loadVM("js/performance/calibration.js");
 
 console.log("\n--- Timing Convergence ---");
 
@@ -90,7 +95,7 @@ test("the rhythm gameplay calibration engine resolves through the same model", f
       return { getCapabilities: function() { return {}; } };
     }
   };
-  global.eval(loadJS("js/sparksuite/core/calibration_engine.js"));
+  loadVM("js/sparksuite/core/calibration_engine.js");
   var engine = new SparkCalibrationEngine();
   assert.strictEqual(engine.getOffsetMs("guitar"), 42, "global + mic, matching performance mode's mic offset");
   assert.strictEqual(engine.getOffsetMs("piano"), 0, "capability gate still applies");

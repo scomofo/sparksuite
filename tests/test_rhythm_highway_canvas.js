@@ -36,6 +36,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 var FILES = [
   "js/utils/normalize.js",
   "js/sparksuite/domain/types.js",
@@ -139,7 +144,7 @@ function makeEnv(opts) {
   global.SparkInstruments = undefined;
   global.SparkSessionTypes = { FLOW_DAILY_PRACTICE: "daily_practice" };
 
-  for (var i = 0; i < FILES.length; i++) global.eval(loadJS(FILES[i]));
+  for (var i = 0; i < FILES.length; i++) loadVM(FILES[i]);
   return env;
 }
 

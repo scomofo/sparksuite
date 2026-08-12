@@ -6,7 +6,7 @@ var fs = require("fs");
 var path = require("path");
 
 global.window = global;
-global.eval(fs.readFileSync(path.join(__dirname, "..", "js/performance/midi_backing.js"), "utf8"));
+require("vm").runInThisContext(fs.readFileSync(path.join(__dirname, "..", "js/performance/midi_backing.js"), "utf8"), { filename: path.join(__dirname, "..", "js/performance/midi_backing.js") });
 
 function u32(n) { return [(n >>> 24) & 0xFF, (n >>> 16) & 0xFF, (n >>> 8) & 0xFF, n & 0xFF]; }
 function u16(n) { return [(n >> 8) & 0xFF, n & 0xFF]; }

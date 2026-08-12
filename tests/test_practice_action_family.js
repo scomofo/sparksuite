@@ -6,6 +6,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function resetEnvironment() {
   var rendered = 0;
   var strummed = [];
@@ -75,10 +80,10 @@ function resetEnvironment() {
 function test(name, fn) {
   try {
     var env = resetEnvironment();
-    global.eval(loadJS("js/sparksuite/core/practice_engine.js"));
+    loadVM("js/sparksuite/core/practice_engine.js");
     global.sparkCore.practiceEngine = new SparkSuitePracticeEngine(null);
-    global.eval(loadJS("js/actions/families.js"));
-    global.eval(loadJS("js/actions/practice_family.js"));
+    loadVM("js/actions/families.js");
+    loadVM("js/actions/practice_family.js");
     fn(env);
     console.log("  PASS: " + name);
   } catch (err) {

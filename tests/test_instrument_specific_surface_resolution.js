@@ -6,6 +6,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function resetEnvironment(activeAppId) {
   var pianoModule = {
     id: "pianospark",
@@ -174,13 +179,13 @@ console.log("\n--- Instrument Specific Surface Resolution ---");
 
 test("piano surfaces rehydrate an app-id-only active instrument shell", function() {
   resetEnvironment("pianospark");
-  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
-  global.eval(loadJS("js/instruments/piano/ui.js"));
-  global.eval(loadJS("js/instruments/piano/pages/games.js"));
-  global.eval(loadJS("js/instruments/piano/pages/onboarding.js"));
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
-  global.eval(loadJS("js/instruments/piano/pages/songs.js"));
-  global.eval(loadJS("js/instruments/piano/pages/tools.js"));
+  loadVM("js/instruments/piano/pages/shared.js");
+  loadVM("js/instruments/piano/ui.js");
+  loadVM("js/instruments/piano/pages/games.js");
+  loadVM("js/instruments/piano/pages/onboarding.js");
+  loadVM("js/instruments/piano/pages/practice.js");
+  loadVM("js/instruments/piano/pages/songs.js");
+  loadVM("js/instruments/piano/pages/tools.js");
 
   assert.ok(pianoPracticeTab().indexOf("First Keys") >= 0);
   assert.ok(pianoSongsTab().indexOf("Moonlight") >= 0);
@@ -250,9 +255,9 @@ test("piano practice tab ignores stale curriculum and custom set labels", functi
     };
   };
   global.S.customSets = [{ name: "undefined", chords: ["C"] }];
-  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
-  global.eval(loadJS("js/instruments/piano/ui.js"));
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/shared.js");
+  loadVM("js/instruments/piano/ui.js");
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var html = pianoPracticeTab();
   assert.ok(html.indexOf("Guided session") >= 0 || html.indexOf("Warmup") >= 0);
@@ -303,9 +308,9 @@ test("piano practice quick start resumes an active guided shell when the session
       };
     }
   };
-  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
-  global.eval(loadJS("js/instruments/piano/ui.js"));
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/shared.js");
+  loadVM("js/instruments/piano/ui.js");
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var html = pianoPracticeTab();
   assert.ok(html.indexOf('onclick="act(\'resume_guided_session\')"') >= 0);
@@ -339,9 +344,9 @@ test("piano practice quick start shows V2 shell details for a fresh guided sessi
       return null;
     }
   };
-  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
-  global.eval(loadJS("js/instruments/piano/ui.js"));
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/shared.js");
+  loadVM("js/instruments/piano/ui.js");
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var html = pianoPracticeTab();
   assert.ok(html.indexOf('onclick="act(\'start_guided_session\')"') >= 0);
@@ -381,9 +386,9 @@ test("piano practice quick start stays honest when guided shell metadata is thin
       };
     }
   };
-  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
-  global.eval(loadJS("js/instruments/piano/ui.js"));
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/shared.js");
+  loadVM("js/instruments/piano/ui.js");
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var html = pianoPracticeTab();
   assert.ok(html.indexOf('onclick="act(\'resume_guided_session\')"') >= 0);
@@ -403,10 +408,10 @@ test("piano onboarding and tools ignore stale intention strings", function() {
   global.S.a4Tuning = [];
   global.S.onboardingStep = 3;
   global.S._toolTab = "settings";
-  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
-  global.eval(loadJS("js/instruments/piano/ui.js"));
-  global.eval(loadJS("js/instruments/piano/pages/onboarding.js"));
-  global.eval(loadJS("js/instruments/piano/pages/tools.js"));
+  loadVM("js/instruments/piano/pages/shared.js");
+  loadVM("js/instruments/piano/ui.js");
+  loadVM("js/instruments/piano/pages/onboarding.js");
+  loadVM("js/instruments/piano/pages/tools.js");
 
   var onboardingHtml = pianoOnboardingPage();
   assert.ok(onboardingHtml.indexOf('value="undefined"') === -1);
@@ -425,7 +430,7 @@ test("piano onboarding and tools ignore stale intention strings", function() {
   assert.ok(toolsHtml.indexOf("NaN") === -1);
 
   global.S.practiceIntention = "undefined";
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
   var practiceHtml = pianoPracticeTab();
   assert.ok(practiceHtml.indexOf("When I undefined") === -1);
 });
@@ -436,7 +441,7 @@ test("piano header ignores stale numeric badges", function() {
   global.S.currentSession = { broken: true };
   global.S.streak = "NaN";
   global.S.onboardingComplete = true;
-  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
+  loadVM("js/instruments/piano/pages/shared.js");
 
   var html = pianoHeaderHTML();
   assert.ok(html.indexOf("0 XP") >= 0);
@@ -449,7 +454,7 @@ test("piano placement test ignores stale prompt text", function() {
   resetEnvironment("pianospark");
   global.S._placementIdx = 0;
   global.PLACEMENT_TESTS = [{ prompt: "undefined" }];
-  global.eval(loadJS("js/instruments/piano/pages/onboarding.js"));
+  loadVM("js/instruments/piano/pages/onboarding.js");
 
   var html = placementTestPage();
   assert.ok(html.indexOf("Try this chord or pattern.") >= 0);
@@ -465,9 +470,9 @@ test("piano tools stats ignore stale history labels", function() {
   global.S.completedSessions = { broken: true };
   global.S.personalBests = { bpm: "null", streak: [] };
   global.S.history = { broken: true };
-  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
-  global.eval(loadJS("js/instruments/piano/ui.js"));
-  global.eval(loadJS("js/instruments/piano/pages/tools.js"));
+  loadVM("js/instruments/piano/pages/shared.js");
+  loadVM("js/instruments/piano/ui.js");
+  loadVM("js/instruments/piano/pages/tools.js");
   global.getPianoPageInstrument = function() {
     return {
       getData: function() {
@@ -498,9 +503,9 @@ test("piano clips tab ignores stale clip timestamps, durations, and urls", funct
   global.S.practiceClips = [
     { ts: "not-a-date", duration: "NaN", url: "undefined" }
   ];
-  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
-  global.eval(loadJS("js/instruments/piano/ui.js"));
-  global.eval(loadJS("js/instruments/piano/pages/tools.js"));
+  loadVM("js/instruments/piano/pages/shared.js");
+  loadVM("js/instruments/piano/ui.js");
+  loadVM("js/instruments/piano/pages/tools.js");
 
   var html = pianoToolsTab();
   assert.ok(html.indexOf("Unknown time") >= 0);
@@ -513,9 +518,9 @@ test("piano clips tab ignores stale clip timestamps, durations, and urls", funct
 test("piano songs library ignores stale sentinel search text", function() {
   resetEnvironment("pianospark");
   global.S.songFilter = "undefined";
-  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
-  global.eval(loadJS("js/instruments/piano/ui.js"));
-  global.eval(loadJS("js/instruments/piano/pages/songs.js"));
+  loadVM("js/instruments/piano/pages/shared.js");
+  loadVM("js/instruments/piano/ui.js");
+  loadVM("js/instruments/piano/pages/songs.js");
 
   var html = pianoSongsTab();
   assert.ok(html.indexOf('value="undefined"') === -1);
@@ -527,9 +532,9 @@ test("piano practice tab ignores malformed mastery percentages", function() {
   global.getAverageMastery = function(kind) {
     return kind === "rhythm" ? "NaN" : { broken: true };
   };
-  global.eval(loadJS("js/instruments/piano/pages/shared.js"));
-  global.eval(loadJS("js/instruments/piano/ui.js"));
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/shared.js");
+  loadVM("js/instruments/piano/ui.js");
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var html = pianoPracticeTab();
   assert.ok(html.indexOf("Chords: 0%") >= 0);
@@ -541,7 +546,7 @@ test("piano practice tab ignores malformed mastery percentages", function() {
 
 test("guitarAct rehydrates an app-id-only active instrument shell", function() {
   resetEnvironment("chordspark");
-  global.eval(loadJS("js/instruments/guitar/app.js"));
+  loadVM("js/instruments/guitar/app.js");
   guitarAct("drillTransition", "C|G");
   assert.strictEqual(S.drillChords.length, 2);
   assert.strictEqual(S.drillChords[0].name, "C");
@@ -550,7 +555,7 @@ test("guitarAct rehydrates an app-id-only active instrument shell", function() {
 
 test("bassAct rehydrates an app-id-only active instrument shell", function() {
   resetEnvironment("bassspark");
-  global.eval(loadJS("js/instruments/bass/app.js"));
+  loadVM("js/instruments/bass/app.js");
   bassAct("guidedStart", "1");
   assert.strictEqual(S.guidedPlan.title, "Bass Basics");
   assert.strictEqual(S.screen, SCR.GUIDED);
@@ -559,10 +564,10 @@ test("bassAct rehydrates an app-id-only active instrument shell", function() {
 test("practice guided session card falls back to curriculum v2 when legacy sessions are absent", function() {
   resetEnvironment("chordspark");
   global.sparkCore = undefined;
-  global.eval(loadJS("js/utils/normalize.js"));
-  global.eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
-  global.eval(loadJS("js/curriculum/curriculum_v2.js"));
-  global.eval(loadJS("js/pages/practice.js"));
+  loadVM("js/utils/normalize.js");
+  loadVM("js/curriculum/curriculum_v2_data.generated.js");
+  loadVM("js/curriculum/curriculum_v2.js");
+  loadVM("js/pages/practice.js");
 
   var html = renderPracticeGuidedSessionCard({});
   assert.ok(html.indexOf("Guided Session 1") >= 0);
@@ -603,7 +608,7 @@ test("practice guided session card can resolve sparkCore from the global binding
       };
     }
   };
-  global.eval(loadJS("js/pages/practice.js"));
+  loadVM("js/pages/practice.js");
 
   var html = renderPracticeGuidedSessionCard({});
   assert.ok(html.indexOf("Guided Session 1") >= 0);
@@ -650,7 +655,7 @@ test("practice guided session card shows resume state for an active guided runti
       };
     }
   };
-  global.eval(loadJS("js/pages/practice.js"));
+  loadVM("js/pages/practice.js");
 
   var html = renderPracticeGuidedSessionCard({});
   assert.ok(html.indexOf("Guided Session 2") >= 0);
@@ -663,9 +668,9 @@ test("practice guided session card shows resume state for an active guided runti
 test("practice guided session and track cards do not invent shell details when metadata is missing", function() {
   resetEnvironment("chordspark");
   global.window = {};
-  global.eval(loadJS("js/utils/normalize.js"));
-  global.eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
-  global.eval(loadJS("js/curriculum/curriculum_v2.js"));
+  loadVM("js/utils/normalize.js");
+  loadVM("js/curriculum/curriculum_v2_data.generated.js");
+  loadVM("js/curriculum/curriculum_v2.js");
   global.sparkCore = {
     getActiveSessionView: function() {
       return {
@@ -689,7 +694,7 @@ test("practice guided session and track cards do not invent shell details when m
       };
     }
   };
-  global.eval(loadJS("js/pages/practice.js"));
+  loadVM("js/pages/practice.js");
 
   var guidedHtml = renderPracticeGuidedSessionCard({});
   var trackHtml = renderPracticeCurriculumV2Card({
@@ -714,10 +719,10 @@ test("practice guided session and track cards do not invent shell details when m
 test("practice curriculum v2 card shows track progress instead of duplicating the launcher hook", function() {
   resetEnvironment("chordspark");
   global.sparkCore = undefined;
-  global.eval(loadJS("js/utils/normalize.js"));
-  global.eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
-  global.eval(loadJS("js/curriculum/curriculum_v2.js"));
-  global.eval(loadJS("js/pages/practice.js"));
+  loadVM("js/utils/normalize.js");
+  loadVM("js/curriculum/curriculum_v2_data.generated.js");
+  loadVM("js/curriculum/curriculum_v2.js");
+  loadVM("js/pages/practice.js");
 
   var html = renderPracticeCurriculumV2Card({
     instrument: "guitar"
@@ -740,9 +745,9 @@ test("practice curriculum v2 card shows track progress instead of duplicating th
 test("practice curriculum v2 card shows live guided runtime context when a session is already active", function() {
   resetEnvironment("chordspark");
   global.window = {};
-  global.eval(loadJS("js/utils/normalize.js"));
-  global.eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
-  global.eval(loadJS("js/curriculum/curriculum_v2.js"));
+  loadVM("js/utils/normalize.js");
+  loadVM("js/curriculum/curriculum_v2_data.generated.js");
+  loadVM("js/curriculum/curriculum_v2.js");
   global.sparkCore = {
     getActiveSessionView: function() {
       return {
@@ -774,7 +779,7 @@ test("practice curriculum v2 card shows live guided runtime context when a sessi
       };
     }
   };
-  global.eval(loadJS("js/pages/practice.js"));
+  loadVM("js/pages/practice.js");
 
   var html = renderPracticeCurriculumV2Card({
     instrument: "guitar"
@@ -794,10 +799,10 @@ test("practice curriculum v2 surfaces react to canonical completion state", func
     guitar: ["gtr-d01"]
   };
   global.sparkCore = undefined;
-  global.eval(loadJS("js/utils/normalize.js"));
-  global.eval(loadJS("js/curriculum/curriculum_v2_data.generated.js"));
-  global.eval(loadJS("js/curriculum/curriculum_v2.js"));
-  global.eval(loadJS("js/pages/practice.js"));
+  loadVM("js/utils/normalize.js");
+  loadVM("js/curriculum/curriculum_v2_data.generated.js");
+  loadVM("js/curriculum/curriculum_v2.js");
+  loadVM("js/pages/practice.js");
 
   var guidedHtml = renderPracticeGuidedSessionCard({});
   var trackHtml = renderPracticeCurriculumV2Card({
@@ -846,7 +851,7 @@ test("practice quick start card favors an active guided runtime over stale chord
       };
     }
   };
-  global.eval(loadJS("js/pages/practice.js"));
+  loadVM("js/pages/practice.js");
 
   var html = renderPracticeQuickStartCard();
   assert.ok(html.indexOf("Guided Session Live") >= 0);
@@ -888,8 +893,8 @@ test("shared session helpers can resolve sparkCore from the global binding", fun
       };
     }
   };
-  global.eval(loadJS("js/utils/normalize.js"));
-  global.eval(loadJS("js/pages/shared.js"));
+  loadVM("js/utils/normalize.js");
+  loadVM("js/pages/shared.js");
 
   var runtime = getLegacyChordDetectRuntime();
   var fingerHtml = fingerExerciseCard();
@@ -941,7 +946,7 @@ test("songs surfaces can resolve sparkCore from the global binding", function() 
   global.STEM_COLORS = { vocals: "#4ECDC4" };
   global.STEM_ICONS = { vocals: "V" };
   global.formatTime = function(value) { return "0:" + String(value); };
-  global.eval(loadJS("js/pages/songs.js"));
+  loadVM("js/pages/songs.js");
 
   var spotifyState = _getSpotifyPlaylistPanelState();
   var stemsHtml = stemsPage();
@@ -962,7 +967,7 @@ test("piano app confirms reset before dispatching reset", function() {
   global.document.removeEventListener = function() {};
   global.resetProgress = function() { resetCalls++; };
   global.confirm = function() { return true; };
-  global.eval(loadJS("js/instruments/piano/app.js"));
+  loadVM("js/instruments/piano/app.js");
 
   pianoAct("pianoConfirmResetProgress");
   assert.strictEqual(resetCalls, 1);

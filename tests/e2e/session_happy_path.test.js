@@ -5,7 +5,7 @@ var path = require("path");
 var repoRoot = path.resolve(__dirname, "..", "..");
 
 function loadJS(file) {
-  global.eval(fs.readFileSync(path.join(repoRoot, file), "utf8"));
+  require("vm").runInThisContext(fs.readFileSync(path.join(repoRoot, file), "utf8"), { filename: path.join(repoRoot, file) });
 }
 
 function loadFixture(relativePath) {

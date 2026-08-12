@@ -6,7 +6,7 @@ var assert = require("assert");
 var fs = require("fs");
 var path = require("path");
 
-function loadJS(file) { global.eval(fs.readFileSync(path.join(__dirname, "..", file), "utf8")); }
+function loadJS(file) { require("vm").runInThisContext(fs.readFileSync(path.join(__dirname, "..", file), "utf8"), { filename: path.join(__dirname, "..", file) }); }
 
 // The engine file only defines the constructor (no global state captured at load
 // time), so load it ONCE; setup() just resets the mock state per test.

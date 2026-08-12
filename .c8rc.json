@@ -1,0 +1,8 @@
+{
+  "include": ["js/**/*.js", "desktop/**/*.js", "preload.js", "main.js"],
+  "exclude": ["**/*.generated.js"],
+  "all": true,
+  "reporter": ["text-summary", "html", "lcov"],
+  "reports-dir": "coverage",
+  "clean": true
+}

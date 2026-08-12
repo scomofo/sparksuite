@@ -3,7 +3,7 @@ var fs = require("fs");
 var path = require("path");
 
 global.window = global;
-global.eval(fs.readFileSync(path.join(__dirname, "..", "js/sparksuite/analysis/performance_tracker.js"), "utf8"));
+require("vm").runInThisContext(fs.readFileSync(path.join(__dirname, "..", "js/sparksuite/analysis/performance_tracker.js"), "utf8"), { filename: path.join(__dirname, "..", "js/sparksuite/analysis/performance_tracker.js") });
 
 function test(name, fn) {
   try { fn(); console.log("  PASS: " + name); }

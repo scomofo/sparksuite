@@ -37,6 +37,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, '..', file);
+  require('vm').runInThisContext(fs.readFileSync(full, 'utf8'), { filename: full });
+}
+
 function installMinimalDocument() {
   global.document = {
     readyState: 'complete',
@@ -894,7 +899,7 @@ test('shell action family routes launcher interactions through SparkInstruments'
     selectInstrument: function(appId) { calls.push(["selectInstrument", appId]); },
     launchInstrumentPerformance: function(appId) { calls.push(["launchInstrumentPerformance", appId]); }
   };
-  global.eval(loadJS("js/actions/shell_family.js"));
+  loadVM("js/actions/shell_family.js");
 
   handled = global.runSparkActionFamilies("openLauncherView", "library");
   assert.strictEqual(handled, true);

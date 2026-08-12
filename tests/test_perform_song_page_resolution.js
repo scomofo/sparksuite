@@ -9,6 +9,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 // Load shared SparkNormalize helper used by page modules below.
 // js/utils/normalize.js attaches to window.SparkNormalize, so bootstrap
 // the window alias first (resetEnv() also sets it but runs per-test).
@@ -89,7 +94,7 @@ test("performSongPage ignores sentinel song text and technique labels", function
     };
   };
 
-  global.eval(loadJS("js/pages/perform_song.js"));
+  loadVM("js/pages/perform_song.js");
 
   var html = performSongPage();
   assert.ok(html.indexOf("song x") >= 0);
@@ -116,7 +121,7 @@ test("performSongPage ignores malformed song numbers and import progress", funct
     };
   };
 
-  global.eval(loadJS("js/pages/perform_song.js"));
+  loadVM("js/pages/perform_song.js");
 
   var html = performSongPage();
   assert.ok(html.indexOf(">?<") >= 0);
@@ -146,7 +151,7 @@ test("performSongPage ignores malformed detected BPM values", function() {
     };
   };
 
-  global.eval(loadJS("js/pages/perform_song.js"));
+  loadVM("js/pages/perform_song.js");
 
   var html = performSongPage();
   assert.ok(html.indexOf("Detected BPM:") === -1);
@@ -193,7 +198,7 @@ test("performSongPage requests stats with canonical song id", function() {
     };
   };
 
-  global.eval(loadJS("js/pages/perform_song.js"));
+  loadVM("js/pages/perform_song.js");
 
   performSongPage();
   assert.deepStrictEqual(capturedArgs, {
@@ -226,7 +231,7 @@ test("performSongPage can resolve sparkCore from the global binding", function()
     }
   };
 
-  global.eval(loadJS("js/pages/perform_song.js"));
+  loadVM("js/pages/perform_song.js");
 
   var html = performSongPage();
   assert.ok(html.indexOf("Night Drive") >= 0);
@@ -254,7 +259,7 @@ test("performSongPage does not render dead weakest-phrase action before results 
     };
   };
 
-  global.eval(loadJS("js/pages/perform_song.js"));
+  loadVM("js/pages/perform_song.js");
 
   var html = performSongPage();
   assert.strictEqual(html.indexOf("performRetryPhrase"), -1);
@@ -277,7 +282,7 @@ test("performSongPage renders weakest-phrase action when phrase results exist", 
     };
   };
 
-  global.eval(loadJS("js/pages/perform_song.js"));
+  loadVM("js/pages/perform_song.js");
 
   var html = performSongPage();
   assert.ok(html.indexOf("performRetryPhrase") >= 0);
@@ -305,7 +310,7 @@ test("performSongPage play actions share the calmer play-button typography class
     };
   };
 
-  global.eval(loadJS("js/pages/perform_song.js"));
+  loadVM("js/pages/perform_song.js");
 
   var html = performSongPage();
   assert.ok(html.indexOf("perform-song-play-btn-primary") >= 0);
@@ -338,7 +343,7 @@ test("performSongPage uses shared card, metric, and action classes", function() 
     };
   };
 
-  global.eval(loadJS("js/pages/perform_song.js"));
+  loadVM("js/pages/perform_song.js");
 
   var html = performSongPage();
   assert.ok(html.indexOf("card-section-heading") >= 0);
@@ -381,8 +386,8 @@ test("piano performance result and song detail surfaces avoid raw bold secondary
     }
   };
 
-  global.eval(loadJS("js/instruments/piano/pages/perform_results.js"));
-  global.eval(loadJS("js/instruments/piano/pages/perform_song.js"));
+  loadVM("js/instruments/piano/pages/perform_results.js");
+  loadVM("js/instruments/piano/pages/perform_song.js");
 
   var resultsHtml = pianoPerformanceResultsPage();
   var songHtml = pianoPerformSongPage();

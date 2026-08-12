@@ -9,6 +9,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 // Load shared SparkNormalize helper used by page modules below.
 // js/utils/normalize.js attaches to window.SparkNormalize, so bootstrap
 // the window alias first (resetEnv() also sets it but runs per-test).
@@ -73,7 +78,7 @@ test("performanceStatsPage ignores sentinel focus and song labels", function() {
     { date: "undefined", type: "null", xp: 10 }
   ];
 
-  global.eval(loadJS("js/pages/performance_stats.js"));
+  loadVM("js/pages/performance_stats.js");
 
   var html = performanceStatsPage();
   assert.ok(html.indexOf(">overview<") >= 0 || html.indexOf(">overview</button>") >= 0);
@@ -99,7 +104,7 @@ test("performanceStatsPage can resolve sparkCore from the global binding", funct
     ];
   };
 
-  global.eval(loadJS("js/pages/performance_stats.js"));
+  loadVM("js/pages/performance_stats.js");
 
   var html = performanceStatsPage();
   assert.ok(html.indexOf(">top<") >= 0 || html.indexOf(">top</button>") >= 0);

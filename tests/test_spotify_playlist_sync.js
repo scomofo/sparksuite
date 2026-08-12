@@ -6,6 +6,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function test(name, fn) {
   Promise.resolve()
     .then(fn)
@@ -34,7 +39,7 @@ test("Spotify playlist client calls the expected sync endpoint", function() {
     });
   };
 
-  global.eval(loadJS("js/sparksuite/network/spotify_playlist_client.js"));
+  loadVM("js/sparksuite/network/spotify_playlist_client.js");
   var client = new SparkSpotifyPlaylistClient({ baseUrl: "http://localhost:3456/api/spotify" });
   return client.syncCurriculumPlaylist({
     curriculumKey: "guitar_core",
@@ -69,7 +74,7 @@ test("SparkCore syncSpotifyCurriculumPlaylist updates playlist runtime state", f
     return JSON.parse(JSON.stringify(value));
   };
 
-  global.eval(loadJS("js/sparksuite/core/spotify_playlist_sync.js"));
+  loadVM("js/sparksuite/core/spotify_playlist_sync.js");
 
   var core = new SparkCore();
   core.spotifyPlaylistClient = {

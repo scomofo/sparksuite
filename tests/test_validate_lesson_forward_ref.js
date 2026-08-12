@@ -3,7 +3,7 @@ var fs = require("fs");
 var path = require("path");
 
 global.window = global;
-global.eval(fs.readFileSync(path.join(__dirname, "..", "js/sparksuite/content/validate_instrument_module.js"), "utf8"));
+require("vm").runInThisContext(fs.readFileSync(path.join(__dirname, "..", "js/sparksuite/content/validate_instrument_module.js"), "utf8"), { filename: path.join(__dirname, "..", "js/sparksuite/content/validate_instrument_module.js") });
 var validateLessons = global.SparkValidateLessons;
 
 function test(name, fn) {

@@ -1,6 +1,7 @@
 node_modules/
 dist/
 www/
+coverage/
 _dev_reload_signal.txt
 # Ignore all `resources/` contents (vendored binaries: demucs.exe, GGML
 # model, etc.) — but exempt the per-instrument design-asset directory

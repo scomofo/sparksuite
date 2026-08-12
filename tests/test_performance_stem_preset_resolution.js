@@ -9,6 +9,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 // Load shared SparkNormalize helper used by page modules below.
 // js/utils/normalize.js attaches to window.SparkNormalize, so bootstrap
 // the window alias first (resetEnv() also sets it but runs per-test).
@@ -99,7 +104,7 @@ test("applyPerformanceStemPreset mutes the piano stem for thin active piano sess
     volume.push(value);
   };
 
-  global.eval(loadJS("js/performance/session.js"));
+  loadVM("js/performance/session.js");
   applyPerformanceStemPreset("no_guitar");
 
   assert.strictEqual(S.performPracticePreset, "no_guitar");
@@ -120,7 +125,7 @@ test("applyPerformanceStemPreset solos the bass stem for thin active bass sessio
   };
   global.setStemVolume = function() {};
 
-  global.eval(loadJS("js/performance/session.js"));
+  loadVM("js/performance/session.js");
   applyPerformanceStemPreset("guitar_solo");
 
   assert.strictEqual(muted.bass, false);
@@ -132,8 +137,8 @@ test("perform preset labels follow the resolved active stem label", function() {
   resetEnv();
   global.escHTML = function(value) { return String(value); };
 
-  global.eval(loadJS("js/performance/session.js"));
-  global.eval(loadJS("js/pages/perform.js"));
+  loadVM("js/performance/session.js");
+  loadVM("js/pages/perform.js");
 
   var presets = getPerformancePracticePresetOptions();
   assert.strictEqual(presets[1].label, "No Piano");
@@ -145,7 +150,7 @@ test("formatTechniqueFocusLabel ignores sentinel focus keys", function() {
   resetEnv();
   global.escHTML = function(value) { return String(value); };
 
-  global.eval(loadJS("js/pages/perform.js"));
+  loadVM("js/pages/perform.js");
 
   assert.strictEqual(formatTechniqueFocusLabel("undefined"), "Technique");
   assert.strictEqual(formatTechniqueFocusLabel(" null "), "Technique");

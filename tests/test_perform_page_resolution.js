@@ -6,6 +6,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 // Load shared SparkNormalize helper used by page modules below.
 // js/utils/normalize.js attaches to window.SparkNormalize, so bootstrap
 // the window alias first (resetEnv() also sets it but runs per-test).
@@ -108,7 +113,7 @@ function resetEnv() {
 function test(name, fn) {
   try {
     resetEnv();
-    global.eval(loadJS("js/pages/perform.js"));
+    loadVM("js/pages/perform.js");
     fn();
     console.log("  PASS: " + name);
   } catch (err) {
@@ -202,7 +207,7 @@ test("perform pages can resolve sparkCore from the global binding", function() {
     }
   };
 
-  global.eval(loadJS("js/pages/perform.js"));
+  loadVM("js/pages/perform.js");
 
   var activeHtml = performPage();
   var doneHtml = performDonePage();
@@ -295,7 +300,7 @@ test("performanceStatsPage uses shared list and metric classes", function() {
     return [{ songId: "slow_burn", bestAccuracy: 62 }];
   };
   global.S.performanceDailyHistory = [{ date: "2026-05-06", type: "full_run", xp: 25 }];
-  global.eval(loadJS("js/pages/performance_stats.js"));
+  loadVM("js/pages/performance_stats.js");
 
   var html = performanceStatsPage();
 

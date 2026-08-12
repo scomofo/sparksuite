@@ -22,6 +22,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function resetEnvironment() {
   global.window = global;
   global.localStorage = {
@@ -65,8 +70,8 @@ function resetEnvironment() {
       global._openedLauncherView = view;
     }
   };
-  global.eval(loadJS("js/showroom/routing_state.js"));
-  global.eval(loadJS("js/showroom/spark-showroom.js"));
+  loadVM("js/showroom/routing_state.js");
+  loadVM("js/showroom/spark-showroom.js");
 }
 
 console.log("\n--- Showroom Navigation Guards ---");
@@ -135,7 +140,7 @@ test("practice action family wires practiceStartItem to the runtime launcher", f
   global.SparkInstruments = {
     getActive: function() { return null; }
   };
-  global.eval(loadJS("js/actions/practice_family.js"));
+  loadVM("js/actions/practice_family.js");
   handled = global.runSparkActionFamilies("practiceStartItem", "focus_01");
   assert.strictEqual(handled, true);
   assert.deepStrictEqual(global.startPracticeItemCalls, ["focus_01"]);
@@ -159,7 +164,7 @@ test("global act routes practiceStartItem through shared families before active 
     }
   };
 
-  global.eval(loadJS("js/actions.js"));
+  loadVM("js/actions.js");
   global.act("practiceStartItem", "focus_01");
 
   assert.deepStrictEqual(familyCalls, [["practiceStartItem", "focus_01"]]);
@@ -198,7 +203,7 @@ test("session registry prefers instrument session page when the engine-owned fla
     };
   };
 
-  global.eval(loadJS("js/render_registry.js"));
+  loadVM("js/render_registry.js");
 
   assert.strictEqual(global._renderActiveScreenContent(), "instrument");
   assert.deepStrictEqual(rendered, ["instrument"]);
@@ -223,7 +228,7 @@ test("session registry keeps legacy active chord routing in the shared session s
     };
   };
 
-  global.eval(loadJS("js/render_registry.js"));
+  loadVM("js/render_registry.js");
 
   assert.strictEqual(global._renderActiveScreenContent(), "shared");
   assert.deepStrictEqual(rendered, ["shared"]);
@@ -257,7 +262,7 @@ test("system action family forwards showroom library filters to the showroom api
     setLibraryCategory: function(value) { categoryCalls.push(value); },
     setLibraryLevel: function(value) { levelCalls.push(value); }
   };
-  global.eval(loadJS("js/actions/system_family.js"));
+  loadVM("js/actions/system_family.js");
 
   handled = global.runSparkActionFamilies("showroomLibraryCategory", "Rock");
   assert.strictEqual(handled, true);
@@ -278,7 +283,7 @@ test("community actions stay removed from the tools family", function() {
   global.S = {};
   global.applySongBrowserRequest = function() {};
   global.render = function() {};
-  global.eval(loadJS("js/actions/tools_family.js"));
+  loadVM("js/actions/tools_family.js");
 
   handled = global.runSparkActionFamilies("communitySearch", "Midnight");
   assert.notStrictEqual(handled, true, "communitySearch should be unhandled");

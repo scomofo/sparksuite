@@ -9,6 +9,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function resetEnvironment() {
   global.window = global;
   global.escHTML = function(value) { return String(value == null ? "" : value); };
@@ -43,7 +48,7 @@ function resetEnvironment() {
 function test(name, fn) {
   try {
     resetEnvironment();
-    global.eval(loadJS("js/meta/profile.js"));
+    loadVM("js/meta/profile.js");
     fn();
     passed += 1;
     console.log("  PASS: " + name);

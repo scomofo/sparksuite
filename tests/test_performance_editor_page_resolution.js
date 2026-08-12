@@ -6,6 +6,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 // Load shared SparkNormalize helper used by page modules below.
 // js/utils/normalize.js attaches to window.SparkNormalize, so bootstrap
 // the window alias first (resetEnv() also sets it but runs per-test).
@@ -27,7 +32,7 @@ function resetEnvironment() {
 function test(name, fn) {
   try {
     resetEnvironment();
-    global.eval(loadJS("js/pages/performance_editor.js"));
+    loadVM("js/pages/performance_editor.js");
     fn();
     console.log("  PASS: " + name);
   } catch (err) {
@@ -210,7 +215,7 @@ test("performanceEditorPage can resolve sparkCore from the global binding", func
     }
   };
 
-  global.eval(loadJS("js/pages/performance_editor.js"));
+  loadVM("js/pages/performance_editor.js");
 
   var html = performanceEditorPage();
   assert.ok(html.indexOf("Global Groove | runtime | 1 events") >= 0);

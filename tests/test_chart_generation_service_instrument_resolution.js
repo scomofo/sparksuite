@@ -6,6 +6,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function test(name, fn) {
   Promise.resolve()
     .then(fn)
@@ -69,7 +74,7 @@ test("ChartGenerationService normalizes app-id instruments before caching and bu
     }
   };
 
-  global.eval(loadJS("js/sparksuite/music/chart_generation_service.js"));
+  loadVM("js/sparksuite/music/chart_generation_service.js");
   var service = new SparkChartGenerationService({
     analyzer: analyzer,
     builder: builder,
@@ -114,7 +119,7 @@ test("SparkChartBuilder normalizes app-id instruments for direct callers", funct
     for (var key in data) this[key] = data[key];
   };
 
-  global.eval(loadJS("js/sparksuite/music/chart_builder.js"));
+  loadVM("js/sparksuite/music/chart_builder.js");
   var builder = new SparkChartBuilder();
   var chart = builder.build({
     trackId: "track_direct",

@@ -32,6 +32,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 var STACK_IN_ORDER = [
   "js/sparksuite/core/timing_core.js",
   "js/sparksuite/core/transport_engine.js",
@@ -78,7 +83,7 @@ function buildStack() {
   };
 
   for (var i = 0; i < STACK_IN_ORDER.length; i++) {
-    global.eval(loadJS(STACK_IN_ORDER[i]));
+    loadVM(STACK_IN_ORDER[i]);
   }
 
   var fakeNow = { ms: 0 };

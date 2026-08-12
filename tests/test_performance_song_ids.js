@@ -21,6 +21,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 global.window = global;
 global.SparkContent = {
   songs: {
@@ -45,9 +50,9 @@ global.SparkSessionTypes = {
   FLOW_PERFORMANCE_SONG: "performance_song"
 };
 
-global.eval(loadJS("js/performance/adapters.js"));
-global.eval(loadJS("js/sparksuite/core/session_engine.js"));
-global.eval(loadJS("js/sparksuite/bridges/performance_bridge.js"));
+loadVM("js/performance/adapters.js");
+loadVM("js/sparksuite/core/session_engine.js");
+loadVM("js/sparksuite/bridges/performance_bridge.js");
 
 console.log("=== Performance Song Id Tests ===");
 

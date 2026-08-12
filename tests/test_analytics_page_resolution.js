@@ -9,6 +9,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 // Load shared SparkNormalize helper used by page modules below.
 // js/utils/normalize.js attaches to window.SparkNormalize, so bootstrap
 // the window alias first (resetEnv() also sets it but runs per-test).
@@ -72,7 +77,7 @@ test("analyticsPage ignores sentinel recommendation labels and reasons", functio
     };
   };
 
-  global.eval(loadJS("js/pages/analytics.js"));
+  loadVM("js/pages/analytics.js");
 
   var html = analyticsPage();
   assert.ok(html.indexOf("Transition") >= 0);
@@ -107,7 +112,7 @@ test("analyticsPage ignores malformed numeric metrics", function() {
     };
   };
 
-  global.eval(loadJS("js/pages/analytics.js"));
+  loadVM("js/pages/analytics.js");
 
   var html = analyticsPage();
   assert.strictEqual(html.indexOf("NaN"), -1);
@@ -131,7 +136,7 @@ test("analyticsPage uses shared visual contract classes", function() {
     };
   };
 
-  global.eval(loadJS("js/pages/analytics.js"));
+  loadVM("js/pages/analytics.js");
 
   var html = analyticsPage();
   assert.strictEqual(html.indexOf("<b>"), -1);
@@ -143,7 +148,7 @@ test("analyticsPage uses shared visual contract classes", function() {
 
 test("analyticsPage renders an empty state when summary builder is not loaded", function() {
   delete global.buildAnalyticsSummary;
-  global.eval(loadJS("js/pages/analytics.js"));
+  loadVM("js/pages/analytics.js");
 
   var html = analyticsPage();
 
@@ -151,7 +156,7 @@ test("analyticsPage renders an empty state when summary builder is not loaded", 
 });
 
 test("analytics engine tolerates missing optional recommendation helpers", function() {
-  global.eval(loadJS("js/analytics/engine.js"));
+  loadVM("js/analytics/engine.js");
 
   var summary = buildAnalyticsSummary();
 

@@ -5,7 +5,7 @@ const path = require("path");
 global.window = global;
 
 function load(file) {
-  global.eval(fs.readFileSync(path.join(__dirname, "..", file), "utf8"));
+  require("vm").runInThisContext(fs.readFileSync(path.join(__dirname, "..", file), "utf8"), { filename: path.join(__dirname, "..", file) });
 }
 
 [

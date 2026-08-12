@@ -6,6 +6,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 // Load shared SparkNormalize helper used by page modules below.
 // js/utils/normalize.js attaches to window.SparkNormalize, so bootstrap
 // the window alias first (resetEnv() also sets it but runs per-test).
@@ -98,7 +103,7 @@ function resetEnvironment() {
 function test(name, fn) {
   try {
     resetEnvironment();
-    global.eval(loadJS("js/pages/practice.js"));
+    loadVM("js/pages/practice.js");
     fn();
     console.log("  PASS: " + name);
   } catch (err) {
@@ -269,7 +274,7 @@ test("shared practice tab renderers survive piano page globals for guitar tabs",
   global.S.quizQ = null;
   global.S.earTrainQ = null;
   global.S.dailyChallenge = { id: "switch", icon: "D", title: "Daily Switch", desc: "Move cleanly", xp: 10 };
-  global.eval(loadJS("js/instruments/piano/pages/games.js"));
+  loadVM("js/instruments/piano/pages/games.js");
 
   var renderers = getSharedHomeTabRenderers();
 
@@ -294,8 +299,8 @@ test("shared practice tab renderers survive piano page globals for guitar tabs",
 });
 
 test("shared tool tab renderers survive piano page globals for guitar tabs", function() {
-  global.eval(loadJS("js/pages/tools.js"));
-  global.eval(loadJS("js/instruments/piano/pages/tools.js"));
+  loadVM("js/pages/tools.js");
+  loadVM("js/instruments/piano/pages/tools.js");
 
   var renderers = getSharedHomeTabRenderers();
 
@@ -305,7 +310,7 @@ test("shared tool tab renderers survive piano page globals for guitar tabs", fun
 });
 
 test("shared tool renderers use shared card and metric typography classes", function() {
-  global.eval(loadJS("js/pages/tools.js"));
+  loadVM("js/pages/tools.js");
   global.getChordTier = function(name) {
     return name === "C" ? { tier: "gold" } : { tier: "none" };
   };
@@ -347,7 +352,7 @@ test("shared tool renderers use shared card and metric typography classes", func
 });
 
 test("shared tool renderers avoid representative raw heavy heading strings", function() {
-  global.eval(loadJS("js/pages/tools.js"));
+  loadVM("js/pages/tools.js");
   global.S.midiEnabled = false;
 
   var tunerHtml = SparkSharedToolRenderers.tunerTab();
@@ -540,7 +545,7 @@ test("practicePage and planPage ignore string false completion flags in cached i
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var practiceHtml = practicePage();
   var planHtml = planPage();
@@ -581,7 +586,7 @@ test("planPage and launchPracticePlanItem can resolve sparkCore from the global 
       };
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var planHtml = planPage();
   launchPracticePlanItem("practice_1");
@@ -638,7 +643,7 @@ test("practicePage and planPage surface the live daily-practice shell from spark
       };
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var practiceHtml = practicePage();
   var summaryHtml = practiceTab();
@@ -707,7 +712,7 @@ test("planPage keeps daily shell metadata honest when duration is missing from t
       };
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var html = planPage();
   assert.ok(html.indexOf("Practice Session Live") >= 0);
@@ -756,7 +761,7 @@ test("practicePage and practiceTab safely render cached item ids containing apos
 
   var practiceHtml = practicePage();
   var summaryHtml = practiceTab();
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
   var planHtml = planPage();
   assert.ok(practiceHtml.indexOf('data-item-id="song_\'_1"') >= 0);
   assert.ok(summaryHtml.indexOf('data-item-id="song_\'_1"') >= 0);
@@ -876,7 +881,7 @@ test("practicePage and planPage ignore sentinel string labels and descriptions",
       ]
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var practiceHtml = practicePage();
   var planHtml = planPage();
@@ -923,7 +928,7 @@ test("practicePage and planPage ignore whitespace-only labels and descriptions",
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var summaryHtml = practiceTab();
   var practiceHtml = practicePage();
@@ -971,7 +976,7 @@ test("practicePage and planPage skip whitespace-only fallback meta labels", func
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var summaryHtml = practiceTab();
   var practiceHtml = practicePage();
@@ -1017,7 +1022,7 @@ test("practicePage and planPage ignore object-shaped fallback meta labels", func
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var summaryHtml = practiceTab();
   var practiceHtml = practicePage();
@@ -1064,7 +1069,7 @@ test("practicePage and planPage ignore whitespace-only exercise types", function
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var practiceHtml = practicePage();
   var planHtml = planPage();
@@ -1106,7 +1111,7 @@ test("practiceTab and planPage ignore whitespace-only subtitle meta tokens", fun
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var summaryHtml = practiceTab();
   var planHtml = planPage();
@@ -1149,7 +1154,7 @@ test("practiceTab and planPage ignore whitespace-only item types in subtitle fal
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var summaryHtml = practiceTab();
   var planHtml = planPage();
@@ -1218,7 +1223,7 @@ test("practicePage and planPage do not render action buttons for whitespace-only
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var practiceHtml = practicePage();
   var planHtml = planPage();
@@ -1246,7 +1251,7 @@ test("practicePage and planPage do not render action buttons for sentinel string
       ]
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var practiceHtml = practicePage();
   var planHtml = planPage();
@@ -1294,7 +1299,7 @@ test("practicePage and planPage do not render action buttons for numeric item id
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var practiceHtml = practicePage();
   var planHtml = planPage();
@@ -1338,7 +1343,7 @@ test("planPage treats whitespace-only item ids without other data as missing pla
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var html = planPage();
   assert.ok(html.indexOf("No practice plan yet.") >= 0);
@@ -1372,7 +1377,7 @@ test("plan page infers richer display types from generic core-backed items", fun
   global.S = { practicePlanComplete: false };
   global.act = function() {};
   global.launchPracticeItem = function() {};
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var html = planPage();
   assert.ok(html.indexOf("ukulele - strum pattern - performance song") >= 0);
@@ -1398,7 +1403,7 @@ test("planPage stays read-only when no plan exists and shows an empty state", fu
   };
   global.S = { practicePlanComplete: false, practicePlan: null };
   global.act = function() {};
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var html = planPage();
   assert.strictEqual(ensureCalls, 0);
@@ -1472,7 +1477,7 @@ test("planPage prefers the active core plan when the practice bridge is unavaila
       };
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var html = planPage();
   assert.ok(html.indexOf("Core Warmup") >= 0);
@@ -1495,7 +1500,7 @@ test("planPage does not render completed items as clickable go buttons", functio
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var html = planPage();
   assert.ok(html.indexOf("Completed Warmup") >= 0);
@@ -1521,7 +1526,7 @@ test("planPage derives plan completion from completed items when the stale compl
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var html = planPage();
   assert.ok(html.indexOf("Plan completed!") >= 0);
@@ -1545,7 +1550,7 @@ test("planPage derives plan completion from real completed items even when stale
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var html = planPage();
   assert.ok(html.indexOf("Plan completed!") >= 0);
@@ -1568,7 +1573,7 @@ test("planPage derives readable fallback labels for sparse plan items", function
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var html = planPage();
   assert.ok(html.indexOf("island strum") >= 0);
@@ -1591,7 +1596,7 @@ test("planPage ignores malformed duration values in cached plan items", function
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var html = planPage();
   assert.ok(html.indexOf("Replay Island Strum") >= 0);
@@ -1613,7 +1618,7 @@ test("planPage ignores boolean duration values in cached plan items", function()
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var html = planPage();
   assert.ok(html.indexOf("Replay Island Strum") >= 0);
@@ -1635,7 +1640,7 @@ test("planPage ignores fractional duration values in cached plan items", functio
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var html = planPage();
   assert.ok(html.indexOf("Replay Island Strum") >= 0);
@@ -1657,7 +1662,7 @@ test("planPage ignores non-plain numeric string durations in cached plan items",
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var html = planPage();
   assert.ok(html.indexOf("Replay Island Strum") >= 0);
@@ -1678,7 +1683,7 @@ test("planPage derives a readable focus label when a cached plan omits focus", f
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var html = planPage();
   assert.ok(html.indexOf("No practice focus yet.") >= 0);
@@ -1717,7 +1722,7 @@ test("planPage and practiceTab treat whitespace-only focus as missing focus", fu
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var planHtml = planPage();
   var practiceHtml = practiceTab();
@@ -1758,7 +1763,7 @@ test("planPage and practiceTab ignore non-string stale focus values", function()
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var planHtml = planPage();
   var practiceHtml = practiceTab();
@@ -1804,7 +1809,7 @@ test("planPage and practiceTab treat sentinel string focus as missing focus", fu
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var planHtml = planPage();
   var practiceHtml = practiceTab();
@@ -1824,7 +1829,7 @@ test("planPage does not render a completed banner when the plan is missing but t
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var html = planPage();
   assert.ok(html.indexOf("No practice plan yet.") >= 0);
@@ -1843,7 +1848,7 @@ test("planPage treats empty cached plan shells as missing plans in the header co
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var html = planPage();
   assert.ok(html.indexOf("<div class=\"muted\">No practice plan yet.</div>") >= 0);
@@ -1866,7 +1871,7 @@ test("planPage does not render go buttons for sparse plan items without ids", fu
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var html = planPage();
   assert.strictEqual(html.indexOf('data-item-id="undefined"'), -1);
@@ -1910,7 +1915,7 @@ test("planPage and practicePage tolerate sparse cached plan items that contain n
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var practiceHtml = practicePage();
   var planHtml = planPage();
@@ -1957,7 +1962,7 @@ test("planPage and practice summaries skip null slots when real plan items exist
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var practiceHtml = practiceTab();
   var planHtml = planPage();
@@ -2089,7 +2094,7 @@ test("launchPracticePlanItem skips null cached plan rows when launching by id", 
   global.launchPracticeItem = function(item) {
     launched.push(item && item.id);
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   launchPracticePlanItem("practice_1");
 
@@ -2644,7 +2649,7 @@ test("practiceTab and planPage treat null-only cached plan arrays as empty state
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var practiceHtml = practiceTab();
   var planHtml = planPage();
@@ -2685,7 +2690,7 @@ test("practiceTab and practicePage treat empty-object cached plan rows as missin
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var practiceHtml = practiceTab();
   var fullHtml = practicePage();
@@ -2726,7 +2731,7 @@ test("practiceTab and practicePage treat object-only meta shells as missing item
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var practiceHtml = practiceTab();
   var fullHtml = practicePage();
@@ -2770,7 +2775,7 @@ test("practiceTab and practicePage treat boolean-only meta shells as missing ite
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var practiceHtml = practiceTab();
   var fullHtml = practicePage();
@@ -2820,7 +2825,7 @@ test("practiceTab and practicePage treat array-shaped meta shells as missing ite
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var practiceHtml = practiceTab();
   var fullHtml = practicePage();
@@ -2864,7 +2869,7 @@ test("practiceTab and practicePage treat numeric-only meta shells as missing ite
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var practiceHtml = practiceTab();
   var fullHtml = practicePage();
@@ -2913,7 +2918,7 @@ test("practiceTab, practicePage, and planPage treat whitespace-only label shells
       return null;
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var summaryHtml = practiceTab();
   var practiceHtml = practicePage();
@@ -2970,7 +2975,7 @@ test("shared guided plan surfaces stay honest when the active shell has no durat
       };
     }
   };
-  global.eval(loadJS("js/pages/plan.js"));
+  loadVM("js/pages/plan.js");
 
   var summaryHtml = practiceTab();
   var planHtml = planPage();

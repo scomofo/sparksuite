@@ -22,6 +22,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function resetState() {
   global.window = global;
   global.APP_NAME = "ChordSpark";
@@ -135,12 +140,12 @@ function resetState() {
     }
   };
 
-  global.eval(loadJS("js/practice/selectors.js"));
-  global.eval(loadJS("js/recommend/candidates.js"));
-  global.eval(loadJS("js/recommend/rules.js"));
-  global.eval(loadJS("js/recommend/scoring.js"));
-  global.eval(loadJS("js/recommend/engine.js"));
-  global.eval(loadJS("js/recommend/ui.js"));
+  loadVM("js/practice/selectors.js");
+  loadVM("js/recommend/candidates.js");
+  loadVM("js/recommend/rules.js");
+  loadVM("js/recommend/scoring.js");
+  loadVM("js/recommend/engine.js");
+  loadVM("js/recommend/ui.js");
 }
 
 resetState();

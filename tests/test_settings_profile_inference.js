@@ -9,6 +9,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function test(name, fn) {
   try {
     resetEnv();
@@ -46,7 +51,7 @@ test("initSettingsDefaults seeds profile from a thin active instrument", functio
     return [{ id: "ukespark", appId: "ukespark", instrument: "ukulele" }];
   };
 
-  global.eval(loadJS("js/settings/settings_state.js"));
+  loadVM("js/settings/settings_state.js");
   initSettingsDefaults();
 
   assert.strictEqual(S.profile.instrumentPrimary, "ukulele");
@@ -55,7 +60,7 @@ test("initSettingsDefaults seeds profile from a thin active instrument", functio
 test("initSettingsDefaults falls back to APP_NAME for non-guitar shells", function() {
   global.APP_NAME = "BassSpark";
 
-  global.eval(loadJS("js/settings/settings_state.js"));
+  loadVM("js/settings/settings_state.js");
   initSettingsDefaults();
 
   assert.strictEqual(S.profile.instrumentPrimary, "bass");
@@ -66,7 +71,7 @@ test("initSettingsDefaults migrates persisted legacy releaseInfo.build", functio
   // {buildNumber}, and the || init leaves an existing object untouched.
   S.releaseInfo = { version: "0.9.0", build: 120, firstInstalled: 1, lastUpdated: 2 };
 
-  global.eval(loadJS("js/settings/settings_state.js"));
+  loadVM("js/settings/settings_state.js");
   initSettingsDefaults();
 
   assert.strictEqual(S.releaseInfo.buildNumber, 120, "legacy build value must carry over");
@@ -77,7 +82,7 @@ test("initSettingsDefaults migrates persisted legacy releaseInfo.build", functio
 test("initSettingsDefaults leaves a modern releaseInfo alone", function() {
   S.releaseInfo = { version: "1.3.0", buildNumber: 7, firstInstalled: 1, lastUpdated: 2 };
 
-  global.eval(loadJS("js/settings/settings_state.js"));
+  loadVM("js/settings/settings_state.js");
   initSettingsDefaults();
 
   assert.strictEqual(S.releaseInfo.buildNumber, 7);
@@ -88,7 +93,7 @@ test("initSettingsDefaults drops a leftover build key beside buildNumber", funct
   // must still run without clobbering the already-migrated buildNumber.
   S.releaseInfo = { version: "1.3.0", buildNumber: 7, build: 120, firstInstalled: 1, lastUpdated: 2 };
 
-  global.eval(loadJS("js/settings/settings_state.js"));
+  loadVM("js/settings/settings_state.js");
   initSettingsDefaults();
 
   assert.strictEqual(S.releaseInfo.buildNumber, 7, "migrated value must not be clobbered by the legacy key");

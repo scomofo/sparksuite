@@ -9,6 +9,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function test(name, fn) {
   try {
     fn();
@@ -40,7 +45,7 @@ test("generateInitialRecommendationsFromOnboarding forwards the selected onboard
     return [{ id: "rec_1" }];
   };
 
-  global.eval(loadJS("js/onboarding/actions.js"));
+  loadVM("js/onboarding/actions.js");
   var recommendations = generateInitialRecommendationsFromOnboarding();
 
   assert.strictEqual(requestedType, "ukulele");

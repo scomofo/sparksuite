@@ -6,7 +6,7 @@ var path = require("path");
 global.window = global;
 global.globalThis = global;
 // SparkNormalizeAccessibilitySettings intentionally not defined
-global.eval(fs.readFileSync(path.join(__dirname, "..", "js/sparksuite/storage/migrations.js"), "utf8"));
+require("vm").runInThisContext(fs.readFileSync(path.join(__dirname, "..", "js/sparksuite/storage/migrations.js"), "utf8"), { filename: path.join(__dirname, "..", "js/sparksuite/storage/migrations.js") });
 
 var migrateProfile = global.SparkMigrateProfile || (typeof module !== "undefined" && require(path.join(__dirname, "..", "js/sparksuite/storage/migrations.js")).migrateProfile);
 

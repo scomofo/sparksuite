@@ -6,6 +6,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function resetEnv(savedState, backupState) {
   global.window = global;
   global.SCR = { HOME: "home" };
@@ -61,7 +66,7 @@ test("loadState migrates legacy performAudioOffsetMs into performMicOffsetMs", f
     performAudioOffsetMs: 87,
     performMicOffsetMs: null
   });
-  global.eval(loadJS("js/state.js"));
+  loadVM("js/state.js");
   assert.strictEqual(S.performMicOffsetMs, 87);
   assert.strictEqual(S.performAudioOffsetMs, 0);
 });
@@ -72,7 +77,7 @@ test("recoverFromCrash migrates backup audio offset into mic offset before savin
     performAudioOffsetMs: 44,
     performMicOffsetMs: null
   });
-  global.eval(loadJS("js/state.js"));
+  loadVM("js/state.js");
   assert.strictEqual(S.performMicOffsetMs, 44);
   assert.strictEqual(S.performAudioOffsetMs, 0);
   assert.ok(localStorageWrites.length >= 1);

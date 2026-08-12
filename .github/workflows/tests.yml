@@ -24,10 +24,41 @@ jobs:
         run: node tests/run-tests.js
 
       - name: Run e2e tests
-        run: node tests/e2e/session_happy_path.test.js && node tests/e2e/instrument_modularity.test.js
+        run: node tests/e2e/session_happy_path.test.js && node tests/e2e/instrument_modularity.test.js && node tests/e2e/session_loop_unmocked.test.js
 
       - name: UI business-logic scan
         run: node scripts/check_ui_business_logic.js
+
+  coverage:
+    name: Coverage baseline
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate chart data
+        run: node scripts/generate-chart-data.js
+
+      # Reports the measured statement/branch coverage of the unit suite
+      # (all: true — never-loaded source files count as 0%, so the number
+      # is honest about untested modules). No thresholds yet — this is a
+      # visibility baseline; add check-coverage flags once it stabilizes.
+      - name: Run suite under c8
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
 
   browser-smoke:
     name: Browser clickthrough smoke

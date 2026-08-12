@@ -6,6 +6,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function test(name, fn) {
   try {
     fn();
@@ -64,7 +69,7 @@ test("midiSettingsPage can resolve sparkCore from the global binding", function(
     }
   };
 
-  global.eval(loadJS("js/midi/ui.js"));
+  loadVM("js/midi/ui.js");
   var html = global.window.midiSettingsPage();
 
   assert.ok(html.indexOf("Launchkey Mini") >= 0);

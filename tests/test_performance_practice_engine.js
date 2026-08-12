@@ -6,6 +6,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function resetState() {
   global.window = global;
   global.SparkSessionTypes = {
@@ -30,7 +35,7 @@ function resetState() {
 function test(name, fn) {
   try {
     resetState();
-    global.eval(loadJS("js/performance/practice_engine.js"));
+    loadVM("js/performance/practice_engine.js");
     fn();
     console.log("  PASS: " + name);
   } catch (err) {

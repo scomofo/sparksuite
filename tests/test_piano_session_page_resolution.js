@@ -6,6 +6,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function resetEnvironment() {
   global.window = global;
   global.sparkCore = undefined;
@@ -76,8 +81,8 @@ function resetEnvironment() {
 function test(name, fn) {
   try {
     resetEnvironment();
-    global.eval(loadJS("js/sparksuite/ui/session_shell.js"));
-    global.eval(loadJS("js/instruments/piano/pages/session.js"));
+    loadVM("js/sparksuite/ui/session_shell.js");
+    loadVM("js/instruments/piano/pages/session.js");
     fn();
     console.log("  PASS: " + name);
   } catch (err) {
@@ -281,7 +286,7 @@ test("piano app confirms session stop before dispatching stop_session", function
   };
   global.T = { sessionStep: 1, session: 1 };
   global.confirm = function() { return true; };
-  global.eval(loadJS("js/instruments/piano/app.js"));
+  loadVM("js/instruments/piano/app.js");
 
   pianoAct("pianoConfirmStopSession");
   assert.strictEqual(S.active, false);

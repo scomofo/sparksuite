@@ -5,7 +5,7 @@ var path = require("path");
 global.window = global;
 
 function loadJS(file) {
-  global.eval(fs.readFileSync(path.join(__dirname, "..", file), "utf8"));
+  require("vm").runInThisContext(fs.readFileSync(path.join(__dirname, "..", file), "utf8"), { filename: path.join(__dirname, "..", file) });
 }
 
 loadJS("js/sparksuite/instruments/ukulele/ukulele_exercises.js");

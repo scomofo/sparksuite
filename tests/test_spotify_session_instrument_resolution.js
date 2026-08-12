@@ -6,6 +6,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function test(name, fn) {
   Promise.resolve()
     .then(fn)
@@ -35,7 +40,7 @@ test("session engine prefers instrumentContext.instrumentType for Spotify chart 
     }
   };
 
-  global.eval(loadJS("js/sparksuite/core/session_engine.js"));
+  loadVM("js/sparksuite/core/session_engine.js");
   var engine = new SparkSuiteSessionEngine({}, {});
 
   return engine.buildSpotifyPlayAlongSession({
@@ -54,7 +59,7 @@ test("SparkCore.startSpotifySession prefers the active instrument type when inpu
   global.window = global;
   global.SparkCore = function SparkCore() {};
   global.SparkCore.prototype.updateRuntimeState = function() {};
-  global.eval(loadJS("js/sparksuite/core/spotify_integration.js"));
+  loadVM("js/sparksuite/core/spotify_integration.js");
 
   var captured = null;
   var core = new SparkCore();

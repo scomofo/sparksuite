@@ -13,7 +13,7 @@ console.log("\n--- applyMidiProfileToNote noteRange guard ---");
 
 test("no crash when profile is missing noteRange (accepts note in default range)", function() {
   global.getActiveMidiProfile = function() { return {}; }; // no noteRange
-  global.eval(fs.readFileSync(path.join(__dirname, "..", "js/midi/mapping.js"), "utf8"));
+  require("vm").runInThisContext(fs.readFileSync(path.join(__dirname, "..", "js/midi/mapping.js"), "utf8"), { filename: path.join(__dirname, "..", "js/midi/mapping.js") });
   var result;
   assert.doesNotThrow(function() {
     result = applyMidiProfileToNote(60, 1, 80);

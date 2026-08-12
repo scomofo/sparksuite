@@ -9,6 +9,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function test(name, fn) {
   try {
     fn();
@@ -59,7 +64,7 @@ test("ensureSparkHighway picks piano skin for piano charts", function() {
   SparkHighway.prototype.init = function() { return Promise.resolve(); };
   SparkHighway.prototype.destroy = function() {};
 
-  global.eval(loadJS("js/performance/highway.js"));
+  loadVM("js/performance/highway.js");
   ensureSparkHighway({ id: "canvas_1" }, { instrument: "piano" });
 
   assert.strictEqual(createdSkin, SparkHighway.PIANO_SKIN);
@@ -83,7 +88,7 @@ test("_updatePerformDisplay initializes the highway renderer before feeding char
   global.S.performCurrentSec = 12;
   global.S.performCombo = 4;
 
-  global.eval(loadJS("js/performance/session.js"));
+  loadVM("js/performance/session.js");
   _updatePerformDisplay();
 
   assert.strictEqual(calls.length >= 3, true);
@@ -106,7 +111,7 @@ test("chord events map distinct chords to distinct lanes in first-appearance ord
   resetEnv();
   global.SparkHighway = function SparkHighway() {};
   SparkHighway.GUITAR_SKIN = { id: "guitar_skin", laneCount: 6 };
-  global.eval(loadJS("js/performance/highway.js"));
+  loadVM("js/performance/highway.js");
 
   var chart = chordChart(["Am", "Am", "E", "G", "D", "F", "C"]);
   var lanes = chart.events.map(function(evt) { return derivePerformanceLaneIndex(chart, evt); });
@@ -118,7 +123,7 @@ test("chord lanes stay stable across the whole chart and wrap past the lane coun
   resetEnv();
   global.SparkHighway = function SparkHighway() {};
   SparkHighway.GUITAR_SKIN = { id: "guitar_skin", laneCount: 6 };
-  global.eval(loadJS("js/performance/highway.js"));
+  loadVM("js/performance/highway.js");
 
   // 7 unique chords on a 6-lane skin: Bm wraps to lane 0, and the reprise
   // of Am/E later in the song must land back on their original lanes.
@@ -132,7 +137,7 @@ test("explicit laneMask, lane, and pitch-bearing events bypass chord-name mappin
   resetEnv();
   global.SparkHighway = function SparkHighway() {};
   SparkHighway.GUITAR_SKIN = { id: "guitar_skin", laneCount: 6 };
-  global.eval(loadJS("js/performance/highway.js"));
+  loadVM("js/performance/highway.js");
 
   var chart = chordChart(["Am", "E"]);
   assert.strictEqual(derivePerformanceLaneMask(chart, { type: "chord", chord: "Am", notes: [], laneMask: 12 }), 12, "explicit laneMask wins");
@@ -144,7 +149,7 @@ test("imported open/technique events keep their zero mask and stay out of the ch
   resetEnv();
   global.SparkHighway = function SparkHighway() {};
   SparkHighway.GUITAR_SKIN = { id: "guitar_skin", laneCount: 6 };
-  global.eval(loadJS("js/performance/highway.js"));
+  loadVM("js/performance/highway.js");
 
   // Imported Spark charts mark open techniques as type:"open" with
   // notes:[] and laneMask 0 — the zero mask IS the meaning. Chord-name

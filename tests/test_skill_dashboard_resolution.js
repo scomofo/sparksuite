@@ -6,6 +6,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 // Load shared SparkNormalize helper used by page modules below.
 // js/utils/normalize.js attaches to window.SparkNormalize, so bootstrap
 // the window alias first (resetEnv() also sets it but runs per-test).
@@ -45,7 +50,7 @@ function resetEnv() {
 function test(name, fn) {
   try {
     resetEnv();
-    global.eval(loadJS("js/pages/skill_dashboard.js"));
+    loadVM("js/pages/skill_dashboard.js");
     fn();
     console.log("  PASS: " + name);
   } catch (err) {

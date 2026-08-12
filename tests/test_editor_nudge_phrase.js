@@ -20,7 +20,7 @@ global.addEditorItem = function() {};
 global.clearEditorSelection = function() {};
 global.removeEditorItem = function() {};
 
-global.eval(fs.readFileSync(path.join(__dirname, "..", "js/editor/transforms.js"), "utf8"));
+require("vm").runInThisContext(fs.readFileSync(path.join(__dirname, "..", "js/editor/transforms.js"), "utf8"), { filename: path.join(__dirname, "..", "js/editor/transforms.js") });
 
 function test(name, fn) {
   try { fn(); console.log("  PASS: " + name); }

@@ -9,6 +9,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function test(name, fn) {
   try {
     resetEnv();
@@ -49,7 +54,7 @@ function resetEnv() {
 console.log("\n--- Challenge Runtime Inference ---");
 
 test("buildDefaultDailyChallenges keeps shared non-piano shells on the stringed challenge path", function() {
-  global.eval(loadJS("js/meta/challenge_rules.js"));
+  loadVM("js/meta/challenge_rules.js");
   var challenges = buildDefaultDailyChallenges();
 
   assert.strictEqual(challenges[2].type, "weak_transition_focus");
@@ -57,8 +62,8 @@ test("buildDefaultDailyChallenges keeps shared non-piano shells on the stringed 
 });
 
 test("initializeChallengesForCurrentCycle resolves thin active instruments before challenge generation", function() {
-  global.eval(loadJS("js/meta/challenge_rules.js"));
-  global.eval(loadJS("js/meta/challenge_engine.js"));
+  loadVM("js/meta/challenge_rules.js");
+  loadVM("js/meta/challenge_engine.js");
 
   var challenges = initializeChallengesForCurrentCycle();
 
@@ -71,7 +76,7 @@ test("challenge inference falls back to APP_NAME for non-guitar shells", functio
   SparkInstruments.getActive = function() {
     return null;
   };
-  global.eval(loadJS("js/meta/challenge_rules.js"));
+  loadVM("js/meta/challenge_rules.js");
 
   var challenges = buildDefaultDailyChallenges();
 

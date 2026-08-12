@@ -29,9 +29,14 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 global.window = global;
 global.S = { level: 3, chordProgress: { A: 100, D: 100, E: 40 } };
-global.eval(loadJS("js/curriculum/curriculum_engine.js"));
+loadVM("js/curriculum/curriculum_engine.js");
 
 console.log("\n--- Song Readiness ---");
 

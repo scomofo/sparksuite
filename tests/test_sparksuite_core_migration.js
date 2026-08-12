@@ -23,6 +23,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function resetState() {
   global.window = global;
   global.S = {
@@ -5546,7 +5551,7 @@ test("orchestrator requests can resolve sparkCore from the global binding", func
       return payload;
     }
   };
-  global.eval(loadJS("js/orchestrator-requests.js"));
+  loadVM("js/orchestrator-requests.js");
 
   var editorRequest = openPerformanceEditorRequest({ id: "chart_1" }, { source: "blank" });
   var calibrationRequest = applyPerformanceCalibrationRequest("calibration_apply", {

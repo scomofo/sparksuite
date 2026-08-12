@@ -6,6 +6,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 // Load shared SparkNormalize helper used by page modules below.
 // js/utils/normalize.js attaches to window.SparkNormalize, so bootstrap
 // the window alias first (resetEnv() also sets it but runs per-test).
@@ -178,13 +183,13 @@ function resetEnvironment() {
 function test(name, fn) {
   try {
     resetEnvironment();
-    global.eval(loadJS("js/pages/dual.js"));
-    global.eval(loadJS("js/pages/games.js"));
-    global.eval(loadJS("js/pages/guided.js"));
-    global.eval(loadJS("js/meta/challenge_ui.js"));
-    global.eval(loadJS("js/pages/tools.js"));
-    global.eval(loadJS("js/pages/shared.js"));
-    global.eval(loadJS("js/pages/skill_tree.js"));
+    loadVM("js/pages/dual.js");
+    loadVM("js/pages/games.js");
+    loadVM("js/pages/guided.js");
+    loadVM("js/meta/challenge_ui.js");
+    loadVM("js/pages/tools.js");
+    loadVM("js/pages/shared.js");
+    loadVM("js/pages/skill_tree.js");
     fn();
     console.log("  PASS: " + name);
   } catch (err) {
@@ -240,7 +245,7 @@ test("active challenges card can resolve sparkCore from the global binding", fun
     }
   };
 
-  global.eval(loadJS("js/meta/challenge_ui.js"));
+  loadVM("js/meta/challenge_ui.js");
   var html = renderActiveChallengesCard();
 
   assert.ok(html.indexOf("Clean Change") >= 0);

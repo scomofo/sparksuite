@@ -9,6 +9,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function test(name, fn) {
   try {
     fn();
@@ -43,7 +48,7 @@ test("buildFullLocalBackup prefers the active instrument app id when release inf
     return { appId: "pianospark" };
   };
 
-  global.eval(loadJS("js/desktop/bridge.js"));
+  loadVM("js/desktop/bridge.js");
   var backup = buildFullLocalBackup();
 
   assert.strictEqual(backup.app, "pianospark");
@@ -52,7 +57,7 @@ test("buildFullLocalBackup prefers the active instrument app id when release inf
 test("buildFullLocalBackup falls back to sparksuite when no app id is available", function() {
   resetEnv();
 
-  global.eval(loadJS("js/desktop/bridge.js"));
+  loadVM("js/desktop/bridge.js");
   var backup = buildFullLocalBackup();
 
   assert.strictEqual(backup.app, "sparksuite");
@@ -81,7 +86,7 @@ test("buildFullLocalBackup uses canonical storage export and debug bundle when a
     return { session: { id: "session_1" }, recentEvents: [] };
   };
 
-  global.eval(loadJS("js/desktop/bridge.js"));
+  loadVM("js/desktop/bridge.js");
   var backup = buildFullLocalBackup();
 
   assert.strictEqual(backup.schemaVersion, 4);
@@ -119,7 +124,7 @@ test("buildFullLocalBackup can target a non-default imported user", function() {
     return { session: null };
   };
 
-  global.eval(loadJS("js/desktop/bridge.js"));
+  loadVM("js/desktop/bridge.js");
   var backup = buildFullLocalBackup({ userId: "smoke_user" });
 
   assert.deepStrictEqual(exportedUserIds, ["smoke_user"]);
@@ -159,7 +164,7 @@ test("exportFullBackupDesktopAware saves the canonical backup payload", async fu
     }
   };
 
-  global.eval(loadJS("js/desktop/bridge.js"));
+  loadVM("js/desktop/bridge.js");
   return exportFullBackupDesktopAware().then(function(result) {
     assert.strictEqual(result, true);
     assert.strictEqual(global.sparkDesktop.calls.length, 1);

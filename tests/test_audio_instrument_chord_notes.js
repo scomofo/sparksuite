@@ -6,6 +6,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function test(name, fn) {
   try {
     global.window = global;
@@ -27,9 +32,9 @@ function test(name, fn) {
         };
       }
     };
-    global.eval(loadJS("js/sparksuite/core/practice_engine.js"));
+    loadVM("js/sparksuite/core/practice_engine.js");
     global.sparkCore = { practiceEngine: new SparkSuitePracticeEngine(null) };
-    global.eval(loadJS("js/audio.js"));
+    loadVM("js/audio.js");
     fn();
     console.log("  PASS: " + name);
   } catch (err) {

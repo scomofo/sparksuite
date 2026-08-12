@@ -9,6 +9,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function test(name, fn) {
   Promise.resolve()
     .then(fn)
@@ -68,7 +73,7 @@ test("handleMidiImport infers app type from a thin active instrument", async fun
     return { track_1: "block_chords" };
   };
 
-  global.eval(loadJS("js/import/midi_ui.js"));
+  loadVM("js/import/midi_ui.js");
   await handleMidiImport({ name: "demo.mid" });
 
   assert.strictEqual(requestedType, "piano");

@@ -6,6 +6,11 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 }
 
+function loadVM(file) {
+  var full = path.join(__dirname, "..", file);
+  require("vm").runInThisContext(fs.readFileSync(full, "utf8"), { filename: full });
+}
+
 function resetEnvironment() {
   global.window = global;
   global.S = {
@@ -45,8 +50,8 @@ function resetEnvironment() {
 function test(name, fn) {
   try {
     resetEnvironment();
-    global.eval(loadJS("js/instruments/piano/pages/practice.js"));
-    global.eval(loadJS("js/instruments/piano/pages/plan.js"));
+    loadVM("js/instruments/piano/pages/practice.js");
+    loadVM("js/instruments/piano/pages/plan.js");
     fn();
     console.log("  PASS: " + name);
   } catch (err) {
@@ -183,7 +188,7 @@ test("piano practice plan section reads the active core-backed plan without gene
   };
 
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var html = practicePlanSection();
   var styles = loadJS("styles.css");
@@ -223,7 +228,7 @@ test("piano practice plan section prefers the active core plan when the practice
   };
 
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var html = practicePlanSection();
   assert.ok(html.indexOf("Core Warmup") >= 0);
@@ -244,7 +249,7 @@ test("piano practice plan section shows an empty state when no plan exists", fun
   };
 
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var html = practicePlanSection();
   assert.ok(html.indexOf("Today's Practice Plan") >= 0 || html.indexOf("Today\\'s Practice Plan") >= 0);
@@ -290,7 +295,7 @@ test("piano practice plan section pivots into guided resume mode with V2 shell d
   };
 
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var html = practicePlanSection();
   var styles = loadJS("styles.css");
@@ -345,7 +350,7 @@ test("piano guided flow surfaces stay honest when the live shell has no duration
   };
 
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
@@ -380,7 +385,7 @@ test("piano practice plan section treats malformed cached plan shells without ar
   };
 
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var html = practicePlanSection();
   assert.ok(html.indexOf("No practice plan yet.") >= 0);
@@ -406,7 +411,7 @@ test("piano plan and practice sections treat null-only cached plan arrays as emp
   };
 
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
@@ -436,7 +441,7 @@ test("piano plan and practice sections treat empty-object cached plan rows as mi
   };
 
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
@@ -466,7 +471,7 @@ test("piano plan and practice sections treat object-only meta shells as missing 
   };
 
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
@@ -496,7 +501,7 @@ test("piano plan and practice sections treat boolean-only meta shells as missing
   };
 
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
@@ -528,7 +533,7 @@ test("piano plan and practice sections treat array-shaped meta shells as missing
   };
 
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
@@ -558,7 +563,7 @@ test("piano plan and practice sections treat numeric-only meta shells as missing
   };
 
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
@@ -589,7 +594,7 @@ test("piano plan and practice sections treat whitespace-only label shells as mis
     }
   };
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
@@ -619,7 +624,7 @@ test("piano practice plan section derives fallback labels for sparse plan items"
   };
 
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var html = practicePlanSection();
   assert.ok(html.indexOf("island strum") >= 0);
@@ -648,7 +653,7 @@ test("piano practice plan section does not render start buttons for sparse plan 
   };
 
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var html = practicePlanSection();
   assert.strictEqual(html.indexOf('data-item-id="undefined"'), -1);
@@ -676,7 +681,7 @@ test("piano plan and practice sections do not render action buttons for whitespa
   };
   global.getAverageMastery = function() { return 0.5; };
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
@@ -706,7 +711,7 @@ test("piano plan and practice sections do not render action buttons for sentinel
   global.SparkPracticeBridge = undefined;
   global.getAverageMastery = function() { return 0.5; };
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
@@ -739,7 +744,7 @@ test("piano plan and practice sections do not render action buttons for numeric 
   };
   global.getAverageMastery = function() { return 0.5; };
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
@@ -867,7 +872,7 @@ test("piano plan and practice sections ignore string false completion flags in c
   };
   global.getAverageMastery = function() { return 0.5; };
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
@@ -974,7 +979,7 @@ test("piano plan surfaces ignore sentinel string labels and descriptions", funct
   global.SparkPracticeBridge = undefined;
   global.getAverageMastery = function() { return 0.5; };
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
@@ -1090,7 +1095,7 @@ test("piano plan and practice sections ignore whitespace-only labels", function(
   };
   global.getAverageMastery = function() { return 0.5; };
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
@@ -1119,7 +1124,7 @@ test("piano plan and practice sections skip whitespace-only fallback meta labels
   };
   global.getAverageMastery = function() { return 0.5; };
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
@@ -1148,7 +1153,7 @@ test("piano plan and practice sections ignore object-shaped fallback meta labels
   };
   global.getAverageMastery = function() { return 0.5; };
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
@@ -1178,7 +1183,7 @@ test("piano plan and practice sections ignore whitespace-only exercise types", f
   };
   global.getAverageMastery = function() { return 0.5; };
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
@@ -1208,7 +1213,7 @@ test("piano practice plan section ignores malformed target display values", func
   };
   global.getAverageMastery = function() { return 0.5; };
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var html = practicePlanSection();
   assert.ok(html.indexOf("Quick warmup") >= 0);
@@ -1424,7 +1429,7 @@ test("piano plan and practice sections safely render cached item ids containing 
   global.getAverageMastery = function() { return 0.5; };
 
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
@@ -1456,7 +1461,7 @@ test("piano plan and practice sections tolerate sparse cached plan items that co
   global.getAverageMastery = function() { return 0.5; };
 
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
@@ -1491,7 +1496,7 @@ test("piano plan and practice sections skip null slots when real plan items exis
   global.getAverageMastery = function() { return 0.5; };
 
   global.practicePlanSection = undefined;
-  global.eval(loadJS("js/instruments/piano/pages/practice.js"));
+  loadVM("js/instruments/piano/pages/practice.js");
 
   var planHtml = pianoPlanPage();
   var practiceHtml = practicePlanSection();
