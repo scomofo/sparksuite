@@ -564,6 +564,14 @@ function _updatePerformDisplay() {
   }
 }
 
+var _performanceInputJudge = null;
+function getPerformanceInputJudge() {
+  if (!_performanceInputJudge && typeof SparkInputJudge === "function") {
+    _performanceInputJudge = new SparkInputJudge();
+  }
+  return _performanceInputJudge;
+}
+
 function maybeScorePendingEvents(nowSec) {
   var chart = S.performChart;
   if (!chart) return;
@@ -581,6 +589,10 @@ function maybeScorePendingEvents(nowSec) {
       : (typeof getStoredPerformanceMicOffsetMs === "function" ? getStoredPerformanceMicOffsetMs() : (S.performMicOffsetMs || 0)));
   var targetTechnique = S.performTargetTechnique || null;
 
+  // Pass 1: expire events whose window has closed, and collect the events
+  // still in-window whose current snapshot shows *some* activity — these are
+  // the candidates competing for this frame's input.
+  var candidates = [];
   for (var i = 0; i < chart.events.length; i++) {
     var evt = chart.events[i];
     if (evt._scored) continue;
@@ -605,33 +617,71 @@ function maybeScorePendingEvents(nowSec) {
       continue;
     }
 
-    // In scoring window — check snapshot
+    // In scoring window — a candidate if the current input snapshot shows activity
     if (performanceSnapshotHasActivity(snapshot, evt, S.performMode)) {
-      var result = scorePerformanceEvent(evt, snapshot, deltaMs, S.performDifficulty, S.performMode);
-
-      if (result.grade !== "miss") {
-        evt._scored = true;
-        evt._hit = true;
-        evt._result = result;
-        evt._score = result.score;
-        if (typeof notifyHighwayHit === "function") notifyHighwayHit(evt);
-        updatePhraseStats(S.performPhraseStats, evt, result);
-
-        S.performCombo++;
-        if (S.performCombo > S.performMaxCombo) S.performMaxCombo = S.performCombo;
-
-        var comboMult = Math.min(1 + S.performCombo * 0.1, 4);
-        S.performScore += Math.round(100 * result.score * comboMult);
-
-        S.performLastHitLabel = typeof buildPerformanceFeedbackLabel === "function"
-          ? buildPerformanceFeedbackLabel(evt, result, targetTechnique)
-          : (result.grade.toUpperCase() + "!");
-        S.performLastHitTime = Date.now();
-
-        _updatePerformanceAccuracy(chart);
-      }
+      candidates.push({ evt: evt, timeSec: evt.t, hit: false, missed: false });
     }
   }
+
+  if (!candidates.length) return;
+
+  // Pass 2: pick the single closest genuinely-matching candidate for this
+  // frame's input through the same shared judge rhythm mode uses, instead of
+  // independently scoring every in-window event off the same input activity
+  // (which let a farther, worse-matching event steal or double-claim credit
+  // that belonged to the closest match).
+  var inputJudge = getPerformanceInputJudge();
+  var winnerCandidate = null;
+  var winnerResult = null;
+
+  if (inputJudge) {
+    var offsetNowSec = nowSec - offsetMs / 1000;
+    var resolution = inputJudge.resolve(
+      candidates,
+      { atSec: offsetNowSec },
+      { hitWindowMs: { miss: S.performWindowMissMs } },
+      function(note) {
+        var candidateDeltaMs = (nowSec - note.evt.t) * 1000 - offsetMs;
+        var candidateResult = scorePerformanceEvent(note.evt, snapshot, candidateDeltaMs, S.performDifficulty, S.performMode);
+        note._candidateResult = candidateResult;
+        return candidateResult.grade !== "miss";
+      }
+    );
+    if (resolution.matched && resolution.reason !== "wrong_fret" && resolution.note) {
+      winnerCandidate = resolution.note;
+      winnerResult = winnerCandidate._candidateResult;
+    }
+  } else {
+    // No shared judge available (older build/test harness) — fall back to
+    // scoring the closest candidate directly rather than skipping the frame.
+    winnerCandidate = candidates[0];
+    var fallbackDeltaMs = (nowSec - winnerCandidate.evt.t) * 1000 - offsetMs;
+    var fallbackResult = scorePerformanceEvent(winnerCandidate.evt, snapshot, fallbackDeltaMs, S.performDifficulty, S.performMode);
+    if (fallbackResult.grade !== "miss") winnerResult = fallbackResult;
+  }
+
+  if (!winnerCandidate || !winnerResult) return;
+
+  var winnerEvt = winnerCandidate.evt;
+  winnerEvt._scored = true;
+  winnerEvt._hit = true;
+  winnerEvt._result = winnerResult;
+  winnerEvt._score = winnerResult.score;
+  if (typeof notifyHighwayHit === "function") notifyHighwayHit(winnerEvt);
+  updatePhraseStats(S.performPhraseStats, winnerEvt, winnerResult);
+
+  S.performCombo++;
+  if (S.performCombo > S.performMaxCombo) S.performMaxCombo = S.performCombo;
+
+  var comboMult = Math.min(1 + S.performCombo * 0.1, 4);
+  S.performScore += Math.round(100 * winnerResult.score * comboMult);
+
+  S.performLastHitLabel = typeof buildPerformanceFeedbackLabel === "function"
+    ? buildPerformanceFeedbackLabel(winnerEvt, winnerResult, targetTechnique)
+    : (winnerResult.grade.toUpperCase() + "!");
+  S.performLastHitTime = Date.now();
+
+  _updatePerformanceAccuracy(chart);
 }
 
 function _updatePerformanceAccuracy(chart) {

@@ -75,9 +75,29 @@ Reuse performance mode's integration pattern (`js/performance/highway.js`:
 
 | Concern | Rhythm | Performance | Convergence target |
 |---|---|---|---|
-| Judge | `input_judge.js` (lane-aware nearest) | `session.js maybeScorePendingEvents` | `input_judge` (it fixed a lane-stealing bug the performance scanner still has) |
+| Judge | `input_judge.js` (lane-aware nearest) | `session.js maybeScorePendingEvents` | ✅ Done — both route candidate selection through `SparkInputJudge` |
 | Score model | integer + combo multiplier | 0–1 weighted → grade | Needs a product decision — different feels, same engine possible |
 | Note model | tick-based `SparkNoteEvent` | seconds-based events | Tick-based domain model, flattened at the renderer boundary (the MIDI chart generator already produces real tempo maps) |
+
+### Judge convergence (2026-08-28)
+
+`SparkInputJudge.resolve()` gained an optional `matchFn(note, inputEvent, preset)`
+parameter (defaulting to the existing lane-mask matcher, so rhythm mode's call
+site is unaffected). `maybeScorePendingEvents` now builds the set of in-window
+candidate events that show snapshot activity, then asks the shared judge to
+pick the single closest genuinely-matching one — via a `matchFn` that scores
+each candidate through the existing `scorePerformanceEvent` and treats a
+non-"miss" grade as a match — instead of independently scoring every matching
+in-window event off the same input. That independent-per-event scan was the
+performance-mode analog of the lane-stealing bug: with two events
+simultaneously in-window and both matching, it credited both off one physical
+input in the same frame instead of awarding the frame to the closer one and
+letting the other resolve on a later frame. `scorePerformanceEvent`'s own
+noteScore/timingScore/grade weighting is unchanged — this converges note
+*selection*, not the scoring model (that's the separate "Score model" row
+above). Falls back to scoring the first in-window candidate directly if
+`SparkInputJudge` isn't loaded. Covered by
+`tests/test_performance_scoring_judge.js`.
 
 ## Risks
 
