@@ -169,7 +169,11 @@
 
   function mirrorGuidedRuntimeFields(runtimeState) {
     if (!runtimeState) return;
-    setLegacyFields({
+    var core = getSparkCoreHandle();
+    var projected = core && typeof core.projectRuntimeStateFields === "function"
+      ? core.projectRuntimeStateFields("guided", runtimeState)
+      : null;
+    setLegacyFields(projected || {
       guidedActivityId: runtimeState.guidedActivityId || null,
       guidedActivityKind: runtimeState.guidedActivityKind || null,
       guidedBlockType: runtimeState.guidedBlockType || null

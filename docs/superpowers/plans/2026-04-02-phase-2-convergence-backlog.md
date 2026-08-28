@@ -84,6 +84,41 @@ Acceptance criteria:
 3. Migrate important live loops toward engine-owned runtime objects
 4. Thin the bridge layer afterward
 
+## Progress
+
+### 2026-08-28: engine-owned runtime-state projection (pilot: guided sessions)
+
+`SparkCore` already had a stable `runtimeState` shape plus `getRuntimeState()`/
+`updateRuntimeState()` (see `js/sparksuite/core/spark_core.js`,
+`createInitialRuntimeState`). What Phase 2 still needed was goal 1's second
+acceptance criterion: legacy `S.*` fields getting updated *from* that engine
+state instead of bridges re-deriving their own copy of the mapping.
+
+Before this: each action family in `js/actions/*_family.js` hand-wrote its
+own "mirror" function (e.g. `mirrorGuidedRuntimeFields` in
+`system_family.js`) that picked a handful of fields off
+`core.getRuntimeState()` and copied them onto `S` — one bespoke, undocumented
+field map per flow, free to drift from what the engine actually considers
+canonical.
+
+Added `SparkCore.RUNTIME_STATE_PROJECTIONS` (a named registry of pure
+`runtimeState -> legacy field object` functions) and
+`SparkCore.prototype.projectRuntimeStateFields(domain, runtimeState)` to read
+it. The `guided` domain is the pilot migration:
+`mirrorGuidedRuntimeFields` in `system_family.js` now delegates to
+`core.projectRuntimeStateFields("guided", runtimeState)` instead of
+re-deriving the field list itself. Pinned by
+`tests/test_runtime_state_projection.js`.
+
+This is the seed of "shrink the bridge layer" (goal 4): the field mapping now
+lives next to `SparkCore`, not scattered across action families. Extending
+this to other flows means adding one function to
+`RUNTIME_STATE_PROJECTIONS` and switching that flow's mirror call site — no
+new mechanism needed. Candidates for the next slice: the performance/song
+mirror sites in `orchestrator-requests.js` (`syncSongRuntimeRequest`,
+`applySongNavigationRequest`) and the calibration/arrangement/difficulty/speed
+mirrors in `js/actions/performance_family.js`.
+
 ## Honest Exit Criteria
 
 We can call Phase 2 done when:

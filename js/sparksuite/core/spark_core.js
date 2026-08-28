@@ -719,6 +719,30 @@
     };
   };
 
+  // Phase 2 convergence: engine-owned runtime-state -> legacy-shell field
+  // projection. Call sites in js/actions/*_family.js used to hand-copy a
+  // handful of runtimeState fields onto S themselves (one bespoke "mirror"
+  // function per flow, each free to drift from what the engine actually
+  // considers canonical). Projections defined here are the single source of
+  // truth for that field mapping per domain; bridges call
+  // projectRuntimeStateFields(domain, ...) instead of re-deriving it.
+  SparkCore.RUNTIME_STATE_PROJECTIONS = {
+    guided: function(runtimeState) {
+      runtimeState = runtimeState || {};
+      return {
+        guidedActivityId: runtimeState.guidedActivityId || null,
+        guidedActivityKind: runtimeState.guidedActivityKind || null,
+        guidedBlockType: runtimeState.guidedBlockType || null
+      };
+    }
+  };
+
+  SparkCore.prototype.projectRuntimeStateFields = function(domain, runtimeState) {
+    var projection = SparkCore.RUNTIME_STATE_PROJECTIONS[domain];
+    if (typeof projection !== "function") return null;
+    return projection(runtimeState || this.runtimeState || {});
+  };
+
   SparkCore.prototype.resolveGuidedRuntimeSegmentId = function(step, plan) {
     var guidedActivity = this.resolveGuidedRuntimeActivity(step, plan);
     var blockType = guidedActivity.guidedBlockType;
