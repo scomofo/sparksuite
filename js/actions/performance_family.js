@@ -548,22 +548,20 @@
         ? coreView.plan.context.performanceSong || null
         : null;
       var selectedSong = performanceSong && performanceSong.songData ? performanceSong.songData : S.performSongData;
-      var selectedSongIndex = coreView && coreView.runtimeState && Object.prototype.hasOwnProperty.call(coreView.runtimeState, "performanceSongIndex")
-        ? coreView.runtimeState.performanceSongIndex
+      var songContext = startCore && typeof startCore.projectRuntimeStateFields === "function"
+        ? startCore.projectRuntimeStateFields("performanceSongContext", coreView && coreView.runtimeState, {
+          performanceSongTitle: selectedSong && selectedSong.title ? selectedSong.title : null,
+          performanceDifficultyId: S.performDifficulty,
+          performanceSpeed: S.performSpeed,
+          performanceTargetTechnique: S.performTargetTechnique
+        })
         : null;
-      var selectedSongTitle = coreView && coreView.runtimeState && coreView.runtimeState.performanceSongTitle
-        ? coreView.runtimeState.performanceSongTitle
-        : (selectedSong && selectedSong.title ? selectedSong.title : null);
+      var selectedSongIndex = songContext ? songContext.performanceSongIndex : null;
+      var selectedSongTitle = songContext ? songContext.performanceSongTitle : (selectedSong && selectedSong.title ? selectedSong.title : null);
       var arrangementType = performanceSong && performanceSong.arrangementType ? performanceSong.arrangementType : S.performArrangementType;
-      var difficultyId = coreView && coreView.runtimeState && coreView.runtimeState.performanceDifficultyId
-        ? coreView.runtimeState.performanceDifficultyId
-        : S.performDifficulty;
-      var speed = coreView && coreView.runtimeState && coreView.runtimeState.performanceSpeed
-        ? coreView.runtimeState.performanceSpeed
-        : S.performSpeed;
-      var targetTechnique = coreView && coreView.runtimeState && Object.prototype.hasOwnProperty.call(coreView.runtimeState, "performanceTargetTechnique")
-        ? coreView.runtimeState.performanceTargetTechnique
-        : S.performTargetTechnique;
+      var difficultyId = songContext ? songContext.performanceDifficultyId : S.performDifficulty;
+      var speed = songContext ? songContext.performanceSpeed : S.performSpeed;
+      var targetTechnique = songContext ? songContext.performanceTargetTechnique : S.performTargetTechnique;
       var selectedSongId = selectedSong && typeof resolvePerformanceSongId === "function"
         ? resolvePerformanceSongId(selectedSong, selectedSongTitle || (selectedSong && selectedSong.title))
         : (selectedSongTitle || (selectedSong && selectedSong.title) || "").toLowerCase().replace(/[^a-z0-9]+/g, "_");
@@ -756,15 +754,15 @@
     if (a === "performRetryPhrase") {
       if (S.performChart && S.performChart.phrases && S.performChart.phrases.length &&
           S.performResults && S.performResults.phraseStats && S.performResults.phraseStats.length) {
-        var targetTechniqueRetry = null;
         var retryCore = getPerformanceActionCore();
-        if (retryCore && typeof retryCore.getActiveSessionView === "function") {
-          var retryCoreView = retryCore.getActiveSessionView();
-          if (retryCoreView && retryCoreView.runtimeState && Object.prototype.hasOwnProperty.call(retryCoreView.runtimeState, "performanceTargetTechnique")) {
-            targetTechniqueRetry = retryCoreView.runtimeState.performanceTargetTechnique;
-          }
-        }
-        if (!targetTechniqueRetry) targetTechniqueRetry = S.performTargetTechnique || null;
+        var retryCoreView = retryCore && typeof retryCore.getActiveSessionView === "function"
+          ? retryCore.getActiveSessionView()
+          : null;
+        var targetTechniqueRetry = retryCore && typeof retryCore.projectRuntimeStateFields === "function"
+          ? retryCore.projectRuntimeStateFields("performanceSongContext", retryCoreView && retryCoreView.runtimeState, {
+            performanceTargetTechnique: S.performTargetTechnique
+          }).performanceTargetTechnique
+          : (S.performTargetTechnique || null);
         var candidateIndices = null;
         if (targetTechniqueRetry && typeof getPerformancePhraseIndicesForTechnique === "function") {
           candidateIndices = getPerformancePhraseIndicesForTechnique(S.performChart, targetTechniqueRetry);

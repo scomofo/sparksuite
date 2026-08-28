@@ -734,13 +734,41 @@
         guidedActivityKind: runtimeState.guidedActivityKind || null,
         guidedBlockType: runtimeState.guidedBlockType || null
       };
+    },
+    // Performance/song launch call sites (js/actions/performance_family.js)
+    // each re-derived "prefer the engine's runtime state, else fall back to
+    // the legacy S value" per field, with a different presence check per
+    // field (some fields treat "" or 0 as unset, some don't) copy-pasted at
+    // every call site. Centralizing the per-field check here means a call
+    // site only supplies its fallback values — the field-by-field precedence
+    // rule itself is engine-owned and can't drift between call sites.
+    performanceSongContext: function(runtimeState, fallback) {
+      runtimeState = runtimeState || {};
+      fallback = fallback || {};
+      return {
+        performanceSongIndex: Object.prototype.hasOwnProperty.call(runtimeState, "performanceSongIndex")
+          ? runtimeState.performanceSongIndex
+          : (fallback.performanceSongIndex != null ? fallback.performanceSongIndex : null),
+        performanceSongTitle: runtimeState.performanceSongTitle
+          ? runtimeState.performanceSongTitle
+          : (fallback.performanceSongTitle || null),
+        performanceDifficultyId: runtimeState.performanceDifficultyId
+          ? runtimeState.performanceDifficultyId
+          : (fallback.performanceDifficultyId || null),
+        performanceSpeed: runtimeState.performanceSpeed
+          ? runtimeState.performanceSpeed
+          : (fallback.performanceSpeed || null),
+        performanceTargetTechnique: Object.prototype.hasOwnProperty.call(runtimeState, "performanceTargetTechnique")
+          ? runtimeState.performanceTargetTechnique
+          : (fallback.performanceTargetTechnique || null)
+      };
     }
   };
 
-  SparkCore.prototype.projectRuntimeStateFields = function(domain, runtimeState) {
+  SparkCore.prototype.projectRuntimeStateFields = function(domain, runtimeState, fallback) {
     var projection = SparkCore.RUNTIME_STATE_PROJECTIONS[domain];
     if (typeof projection !== "function") return null;
-    return projection(runtimeState || this.runtimeState || {});
+    return projection(runtimeState || this.runtimeState || {}, fallback || {});
   };
 
   SparkCore.prototype.resolveGuidedRuntimeSegmentId = function(step, plan) {

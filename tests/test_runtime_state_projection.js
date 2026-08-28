@@ -141,5 +141,61 @@ test("js/actions/system_family.js mirrors guided runtime fields through the engi
   );
 });
 
+test("projectRuntimeStateFields('performanceSongContext') prefers engine runtime state over the fallback", function() {
+  var core = createDefaultSparkCore();
+  var projected = core.projectRuntimeStateFields("performanceSongContext", {
+    performanceSongIndex: 2,
+    performanceSongTitle: "Night Drive",
+    performanceDifficultyId: "hard",
+    performanceSpeed: 0.9,
+    performanceTargetTechnique: "hammer_on"
+  }, {
+    performanceSongTitle: "fallback title",
+    performanceDifficultyId: "normal",
+    performanceSpeed: 1.0,
+    performanceTargetTechnique: "slide"
+  });
+  assert.deepStrictEqual(projected, {
+    performanceSongIndex: 2,
+    performanceSongTitle: "Night Drive",
+    performanceDifficultyId: "hard",
+    performanceSpeed: 0.9,
+    performanceTargetTechnique: "hammer_on"
+  });
+});
+
+test("projectRuntimeStateFields('performanceSongContext') falls back to the caller-supplied legacy values when runtime state is empty", function() {
+  var core = createDefaultSparkCore();
+  var projected = core.projectRuntimeStateFields("performanceSongContext", {}, {
+    performanceSongTitle: "fallback title",
+    performanceDifficultyId: "normal",
+    performanceSpeed: 1.0,
+    performanceTargetTechnique: "slide"
+  });
+  assert.deepStrictEqual(projected, {
+    performanceSongIndex: null,
+    performanceSongTitle: "fallback title",
+    performanceDifficultyId: "normal",
+    performanceSpeed: 1.0,
+    performanceTargetTechnique: "slide"
+  });
+});
+
+test("projectRuntimeStateFields('performanceSongContext') treats an explicit null target technique as engine-owned, not a cue to fall back", function() {
+  var core = createDefaultSparkCore();
+  var projected = core.projectRuntimeStateFields("performanceSongContext", {
+    performanceTargetTechnique: null
+  }, {
+    performanceTargetTechnique: "slide"
+  });
+  assert.strictEqual(projected.performanceTargetTechnique, null);
+});
+
+test("js/actions/performance_family.js resolves song-launch and retry-phrase context through the engine-owned projection", function() {
+  var source = loadJS("js/actions/performance_family.js");
+  var matches = source.match(/projectRuntimeStateFields\("performanceSongContext"/g);
+  assert.ok(matches && matches.length === 2, "expected both performStartFromSong and performRetryPhrase to delegate to the shared projection");
+});
+
 console.log("\nPassed: " + passed + "  Failed: " + failed);
 if (failed > 0) process.exit(1);
