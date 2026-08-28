@@ -227,6 +227,7 @@ function startPerformance(chartIdOrChart, opts) {
 
   chartPromise.then(function(chart) {
     var chartId = typeof chartIdOrChart === "string" ? chartIdOrChart : (chart.id || "generated");
+    if (typeof ensurePerformanceChartTickModel === "function") chart = ensurePerformanceChartTickModel(chart);
     chart = applyPerformanceChartInstrumentContext(chart, chartId, opts);
     if (window.SparkPerformanceBridge && typeof SparkPerformanceBridge.syncPerformanceRuntimeState === "function") {
       SparkPerformanceBridge.syncPerformanceRuntimeState("start", {

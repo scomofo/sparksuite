@@ -221,6 +221,11 @@ test('convertSparkSongChartToPerformanceChart adapts imported spark charts for p
   assert.strictEqual(performanceChart.events.length, 1);
   assert.deepStrictEqual(performanceChart.events[0].notes, ['C']);
   assert.strictEqual(performanceChart.events[0]._scored, false);
+  // Note-model convergence: the real tick data from the source tempo map is
+  // carried through onto the flattened performance event instead of discarded.
+  assert.strictEqual(performanceChart.events[0].tick, 0);
+  assert.strictEqual(performanceChart.events[0].tickLength, 96);
+  assert.strictEqual(typeof performanceChart.tempoMap.tickToSeconds, 'function');
 });
 
 test('normalizePerformanceChartDefinition imports package-backed performance charts', function() {
@@ -255,6 +260,60 @@ test('normalizePerformanceChartDefinition imports package-backed performance cha
   assert.strictEqual(performanceChart.artist, 'Performance Loader');
   assert.strictEqual(performanceChart.events.length, 2);
   assert.strictEqual(performanceChart.events[0]._scored, false);
+});
+
+console.log('\n--- PerformanceCore: Note-Model Tick Convergence ---');
+
+test('SparkTempoMap.secondsToTick is the inverse of tickToSeconds for a single-tempo map', function() {
+  var tempoMap = new SparkTempoMap({ bpm: 120 });
+  var ticks = [0, 480, 960, 1234];
+  for (var i = 0; i < ticks.length; i++) {
+    var sec = tempoMap.tickToSeconds(ticks[i]);
+    assert.strictEqual(tempoMap.secondsToTick(sec), ticks[i]);
+  }
+});
+
+test('SparkTempoMap.secondsToTick round-trips across a multi-segment tempo map', function() {
+  var tempoMap = new SparkTempoMap({
+    segments: [{ tick: 0, bpm: 100 }, { tick: 960, bpm: 140 }]
+  });
+  var secBeforeChange = tempoMap.tickToSeconds(480);
+  var secAfterChange = tempoMap.tickToSeconds(1440);
+  assert.strictEqual(tempoMap.secondsToTick(secBeforeChange), 480);
+  assert.strictEqual(tempoMap.secondsToTick(secAfterChange), 1440);
+});
+
+test('ensurePerformanceChartTickModel backfills a synthesized tempo map onto seconds-only hand-authored charts', function() {
+  var chart = {
+    bpm: 120,
+    events: [
+      { id: 'a', t: 0, dur: 0.5 },
+      { id: 'b', t: 0.5, dur: 0.5 }
+    ]
+  };
+
+  var enriched = ensurePerformanceChartTickModel(chart);
+
+  assert.strictEqual(typeof enriched.tempoMap.tickToSeconds, 'function');
+  assert.strictEqual(enriched.events[0].tick, 0);
+  assert.strictEqual(enriched.events[0].tickLength, enriched.events[1].tick - enriched.events[0].tick);
+  assert.ok(enriched.events[1].tick > enriched.events[0].tick);
+  // Seconds stay the source of truth: re-deriving from the synthesized
+  // tempoMap must reproduce the authored second exactly (single-tempo map).
+  assert.strictEqual(Math.round(enriched.tempoMap.tickToSeconds(enriched.events[1].tick) * 1000) / 1000, 0.5);
+});
+
+test('ensurePerformanceChartTickModel does not overwrite tick data a chart already carries', function() {
+  var chart = {
+    bpm: 120,
+    tempoMap: new SparkTempoMap({ bpm: 120 }),
+    events: [{ id: 'a', t: 1, dur: 0.5, tick: 999, tickLength: 111 }]
+  };
+
+  var enriched = ensurePerformanceChartTickModel(chart);
+
+  assert.strictEqual(enriched.events[0].tick, 999);
+  assert.strictEqual(enriched.events[0].tickLength, 111);
 });
 
 test('getPerformanceChartLibrary includes package-backed entries for the perform browser', function() {

@@ -25,5 +25,25 @@
     return sec;
   };
 
+  // Inverse of tickToSeconds — walks the same segments to find which one
+  // contains `sec`, then solves for the tick within it.
+  TempoMap.prototype.secondsToTick = function(sec) {
+    var ppq = this.ppq;
+    var segs = this.segments;
+    var accumSec = 0;
+    for (var i = 0; i < segs.length; i++) {
+      var cur = segs[i];
+      var next = segs[i + 1];
+      var segDurSec = next ? ((next.tick - cur.tick) / ppq) * (60 / cur.bpm) : Infinity;
+      if (!next || sec <= accumSec + segDurSec) {
+        var remainingSec = sec - accumSec;
+        var ticksIntoSeg = (remainingSec / (60 / cur.bpm)) * ppq;
+        return Math.round(cur.tick + ticksIntoSeg);
+      }
+      accumSec += segDurSec;
+    }
+    return 0;
+  };
+
   window.SparkTempoMap = TempoMap;
 })();

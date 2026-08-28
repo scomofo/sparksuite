@@ -507,6 +507,12 @@ function convertSparkSongChartToPerformanceChart(songChart, options) {
       id: note.id || ("spark_evt_" + i),
       t: startSec,
       dur: Math.max(0.05, endSec - startSec),
+      // Real tick data from the source tempo map — carried through instead
+      // of discarded, so ensurePerformanceChartTickModel doesn't have to
+      // synthesize an approximation for charts that already have the exact
+      // tick position available.
+      tick: note.tick,
+      tickLength: note.tickLength || 0,
       type: eventType,
       chord: note.label || formatPitchClasses(eventNotes),
       laneLabel: laneLabel,
@@ -577,7 +583,10 @@ function convertSparkSongChartToPerformanceChart(songChart, options) {
     audio: options.audio || { type: "silent" },
     events: events,
     phrases: normalizedPhrases,
-    sourceFormat: songChart.metadata ? songChart.metadata.sourceFormat : null
+    sourceFormat: songChart.metadata ? songChart.metadata.sourceFormat : null,
+    // Carry the real tempo map through so ensurePerformanceChartTickModel
+    // doesn't synthesize an approximation for a chart that already has one.
+    tempoMap: songChart.tempoMap
   };
   var builtChart = normalizePerformanceChart(chartDef);
   var lastEvtEnd = builtChart.events.length
@@ -642,6 +651,30 @@ function normalizePerformanceChart(chart) {
     evt._scored = false;
     evt._result = null;
     evt._score = 0;
+  }
+  return chart;
+}
+
+// Note-model convergence: rhythm mode's chart events are authored as
+// tick + tempoMap and only flattened to seconds at the gameplay-engine
+// boundary (SparkRhythmGameplayEngine.buildNoteStates). Performance charts
+// are authored/generated directly in seconds with no tempo map at all. This
+// backfills a tempoMap (the chart's own real one when already present, a
+// synthesized single-tempo one otherwise) plus tick/tickLength per event, so
+// every live performance chart carries the same tick+tempoMap shape rhythm
+// mode's domain model does. Seconds (`t`/`dur`) stay the source of truth for
+// gameplay timing/scoring — this is additive enrichment, not a behavior change.
+function ensurePerformanceChartTickModel(chart) {
+  if (!chart || !Array.isArray(chart.events) || typeof SparkTempoMap !== "function") return chart;
+  if (!chart.tempoMap || typeof chart.tempoMap.tickToSeconds !== "function") {
+    chart.tempoMap = new SparkTempoMap({ bpm: chart.bpm || 100 });
+  }
+  var tempoMap = chart.tempoMap;
+  for (var i = 0; i < chart.events.length; i++) {
+    var evt = chart.events[i];
+    if (typeof evt.tick === "number") continue;
+    evt.tick = tempoMap.secondsToTick(evt.t || 0);
+    evt.tickLength = Math.max(0, tempoMap.secondsToTick((evt.t || 0) + (evt.dur || 0)) - evt.tick);
   }
   return chart;
 }

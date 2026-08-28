@@ -77,7 +77,7 @@ Reuse performance mode's integration pattern (`js/performance/highway.js`:
 |---|---|---|---|
 | Judge | `input_judge.js` (lane-aware nearest) | `session.js maybeScorePendingEvents` | ✅ Done — both route candidate selection through `SparkInputJudge` |
 | Score model | integer + combo multiplier | 0–1 weighted → grade | Needs a product decision — different feels, same engine possible |
-| Note model | tick-based `SparkNoteEvent` | seconds-based events | Tick-based domain model, flattened at the renderer boundary (the MIDI chart generator already produces real tempo maps) |
+| Note model | tick-based `SparkNoteEvent` | seconds-based events | ✅ Done — performance charts now carry the same tick+tempoMap shape |
 
 ### Judge convergence (2026-08-28)
 
@@ -98,6 +98,32 @@ noteScore/timingScore/grade weighting is unchanged — this converges note
 above). Falls back to scoring the first in-window candidate directly if
 `SparkInputJudge` isn't loaded. Covered by
 `tests/test_performance_scoring_judge.js`.
+
+### Note model convergence (2026-08-28)
+
+Rhythm mode's chart events were always authored as tick + tempoMap
+(`chart_io`/`SparkChart`) and only flattened to seconds at the gameplay-engine
+boundary. Performance mode's ~33 MIDI-imported charts already went through
+that same domain model on import, but the flattening step (
+`convertSparkSongChartToPerformanceChart`) discarded the tick data once it
+computed seconds. The other 88 hand-authored charts in
+`data/performance_charts/*.json` never had a tempo map at all — they're
+authored directly in seconds.
+
+Rather than migrate those 88 content files to an authored-tick format (a much
+bigger, content-format-changing lift), `js/sparksuite/domain/tempo_map.js`
+gained `SparkTempoMap.prototype.secondsToTick` (the inverse of the existing
+`tickToSeconds`), and `js/performance/chart.js` gained
+`ensurePerformanceChartTickModel(chart)`: called once from
+`startPerformance` for every chart regardless of source, it backfills
+`tick`/`tickLength` on any event that doesn't already have them, using the
+chart's own tempo map if it has one, or a synthesized single-tempo map built
+from the chart's declared `bpm` otherwise. `convertSparkSongChartToPerformanceChart`
+now also carries the *real* tick/tempoMap through instead of discarding it,
+so MIDI-imported charts get their exact tick data rather than a synthesized
+approximation. `t`/`dur` (seconds) remain the source of truth for gameplay
+timing/scoring throughout — this converges the chart *shape*, not the timing
+math. Covered by new tests in `tests/test_performance_core.js`.
 
 ## Risks
 
