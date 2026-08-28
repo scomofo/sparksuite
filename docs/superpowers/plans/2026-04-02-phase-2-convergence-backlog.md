@@ -84,6 +84,67 @@ Acceptance criteria:
 3. Migrate important live loops toward engine-owned runtime objects
 4. Thin the bridge layer afterward
 
+## Progress
+
+### 2026-08-28: engine-owned runtime-state projection (pilot: guided sessions)
+
+`SparkCore` already had a stable `runtimeState` shape plus `getRuntimeState()`/
+`updateRuntimeState()` (see `js/sparksuite/core/spark_core.js`,
+`createInitialRuntimeState`). What Phase 2 still needed was goal 1's second
+acceptance criterion: legacy `S.*` fields getting updated *from* that engine
+state instead of bridges re-deriving their own copy of the mapping.
+
+Before this: each action family in `js/actions/*_family.js` hand-wrote its
+own "mirror" function (e.g. `mirrorGuidedRuntimeFields` in
+`system_family.js`) that picked a handful of fields off
+`core.getRuntimeState()` and copied them onto `S` — one bespoke, undocumented
+field map per flow, free to drift from what the engine actually considers
+canonical.
+
+Added `SparkCore.RUNTIME_STATE_PROJECTIONS` (a named registry of pure
+`runtimeState -> legacy field object` functions) and
+`SparkCore.prototype.projectRuntimeStateFields(domain, runtimeState)` to read
+it. The `guided` domain is the pilot migration:
+`mirrorGuidedRuntimeFields` in `system_family.js` now delegates to
+`core.projectRuntimeStateFields("guided", runtimeState)` instead of
+re-deriving the field list itself. Pinned by
+`tests/test_runtime_state_projection.js`.
+
+This is the seed of "shrink the bridge layer" (goal 4): the field mapping now
+lives next to `SparkCore`, not scattered across action families. Extending
+this to other flows means adding one function to
+`RUNTIME_STATE_PROJECTIONS` and switching that flow's mirror call site — no
+new mechanism needed.
+
+### 2026-08-28: performance/song runtime context (second migration)
+
+`js/actions/performance_family.js` had two independent copies of "prefer the
+engine's runtime state field, else fall back to the legacy S value" —
+`performStartFromSong` (5 fields: song index/title, difficulty, speed, target
+technique) and `performRetryPhrase` (target technique only) — each with its
+own presence check per field, and the two copies had already drifted: one
+used a pure `hasOwnProperty` check on `performanceTargetTechnique`, the other
+additionally re-fell-back to `S` whenever the engine value was falsy, so an
+explicit "no target technique" from the engine (`null`) was silently
+overridden by stale `S` state in one of the two call sites but not the other.
+
+Added `performanceSongContext` to `RUNTIME_STATE_PROJECTIONS`. It's a pure
+`(runtimeState, fallback) -> fields` function — the field-by-field precedence
+rule (which check applies to which field) is engine-owned and single-sourced;
+call sites only supply their fallback values. `projectRuntimeStateFields`
+now takes that `fallback` as a third argument. Both call sites in
+`performance_family.js` were migrated, resolving the drift in the engine's
+favor (an explicit engine `null` now wins over stale `S` at both sites).
+Pinned by the additional cases in `tests/test_runtime_state_projection.js`.
+
+Remaining candidates for the next slice: the song mirror sites in
+`orchestrator-requests.js` (`syncSongRuntimeRequest`,
+`applySongNavigationRequest`) write `updateRuntimeState` directly rather than
+mirroring runtime state onto `S`, so they aren't a fit for this same
+projection shape — a future slice should look at whether `S.songPlaying` /
+`S.songBeat` (still set independently of `runtimeState` in
+`js/actions/song_family.js`) should instead be derived the same way.
+
 ## Honest Exit Criteria
 
 We can call Phase 2 done when:
