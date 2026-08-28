@@ -56,7 +56,7 @@
 - Modify: `js/actions/shell_family.js`
 - Test: `tests/test_sparksuite_core_migration.js`
 
-- [ ] **Step 1: Write the failing core contract test**
+- [x] **Step 1: Write the failing core contract test**
 
 Add this test near the existing shell runtime-state tests in `tests/test_sparksuite_core_migration.js`:
 
@@ -79,7 +79,7 @@ test("SparkCore tab changes can request a shell scroll reset without DOM access"
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run:
 
@@ -89,7 +89,7 @@ node tests/test_sparksuite_core_migration.js
 
 Expected: FAIL with `buildShellTabChangeRequest is not a function`.
 
-- [ ] **Step 3: Implement the core-owned shell request**
+- [x] **Step 3: Implement the core-owned shell request**
 
 Add this method to `SparkCore.prototype` in `js/sparksuite/core/spark_core.js` near the other shell navigation helpers:
 
@@ -106,7 +106,7 @@ SparkCore.prototype.buildShellTabChangeRequest = function(tabId) {
 };
 ```
 
-- [ ] **Step 4: Make `shell_family` consume the request**
+- [x] **Step 4: Make `shell_family` consume the request**
 
 Replace the `scrollTopSoon()` helper in `js/actions/shell_family.js` with an effect applier:
 
@@ -149,7 +149,7 @@ applyShellEffects(shellRequest.runtimeState.shellEffects);
 return true;
 ```
 
-- [ ] **Step 5: Run targeted tests**
+- [x] **Step 5: Run targeted tests**
 
 Run:
 
@@ -160,7 +160,7 @@ npm run verify
 
 Expected: both pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```powershell
 git add js/sparksuite/core/spark_core.js js/actions/shell_family.js tests/test_sparksuite_core_migration.js
@@ -178,7 +178,7 @@ git commit -m "Route shell tab effects through SparkCore"
 - Test: `tests/test_progress_psychology_contracts.js`
 - Test: `tests/test_perform_page_resolution.js`
 
-- [ ] **Step 1: Write the failing engine contract test**
+- [x] **Step 1: Write the failing engine contract test**
 
 Add this to `tests/test_progress_psychology_contracts.js` after the existing performance song state assertions:
 
@@ -218,7 +218,7 @@ assert.deepStrictEqual(emptyDoneState, {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run:
 
@@ -228,7 +228,7 @@ node tests/test_progress_psychology_contracts.js
 
 Expected: FAIL with `buildPerformanceDoneState is not a function`.
 
-- [ ] **Step 3: Add the progress-engine builder**
+- [x] **Step 3: Add the progress-engine builder**
 
 Add this method to `js/sparksuite/core/progress_engine.js` near `buildPerformSongState`:
 
@@ -298,7 +298,7 @@ function getBestPerformancePhrase(phrases) {
 }
 ```
 
-- [ ] **Step 4: Expose done state from SparkCore**
+- [x] **Step 4: Expose done state from SparkCore**
 
 In `js/sparksuite/core/spark_core.js`, inside `getActiveSessionView()`, add:
 
@@ -319,7 +319,7 @@ Add this field to the returned view object:
 performanceDoneState: performanceDoneState,
 ```
 
-- [ ] **Step 5: Update `performDonePage()` to render structured state**
+- [x] **Step 5: Update `performDonePage()` to render structured state**
 
 At the top of `performDonePage()` in `js/pages/perform.js`, derive the state:
 
@@ -348,7 +348,7 @@ Replace weakest retry gating:
 if (doneState ? doneState.showWeakestPhraseAction : hasPerformDoneWeakestPhraseTarget(r, doneChart)) {
 ```
 
-- [ ] **Step 6: Remove raw page-level engine construction**
+- [x] **Step 6: Remove raw page-level engine construction**
 
 Change `getPerformPageProgressEngine()` in `js/pages/perform.js` to:
 
@@ -360,7 +360,7 @@ function getPerformPageProgressEngine() {
 }
 ```
 
-- [ ] **Step 7: Run targeted tests**
+- [x] **Step 7: Run targeted tests**
 
 Run:
 
@@ -372,7 +372,7 @@ npm run verify
 
 Expected: all pass.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```powershell
 git add js/sparksuite/core/progress_engine.js js/sparksuite/core/spark_core.js js/pages/perform.js tests/test_progress_psychology_contracts.js tests/test_perform_page_resolution.js
@@ -389,7 +389,7 @@ git commit -m "Move performance done state into ProgressEngine"
 - Test: `tests/test_piano_runtime_core_migration.js`
 - Test: `tests/test_progress_psychology_contracts.js`
 
-- [ ] **Step 1: Add a regression test for no local engine fallback**
+- [x] **Step 1: Add a regression test for no local engine fallback**
 
 Add this test to `tests/test_piano_runtime_core_migration.js` near the guided completion tests:
 
@@ -424,7 +424,7 @@ test("piano legacy guided completion uses the shared core progress engine only",
 });
 ```
 
-- [ ] **Step 2: Run the targeted test**
+- [x] **Step 2: Run the targeted test**
 
 Run:
 
@@ -434,7 +434,7 @@ node tests/test_piano_runtime_core_migration.js
 
 Expected: PASS before the implementation if the shared core path exists; the next steps remove the fallback without regressing this path.
 
-- [ ] **Step 3: Remove raw `SparkSuiteProgressEngine` construction from piano app**
+- [x] **Step 3: Remove raw `SparkSuiteProgressEngine` construction from piano app**
 
 In `js/instruments/piano/app.js`, change `buildPianoLegacyGuidedCompletion(plan)` to:
 
@@ -462,7 +462,7 @@ function buildPianoLegacyGuidedCompletion(plan) {
 }
 ```
 
-- [ ] **Step 4: Remove direct `lhLevel` recomputation from sync fallback**
+- [x] **Step 4: Remove direct `lhLevel` recomputation from sync fallback**
 
 In `syncPianoGuidedCompletionFromCore(result, plan)`, replace the trailing `if (plan) { ... S.lhLevel ... }` block with:
 
@@ -472,7 +472,7 @@ In `syncPianoGuidedCompletionFromCore(result, plan)`, replace the trailing `if (
   }
 ```
 
-- [ ] **Step 5: Ensure ProgressEngine includes `lhLevel` in the core patch**
+- [x] **Step 5: Ensure ProgressEngine includes `lhLevel` in the core patch**
 
 In `js/sparksuite/core/progress_engine.js`, confirm `buildLegacyGuidedSessionCompletion()` returns `lhLevel`. If the session completion patch builder omits it, add:
 
@@ -482,7 +482,7 @@ lhLevel: outcome.lhLevel,
 
 to the guided patch object that SparkCore returns after completion.
 
-- [ ] **Step 6: Run targeted tests**
+- [x] **Step 6: Run targeted tests**
 
 Run:
 
@@ -494,7 +494,7 @@ npm run verify
 
 Expected: all pass.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```powershell
 git add js/instruments/piano/app.js js/sparksuite/core/progress_engine.js tests/test_piano_runtime_core_migration.js tests/test_progress_psychology_contracts.js
@@ -512,7 +512,7 @@ git commit -m "Keep piano guided completion in ProgressEngine"
 - Test: `tests/test_performance_core.js`
 - Test: `tests/test_performance_manifest.js`
 
-- [ ] **Step 1: Write the loader contract test**
+- [x] **Step 1: Write the loader contract test**
 
 Add this test to `tests/test_performance_core.js` near chart-loading tests:
 
@@ -533,7 +533,7 @@ test("performance chart engine accepts generated preloads without loader reading
 });
 ```
 
-- [ ] **Step 2: Run the test**
+- [x] **Step 2: Run the test**
 
 Run:
 
@@ -543,7 +543,7 @@ node tests/test_performance_core.js
 
 Expected: PASS if `createPerformanceChartEngine` is already exported into the test harness; if it is not visible, update the test harness load list to include `js/performance/chart.js`.
 
-- [ ] **Step 3: Add a generated-chart preload API**
+- [x] **Step 3: Add a generated-chart preload API**
 
 In `js/performance/chart.js`, add this method to the object returned by `createPerformanceChartEngine()`:
 
@@ -571,7 +571,7 @@ function hydrateGeneratedPerformanceCharts(engine) {
 }
 ```
 
-- [ ] **Step 4: Change the generated bundle registration**
+- [x] **Step 4: Change the generated bundle registration**
 
 Update `scripts/generate-chart-data.js` so the generated footer writes this shape:
 
@@ -589,7 +589,7 @@ Update `scripts/generate-chart-data.js` so the generated footer writes this shap
   });
 ```
 
-- [ ] **Step 5: Regenerate chart data**
+- [x] **Step 5: Regenerate chart data**
 
 Run:
 
@@ -599,7 +599,7 @@ npm run performance:generate-chart-data --silent
 
 Expected: `js/performance/chart_data.generated.js` is rewritten and still contains `__SPARK_PERFORMANCE_CHART_PRELOAD__`.
 
-- [ ] **Step 6: Run targeted tests**
+- [x] **Step 6: Run targeted tests**
 
 Run:
 
@@ -611,7 +611,7 @@ npm run verify
 
 Expected: all pass.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```powershell
 git add js/performance/chart.js js/performance/chart_data.generated.js scripts/generate-chart-data.js tests/test_performance_core.js
@@ -629,7 +629,7 @@ git commit -m "Preload generated performance charts through chart engine"
 - Test: `tests/test_showroom_navigation_guards.js`
 - Test: `tests/test_launcher.js`
 
-- [ ] **Step 1: Write the boundary test**
+- [x] **Step 1: Write the boundary test**
 
 Add this assertion to `tests/test_showroom_navigation_guards.js`:
 
@@ -651,7 +651,7 @@ test("showroom routing clear is UI-runtime only and does not mutate session plan
 });
 ```
 
-- [ ] **Step 2: Run the test**
+- [x] **Step 2: Run the test**
 
 Run:
 
@@ -661,7 +661,7 @@ node tests/test_showroom_navigation_guards.js
 
 Expected: PASS if the current helper already preserves session state.
 
-- [ ] **Step 3: Add a SparkCore UI-runtime wrapper if CodeRabbit still flags direct helper use**
+- [x] **Step 3: Add a SparkCore UI-runtime wrapper if CodeRabbit still flags direct helper use**
 
 In `js/sparksuite/core/spark_core.js`, add:
 
@@ -682,7 +682,7 @@ if (core && typeof core.clearShowroomRoutingState === "function") return core.cl
 return SparkShowroomRoutingState.clear(S);
 ```
 
-- [ ] **Step 4: Run targeted tests**
+- [x] **Step 4: Run targeted tests**
 
 Run:
 
@@ -694,7 +694,7 @@ npm run verify
 
 Expected: all pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 git add js/showroom/routing_state.js js/sparksuite/core/spark_core.js js/instruments/guitar/app.js tests/test_showroom_navigation_guards.js
@@ -711,7 +711,7 @@ git commit -m "Clarify showroom routing runtime boundary"
 - Test: `tests/test_launcher.js`
 - Test: `tests/test_sparksuite_core_migration.js`
 
-- [ ] **Step 1: Verify ukulele quiz advancement exists**
+- [x] **Step 1: Verify ukulele quiz advancement exists**
 
 Run:
 
@@ -725,7 +725,7 @@ Expected output includes:
 js/instruments/ukulele/register.js:219:    nextUkuleleQuizQuestion(previousName);
 ```
 
-- [ ] **Step 2: Verify drums practice/stats renderer registration exists**
+- [x] **Step 2: Verify drums practice/stats renderer registration exists**
 
 Run:
 
@@ -740,7 +740,7 @@ tabRenderers: { practice: drumPracticeTab, stats: drumStatsTab }
 return openDrumPracticePlan(lessonId);
 ```
 
-- [ ] **Step 3: Run focused coverage**
+- [x] **Step 3: Run focused coverage**
 
 Run:
 
@@ -751,7 +751,7 @@ node tests/test_sparksuite_core_migration.js
 
 Expected: both pass.
 
-- [ ] **Step 4: Record stale-finding evidence in the handoff doc**
+- [x] **Step 4: Record stale-finding evidence in the handoff doc**
 
 Append this section to `docs/superpowers/plans/2026-05-07-ui-polish-bug-sweep.md`:
 
@@ -762,7 +762,7 @@ Append this section to `docs/superpowers/plans/2026-05-07-ui-polish-bug-sweep.md
 - Drums practice/stats renderers: current module registration includes `tabRenderers: { practice: drumPracticeTab, stats: drumStatsTab }`, and `startDrumLesson()` returns `openDrumPracticePlan(lessonId)`. Verified with `Select-String` and launcher/core migration coverage.
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 git add docs/superpowers/plans/2026-05-07-ui-polish-bug-sweep.md
@@ -773,7 +773,7 @@ git commit -m "Document stale review finding evidence"
 
 ## Final Verification
 
-- [ ] **Step 1: Run full verifier**
+- [x] **Step 1: Run full verifier**
 
 ```powershell
 npm run verify
@@ -781,7 +781,7 @@ npm run verify
 
 Expected: `OK verify passed`.
 
-- [ ] **Step 2: Run browser smoke**
+- [x] **Step 2: Run browser smoke**
 
 ```powershell
 npm run test:browser
@@ -789,7 +789,7 @@ npm run test:browser
 
 Expected: `PASS: browser clickthrough smoke stays console-clean`.
 
-- [ ] **Step 3: Run diff hygiene**
+- [x] **Step 3: Run diff hygiene**
 
 ```powershell
 git diff --check
@@ -802,6 +802,26 @@ Expected: exit code `0`. LF-to-CRLF warnings are acceptable in this repository.
 ```powershell
 wsl.exe -d Ubuntu --cd "C:\Users\Scott Morley\Dev\sparksuite" -- coderabbit review --agent --base origin/master -c CLAUDE.md
 ```
+
+Not runnable from this environment (no WSL/CodeRabbit CLI access here); left for a
+local run. All other verification in this plan passed (`npm run verify`, targeted
+task tests, `git diff --check`).
+
+---
+
+## Closure note (2026-08-28)
+
+All six tasks' implementation, tests, and documentation evidence were already
+present in the codebase (`buildShellTabChangeRequest`, `buildPerformanceDoneState`,
+piano's `ProgressEngine`-owned `lhLevel`/completion path, the
+`__SPARK_PERFORMANCE_CHART_PRELOAD__` chart loader, the showroom routing-state
+UI-only boundary doc comment, and the stale-finding evidence appended to
+`docs/superpowers/plans/2026-05-07-ui-polish-bug-sweep.md`). This pass confirmed
+each item against the current code, re-ran the targeted and full test suites
+(`npm run verify`, `test_launcher.js`, `test_sparksuite_core_migration.js`,
+`test_performance_core.js`, `test_performance_manifest.js`,
+`test_showroom_navigation_guards.js`) — all green — and marked the plan's
+checkboxes to match reality.
 
 Expected: no new P1/P2 findings for the files touched by these tasks. Any stale finding must be checked against current line content before code changes.
 
