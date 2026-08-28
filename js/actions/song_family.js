@@ -46,40 +46,44 @@
       var nextSongPlaying;
       var selectedSong;
       var runtimeState;
+      var syncedState;
       snd("click");
-      nextSongPlaying = !S.songPlaying;
       selectedSong = S.selectedSong;
       runtimeState = getSongFamilyCoreRuntimeState();
-      syncSongRuntimeRequest(nextSongPlaying ? "play" : "pause", {
+      nextSongPlaying = runtimeState ? !runtimeState.songPlaying : !S.songPlaying;
+      syncedState = syncSongRuntimeRequest(nextSongPlaying ? "play" : "pause", {
         songData: selectedSong,
         source: runtimeState ? runtimeState.songSessionSource : "builtin",
         songBeat: nextSongPlaying ? 0 : S.songBeat
       });
+      nextSongPlaying = syncedState ? !!syncedState.songPlaying : nextSongPlaying;
       applySongFamilyRuntimeUpdate({
-        setFields: nextSongPlaying ? { songPlaying: true, songBeat: 0 } : { songPlaying: false },
+        setFields: nextSongPlaying
+          ? { songPlaying: true, songBeat: syncedState ? syncedState.songBeat : 0 }
+          : { songPlaying: false },
         clearIntervals: nextSongPlaying ? [] : ["song"]
       }, function() {
         S.songPlaying = nextSongPlaying;
-        if (S.songPlaying) S.songBeat = 0;
+        if (S.songPlaying) S.songBeat = syncedState ? syncedState.songBeat : 0;
         else clearInterval(T.song);
       });
       if (nextSongPlaying && selectedSong && Array.isArray(selectedSong.progression) && selectedSong.progression.length) {
-        var currentBeat = 0;
         var ms = 60000 / selectedSong.bpm;
         var chordName = selectedSong.progression[0];
         strumChord(CHORD_NAME_MAP[chordName] || chordName);
         render();
         T.song = setInterval(function() {
           var nextChordName;
-          currentBeat = (currentBeat + 1) % selectedSong.progression.length;
+          var nextBeat;
+          var tickState = syncSongRuntimeRequest("tick", { progressionLength: selectedSong.progression.length });
+          nextBeat = tickState ? tickState.songBeat : 0;
           applySongFamilyRuntimeUpdate({
-            setFields: { songBeat: currentBeat },
+            setFields: { songBeat: nextBeat },
             save: false
           }, function() {
-            S.songBeat = currentBeat;
+            S.songBeat = nextBeat;
           });
-          syncSongRuntimeRequest("tick", { songBeat: currentBeat });
-          nextChordName = selectedSong.progression[currentBeat];
+          nextChordName = selectedSong.progression[nextBeat];
           strumChord(CHORD_NAME_MAP[nextChordName] || nextChordName);
           render();
         }, ms);
