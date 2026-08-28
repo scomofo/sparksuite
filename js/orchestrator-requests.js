@@ -561,6 +561,14 @@ function syncSongRuntimeRequest(action, options) {
   if (core && typeof core.updateRuntimeState === "function") {
     options = options || {};
     var runtimeState = typeof core.getRuntimeState === "function" ? core.getRuntimeState() : {};
+    var nextSongBeat;
+    if (action === "tick" && typeof options.progressionLength === "number" && options.progressionLength > 0) {
+      nextSongBeat = (Math.round(runtimeState.songBeat || 0) + 1) % Math.round(options.progressionLength);
+    } else if (Object.prototype.hasOwnProperty.call(options, "songBeat")) {
+      nextSongBeat = options.songBeat;
+    } else {
+      nextSongBeat = 0;
+    }
     return core.updateRuntimeState({
       activeFlow: "song_session",
       activeScreen: options.targetScreen || (action === "complete" ? "song_done" : "song"),
@@ -568,7 +576,7 @@ function syncSongRuntimeRequest(action, options) {
       songSessionData: Object.prototype.hasOwnProperty.call(options, "songData") ? options.songData : runtimeState.songSessionData,
       songSessionSource: options.source || runtimeState.songSessionSource || "builtin",
       songPlaying: action === "play" ? true : !!options.songPlaying,
-      songBeat: Object.prototype.hasOwnProperty.call(options, "songBeat") ? options.songBeat : 0,
+      songBeat: nextSongBeat,
       transport: {
         status: action === "complete" ? "completed" : (action === "play" ? "running" : "ready"),
         positionMs: 0

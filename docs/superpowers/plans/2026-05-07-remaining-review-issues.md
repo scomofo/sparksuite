@@ -823,6 +823,34 @@ each item against the current code, re-ran the targeted and full test suites
 `test_showroom_navigation_guards.js`) — all green — and marked the plan's
 checkboxes to match reality.
 
+## Follow-up (2026-08-28): song runtime derivation
+
+A separate gap noted during closure: `S.songPlaying`/`S.songBeat` in
+`js/actions/song_family.js` were set independently of the SparkCore-owned
+`runtimeState` rather than derived from it — `toggleSong` recomputed the next
+play state from the legacy `S` mirror instead of `core.getRuntimeState()`,
+and the beat-advance interval kept its own `currentBeat` closure variable
+and modulo math instead of asking the engine for the next beat. Fixed by:
+
+- `SparkCore.prototype.syncSongRuntimeState`'s `"tick"` branch now advances
+  `songBeat` itself (mod `progressionLength`) when given a progression
+  length, instead of taking a caller-computed `songBeat`.
+- `js/orchestrator-requests.js`'s `syncSongRuntimeRequest` fallback path
+  (used only when core lacks `syncSongRuntimeState`) mirrors the same
+  progression-length-based advance for parity.
+- `js/actions/song_family.js`'s `toggleSong` now derives `nextSongPlaying`
+  from `core.getRuntimeState().songPlaying` (falling back to the legacy `S`
+  mirror only when no core is present) and mirrors `S.songPlaying`/`S.songBeat`
+  from the engine's returned runtime state rather than a locally computed
+  value; the tick interval calls `syncSongRuntimeRequest("tick", {
+  progressionLength })` and reads the resulting `songBeat` back instead of
+  tracking its own counter.
+
+Covered by a new unit test (`SparkCore advances songBeat itself on tick when
+given a progression length`) and updated assertions in the existing song
+action-family test. `npm run verify` and the targeted core-migration suite
+pass.
+
 Expected: no new P1/P2 findings for the files touched by these tasks. Any stale finding must be checked against current line content before code changes.
 
 ---

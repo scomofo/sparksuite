@@ -4131,12 +4131,11 @@ test("song family routes browser, playback, and completion state through the sha
   var communityFetches = 0;
   var strumHits = [];
   var originalPracticeBridge = global.SparkPracticeBridge;
+  var songRuntimeState = { songSessionSource: "community", songPlaying: false, songBeat: 0 };
   global.window = {};
   global.sparkCore = {
     getRuntimeState: function() {
-      return {
-        songSessionSource: "community"
-      };
+      return songRuntimeState;
     },
     getActiveSessionView: function() {
       return {
@@ -4161,7 +4160,18 @@ test("song family routes browser, playback, and completion state through the sha
   };
   global.syncSongRuntimeRequest = function(action, payload) {
     songSyncs.push({ action: action, payload: payload });
-    return payload;
+    var nextBeat = songRuntimeState.songBeat;
+    if (action === "play") {
+      nextBeat = typeof payload.songBeat === "number" ? payload.songBeat : 0;
+    } else if (action === "tick" && typeof payload.progressionLength === "number" && payload.progressionLength > 0) {
+      nextBeat = (songRuntimeState.songBeat + 1) % payload.progressionLength;
+    }
+    songRuntimeState = {
+      songSessionSource: payload.source || songRuntimeState.songSessionSource,
+      songPlaying: action === "play" ? true : (action === "pause" || action === "complete" ? false : songRuntimeState.songPlaying),
+      songBeat: nextBeat
+    };
+    return songRuntimeState;
   };
   global.completeSongSessionRequest = function(payload) {
     songCompletions.push(payload);
@@ -4234,7 +4244,7 @@ test("song family routes browser, playback, and completion state through the sha
 
   assert.strictEqual(songSyncs[0].payload.source, "community");
   assert.strictEqual(songSyncs[1].action, "tick");
-  assert.strictEqual(songSyncs[1].payload.songBeat, 1);
+  assert.strictEqual(songSyncs[1].payload.progressionLength, 3);
   assert.strictEqual(songCompletions[0].source, "community");
   assert.strictEqual(songRuntimeUpdates.length, 5);
   assert.deepStrictEqual(songRuntimeUpdates[0], {
@@ -4400,6 +4410,24 @@ test("SparkCore can open, sync, navigate, and complete song sessions explicitly"
   assert.strictEqual(homeState.activeScreen, "home");
   assert.strictEqual(homeState.activeTab, "songs");
   assert.strictEqual(homeState.transport.status, "idle");
+});
+
+test("SparkCore advances songBeat itself on tick when given a progression length", function() {
+  var core = createDefaultSparkCore();
+  core.openSongSession({
+    songData: { title: "Loop", progression: ["C", "G", "Am"] },
+    source: "builtin",
+    songPlaying: true
+  });
+
+  var tick1 = core.syncSongRuntimeState("tick", { progressionLength: 3 });
+  assert.strictEqual(tick1.songBeat, 1);
+
+  var tick2 = core.syncSongRuntimeState("tick", { progressionLength: 3 });
+  assert.strictEqual(tick2.songBeat, 2);
+
+  var tick3 = core.syncSongRuntimeState("tick", { progressionLength: 3 });
+  assert.strictEqual(tick3.songBeat, 0);
 });
 
 test("SparkCore can track song browser state explicitly", function() {

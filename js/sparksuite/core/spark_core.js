@@ -1755,6 +1755,9 @@
       next.songPlaying = false;
       next.transport = { status: "ready", positionMs: 0 };
     } else if (action === "tick") {
+      if (typeof options.progressionLength === "number" && options.progressionLength > 0) {
+        next.songBeat = (Math.round(runtimeState.songBeat || 0) + 1) % Math.round(options.progressionLength);
+      }
       next.transport = { status: next.songPlaying ? "running" : "ready", positionMs: 0 };
     } else if (action === "complete") {
       next.songPlaying = false;
