@@ -607,6 +607,11 @@ function startChordDetect(){
 // start a second acquisition should wait on this rather than on
 // S.chordDetectOn, which only turns true once a stream has arrived.
 function isChordDetectPending(){return _chordDetectPending;}
+// True while the microphone is on OR still being acquired. Teardown paths
+// must use this, not S.chordDetectOn: that flag stays false for the whole
+// getUserMedia round-trip, so a guard on it alone silently skips the stop
+// and the stream installs itself after the user has left mic mode.
+function isChordDetectActive(){return !!(typeof S!=="undefined"&&S.chordDetectOn)||_chordDetectPending;}
 
 function stopChordDetect(){
   var core=getAudioCore();

@@ -108,8 +108,12 @@ test("choosing Mic opens the microphone", function() {
 
 test("choosing another source releases the microphone", function() {
   assert.ok(
-    /else if \(S\.chordDetectOn[\s\S]{0,160}stopChordDetect\(\)/.test(modeHandler),
+    /else if \([\s\S]{0,120}isChordDetectActive\(\)[\s\S]{0,160}stopChordDetect\(\)/.test(modeHandler),
     "switching away from mic must release the stream rather than leave it open"
+  );
+  assert.ok(
+    !/else if \(S\.chordDetectOn\b/.test(modeHandler),
+    "gating on S.chordDetectOn alone skips teardown while the request is still pending"
   );
 });
 
@@ -118,8 +122,8 @@ test("choosing another source releases the microphone", function() {
 test("stopAllTimers still releases the microphone", function() {
   var timers = sourceOf("js/timers.js");
   assert.ok(
-    /if\(S\.chordDetectOn\)stopChordDetect\(\);/.test(timers),
-    "leaving performance must not leave the microphone open"
+    /if\(typeof isChordDetectActive==="function"&&isChordDetectActive\(\)\)stopChordDetect\(\);/.test(timers),
+    "leaving performance must tear down the microphone even mid-acquisition"
   );
 });
 

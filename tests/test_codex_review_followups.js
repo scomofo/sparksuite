@@ -152,4 +152,123 @@ test("the performance path waits on a pending request", function() {
   assert.ok(fn.indexOf("startChordDetect()") > pendingIdx);
 });
 
-console.log("PASS: Codex review follow-ups — zero accuracy preserved, mic acquisition guarded (" + passed + " checks)");
+
+// --- Finding 3 (Codex review on PR #121) ---------------------------------
+//
+// The generation guard above only helps if something bumps the generation.
+// Every teardown site gated on S.chordDetectOn, which is false for the whole
+// getUserMedia round-trip — so switching away from mic mode while the
+// permission prompt was open skipped the stop entirely, and the stream
+// installed itself afterwards on a screen the user had already left.
+//
+// This runs the real functions rather than matching source text, so it fails
+// if the guard regresses even when the wording survives.
+
+function withChordDetect(fn) {
+  var settle;
+  var saved = { S: global.S, render: global.render, navigator: global.navigator };
+  global.S = { chordDetectOn: false, detectedNotes: [], chordMatch: -1 };
+  global.render = function () {};
+  global.updateChordCheckUI = function () {};
+  global.cancelAnimationFrame = function () {};
+  global.requestAnimationFrame = function () { return 0; };
+  global.AC = function () {
+    return {
+      createMediaStreamSource: function () { return { connect: function () {} }; },
+      createAnalyser: function () { return { fftSize: 0, smoothingTimeConstant: 0 }; },
+      close: function () {}, sampleRate: 44100
+    };
+  };
+  global.getAudioConstraint = function () { return { audio: true }; };
+  global.getAudioCore = function () { return null; };
+  global.detectFromFFT = function () { return []; };
+  global.getStableChordNotes = function () { return []; };
+  global.getExpectedNotes = function () { return []; };
+  Object.defineProperty(global, "navigator", {
+    configurable: true, writable: true,
+    value: { mediaDevices: { getUserMedia: function () {
+      return new Promise(function (res) { settle = res; });
+    } } }
+  });
+
+  var lines = read("js/audio.js").split("\n");
+  var from = lines.findIndex(function (l) { return /^var _chordDetectGeneration/.test(l); });
+  var to = lines.findIndex(function (l) { return /^function getCoachFeedback\(/.test(l); });
+  assert.ok(from > -1 && to > from, "could not locate the chord-detect block in js/audio.js");
+  var sandbox = { stopped: 0 };
+  global.eval(
+    "var chordR={stream:null,analyser:null,ctx:null,anim:null};" +
+    "var _chordNoteHistory=[],_chordFrameCount=0,_chordUpdateInterval=3;" +
+    lines.slice(from, to).join("\n")
+  );
+  var stream = { getTracks: function () { return [{ stop: function () { sandbox.stopped++; } }]; } };
+  function restore() {
+    global.S = saved.S;
+    if (saved.render) global.render = saved.render;
+    Object.defineProperty(global, "navigator", { configurable: true, writable: true, value: saved.navigator });
+  }
+  // The stubs have to outlive fn's promise — getUserMedia settles after it
+  // returns, and the .then() inside startChordDetect still calls render().
+  return Promise.resolve(fn({
+    grant: function () { settle(stream); return new Promise(function (r) { setTimeout(r, 0); }); },
+    sandbox: sandbox
+  })).then(function (v) { restore(); return v; }, function (e) { restore(); throw e; });
+}
+
+// These share one set of module globals, so they must run one at a time —
+// run in parallel, each test's teardown restores state out from under the next.
+var pending = [];
+function asyncTest(name, fn) {
+  return function () {
+    return withChordDetect(fn).then(function () {
+      console.log("  PASS " + name); passed++;
+    }, function (e) {
+      console.error("  FAIL " + name + ": " + (e && e.message)); process.exitCode = 1;
+    });
+  };
+}
+
+pending.push(asyncTest("the flag guards lag the request, the predicate does not", function (ctl) {
+  startChordDetect();
+  assert.strictEqual(S.chordDetectOn, false, "S.chordDetectOn stays false while the prompt is open");
+  assert.strictEqual(isChordDetectPending(), true);
+  assert.strictEqual(isChordDetectActive(), true, "the teardown predicate must see the pending request");
+  stopChordDetect();
+  return ctl.grant();
+}));
+
+pending.push(asyncTest("leaving mic mode mid-acquisition cancels it", function (ctl) {
+  startChordDetect();
+  // exactly what the widened teardown sites now do
+  if (typeof isChordDetectActive === "function" && isChordDetectActive()) stopChordDetect();
+  return ctl.grant().then(function () {
+    assert.strictEqual(S.chordDetectOn, false, "the microphone must not switch on after the user left");
+    assert.strictEqual(chordR.stream, null, "no stream may be installed");
+    assert.ok(ctl.sandbox.stopped > 0, "the arriving stream's tracks must be stopped, not leaked");
+  });
+}));
+
+pending.push(asyncTest("a granted request still installs when nothing tore it down", function (ctl) {
+  startChordDetect();
+  return ctl.grant().then(function () {
+    assert.strictEqual(S.chordDetectOn, true, "the normal path must still work");
+    assert.ok(chordR.stream, "the stream should be installed");
+  });
+}));
+
+var teardownSites = [
+  "js/actions/practice_family.js", "js/actions/system_family.js",
+  "js/actions/performance_family.js", "js/timers.js", "js/pages/guided.js"
+];
+test("no teardown site still gates stopChordDetect on the lagging flag alone", function () {
+  teardownSites.forEach(function (f) {
+    var src = read(f).replace(/^[ \t]*\/\/[^\n]*/gm, "");
+    var re = /if\s*\(\s*S\.chordDetectOn[^)]*\)\s*(\{\s*)?stopChordDetect/g;
+    assert.strictEqual(src.match(re), null,
+      f + " still guards teardown on S.chordDetectOn, which is false while acquiring");
+  });
+});
+
+pending.reduce(function (chain, t) { return chain.then(t); }, Promise.resolve()).then(function () {
+  console.log("PASS: Codex review follow-ups — zero accuracy preserved, mic acquisition guarded, teardown cancels mid-flight (" + passed + " checks)");
+});

@@ -262,7 +262,7 @@
         T.session = null;
       });
       if (S.metronomeOn) stopMetronome();
-      if (S.chordDetectOn) stopChordDetect();
+      if (typeof isChordDetectActive === "function" && isChordDetectActive()) stopChordDetect();
       setPracticeFamilyTimerActive(true, function() {
         S.timerActive = true;
         S.timer = 0;
