@@ -18,7 +18,11 @@
     this.trackAnalyzer = null;
     this.chartService = null;
     this.playbackEngine = null;
-    this.practiceIntelligence = options.practiceIntelligence || (typeof SparkPracticeIntelligence !== "undefined" ? new SparkPracticeIntelligence() : null);
+    // Injectable only. The SparkPracticeIntelligence global it used to
+    // construct was never loaded by index.html, so this was always null in
+    // the app; the module has been removed with the rest of the unshipped
+    // Spotify practice feature that consumed it.
+    this.practiceIntelligence = options.practiceIntelligence || null;
     this.runtimeState = this.createInitialRuntimeState();
     this.eventBus = options.eventBus || (typeof SparkEventBus !== "undefined" ? new SparkEventBus({ maxEvents: 1000 }) : null);
     this.performanceMonitor = options.performanceMonitor || (
