@@ -145,7 +145,7 @@ loadJS("js/sparksuite/core/curriculum_engine.js");
 loadJS("js/sparksuite/core/practice_engine.js");
 loadJS("js/sparksuite/core/progress_engine.js");
 loadJS("js/sparksuite/core/session_engine.js");
-loadJS("js/sparksuite/core/spark_core.js");
+require("./spark_core_modules.js").loadSparkCore(loadJS);
 
 console.log("\n--- Session State Machine ---");
 
