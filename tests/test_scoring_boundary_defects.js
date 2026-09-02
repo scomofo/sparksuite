@@ -68,9 +68,9 @@ test("the launcher does not inherit the previous run's preset or loop", function
     "the payload's own enginePreset must be passed as the middle argument"
   );
   assert.ok(
-    /S\.rhythmHighwayLoop = null/.test(body),
-    "a stale loop window must be cleared; passing loopSpec null cannot express " +
-      "'no loop' because the resolution is `launchContext.loopSpec || S.rhythmHighwayLoop`"
+    /launchContext\.loopSpec = null/.test(body),
+    "a fresh drill must not inherit the previous run's loop window; the adapter " +
+      "declares 'no loop' as a per-call property"
   );
 
   // The two behaviours above only matter because of these two lines in the
@@ -81,8 +81,9 @@ test("the launcher does not inherit the previous run's preset or loop", function
     "preset resolution changed — recheck whether the adapter still needs to pass one"
   );
   assert.ok(
-    /var resolvedLoopSpec = launchContext\.loopSpec \|\| S\.rhythmHighwayLoop \|\| null;/.test(page),
-    "loop resolution changed — recheck whether clearing S.rhythmHighwayLoop is still needed"
+    /hasOwnProperty\.call\(launchContext, "loopSpec"\)/.test(page),
+    "loop resolution changed — recheck whether the adapter still needs to set the property. " +
+      "tests/test_rhythm_highway_loop_scope.js owns this contract in full"
   );
   assert.ok(
     /function startRhythmHighwayPayload\(payload, presetName, launchContext\)/.test(page),
@@ -109,9 +110,9 @@ test("the adapter clears the stale loop and forwards the payload preset", functi
       // Capture what the real function would resolve against, per lines 317-318.
       seen = {
         presetName: presetName,
-        loopAtCall: scope.S.rhythmHighwayLoop,
-        resolvedPreset: presetName || scope.S.rhythmHighwayPreset || payload.enginePreset,
-        resolvedLoop: (ctx && ctx.loopSpec) || scope.S.rhythmHighwayLoop || null
+        loopSpecArg: ctx ? ctx.loopSpec : undefined,
+        storedLoopUntouched: scope.S.rhythmHighwayLoop !== null,
+        resolvedPreset: presetName || scope.S.rhythmHighwayPreset || payload.enginePreset
       };
       return true;
     });
@@ -123,9 +124,10 @@ test("the adapter clears the stale loop and forwards the payload preset", functi
     "the exercise's own preset must be passed, not left to the sticky S.rhythmHighwayPreset");
   assert.strictEqual(seen.resolvedPreset, "spark_pro",
     "a drill must not launch at the previous run's assist preset");
-  assert.strictEqual(seen.loopAtCall, null, "the stale loop window must be cleared before delegating");
-  assert.strictEqual(seen.resolvedLoop, null,
-    "a fresh drill must not be sliced by the loop window set on a previous exercise");
+  assert.strictEqual(seen.loopSpecArg, null,
+    "the adapter must declare 'no loop' explicitly rather than leaving it to stored state");
+  assert.strictEqual(seen.storedLoopUntouched, true,
+    "and it must do so without reaching into S.rhythmHighwayLoop");
 });
 
 test("a caller that asks for a loop still gets one", function () {
@@ -136,7 +138,7 @@ test("a caller that asks for a loop still gets one", function () {
   var S = { rhythmHighwayPreset: null, rhythmHighwayLoop: { startTick: 0, endTick: 100 } };
   var run = new Function("S", "startRhythmHighwayPayload", body +
     "; return startPlayableRhythmHighwayPayload;")(S, function (payload, presetName, ctx) {
-      seen = { loopSpec: ctx.loopSpec, loopState: S.rhythmHighwayLoop };
+      seen = { loopSpec: ctx.loopSpec, loopState: S.rhythmHighwayLoop };  // stored state must be untouched either way
       return true;
     });
   var wanted = { startTick: 200, endTick: 400, label: "requested" };

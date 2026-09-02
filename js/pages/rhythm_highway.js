@@ -315,7 +315,15 @@
     stopSparkRhythmHighway();
 
     var resolvedPresetName = resolveRhythmHighwayPresetName(presetName || S.rhythmHighwayPreset || payload.enginePreset);
-    var resolvedLoopSpec = launchContext.loopSpec || S.rhythmHighwayLoop || null;
+    // The loop window is per-launch, never inherited. `||` could not express
+    // "no loop" — a null loopSpec fell straight through to S.rhythmHighwayLoop,
+    // so starting a different segment silently sliced the new chart with the
+    // tick range the player had set on the previous one. An explicitly present
+    // loopSpec is now honoured literally; only a caller that omits the property
+    // entirely gets the stored window.
+    var resolvedLoopSpec = Object.prototype.hasOwnProperty.call(launchContext, "loopSpec")
+      ? (launchContext.loopSpec || null)
+      : (S.rhythmHighwayLoop || null);
     var activePayload = resolvedLoopSpec ? buildRhythmHighwayLoopPayload(payload, resolvedLoopSpec) : payload;
     if (!activePayload || !activePayload.songChart) activePayload = payload;
 
@@ -851,7 +859,7 @@
   // "no loop" — null falls straight through to the old range.
   function startPlayableRhythmHighwayPayload(payload, launchContext) {
     launchContext = launchContext || {};
-    if (!launchContext.loopSpec && typeof S !== "undefined") S.rhythmHighwayLoop = null;
+    if (!Object.prototype.hasOwnProperty.call(launchContext, "loopSpec")) launchContext.loopSpec = null;
     return startRhythmHighwayPayload(payload, (payload && payload.enginePreset) || null, launchContext);
   }
 
