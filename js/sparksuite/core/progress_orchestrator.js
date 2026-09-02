@@ -357,32 +357,24 @@
 
       // 5. Update mastery
       //
-      // KNOWN GAP: `updateMastery` has never been a global. It was declared
-      // inside the IIFE in js/progression/mastery.js and never exported, so
-      // both guards below have always been false and chord/song mastery is
-      // never written by this cascade — `SparkMastery.set` is only ever
-      // called for "rhythm" (progress_bridge.js) and "lessons"
-      // (progress_engine.js). Readers of chord/song mastery therefore always
-      // see 0: the Chord/Song Mastery rows in progress_ui.js, the piano
-      // practice summary, and the "F chord" / "song_2" rules in
-      // js/progression/unlocks.js, which can never fire.
-      //
-      // Wiring this up needs a scale decision first, so it is deliberately
-      // left as-is rather than half-fixed: the calls below write `acc * 100`
-      // (0-100), while unlocks.js compares mastery against 0.7 / 0.75 (0-1).
-      // Simply restoring the calls would unlock the F chord after a single
-      // session. Pick the canonical scale, align unlocks.js and
-      // progress_bridge.js (which clamps rhythm to 0-100) to it, then route
-      // this through the engine rather than a bare global.
-      if (event.chordName && typeof updateMastery === "function") {
-        var acc = event.accuracy || 0.75;
-        updateMastery("chords", event.chordName, acc * 100);
-        result.masteryUpdates[event.chordName] = typeof SparkMastery !== "undefined"
-          ? (SparkMastery.get("chords", event.chordName) || 0)
-          : (S.mastery && S.mastery.chords ? S.mastery.chords[event.chordName] : 0);
+      // This used to guard on `typeof updateMastery === "function"` — a bare
+      // global that never existed (it was declared inside the IIFE in
+      // js/progression/mastery.js and never exported), so the step silently
+      // did nothing and chord/song mastery was never written by anything.
+      // It now routes through the engine, which owns the 0-100 scale and the
+      // blend rule. ProgressEngine.toMasteryPercent accepts either accuracy
+      // convention, so no scaling is applied at this call site.
+      var masteryEngine = typeof SparkSuiteProgressEngine !== "undefined"
+        && typeof SparkSuiteProgressEngine.blendCategoryMastery === "function"
+        ? SparkSuiteProgressEngine
+        : null;
+
+      if (masteryEngine && event.chordName) {
+        result.masteryUpdates[event.chordName] =
+          masteryEngine.blendCategoryMastery("chords", event.chordName, event.accuracy || 0.75);
       }
-      if (event.type === "song" && event.songId && typeof updateMastery === "function") {
-        updateMastery("songs", event.songId, (event.accuracy || 0) * 100);
+      if (masteryEngine && event.type === "song" && event.songId) {
+        masteryEngine.blendCategoryMastery("songs", event.songId, event.accuracy || 0);
       }
 
       // 6. Evaluate unlocks

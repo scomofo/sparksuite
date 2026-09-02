@@ -315,7 +315,7 @@ var PERSIST_FIELDS=["activeInstrument","xp","streak","sessions","drillCount","da
   "practicePlan","practicePlanDate","practicePlanHistory",
   "weakSpots","practiceHistory","adaptiveState",
   "weeklyPracticePlan","practiceStreak","totalPracticeMinutes","todayPracticeMinutes",
-  "mastery","unlocks",
+  "mastery","masteryScaleVersion","unlocks",
   "playerXP","playerLevel","playerAchievements","playerStats","xpLog","contentLibrary",
   "dailyChallenges","weeklyGoals","skillTree","metaProgress","challengeHistory",
   "analytics",

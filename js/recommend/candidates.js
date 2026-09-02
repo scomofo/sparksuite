@@ -220,7 +220,7 @@
   function getUnlockOpportunityCandidates(){
     var out = [];
     var avgTransitions = typeof getAverageMastery === "function" ? getAverageMastery("transitions") : 0;
-    if(avgTransitions < 0.7){
+    if(avgTransitions < 70){
       out.push({
         id: "unlock_transitions_push",
         type: "drill",

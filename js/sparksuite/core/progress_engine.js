@@ -872,6 +872,56 @@
   };
 
   /*
+   * Category mastery (SparkMastery / S.mastery) is on a 0-100 scale.
+   *
+   * Accuracy reaches this boundary in both conventions — scoring_engine.js
+   * emits 0-1, js/performance/scoring.js emits 0-100 — so normalize once
+   * here rather than defending in every consumer. A value at or below 1 is
+   * read as a fraction: on the percent scale those are sub-1% readings,
+   * indistinguishable from noise, whereas 1 as a fraction means a perfect
+   * score, which is the reading that matters. Same heuristic the psychology
+   * engine already applies (psychology_engine.js:99, :109).
+   */
+  ProgressEngine.MASTERY_SCALE_MAX = 100;
+
+  ProgressEngine.toMasteryPercent = function(value) {
+    var n = typeof value === "number" && isFinite(value) ? value : 0;
+    if (n < 0) n = 0;
+    if (n <= 1) n = n * 100;
+    return Math.max(0, Math.min(ProgressEngine.MASTERY_SCALE_MAX, n));
+  };
+
+  /*
+   * Blend one performance into a category's stored mastery and persist it.
+   * Uses the same 0.75/0.25 weighting as smoothMastery, so there is one
+   * blend rule rather than the two that used to coexist. Static because the
+   * progression cascade needs it without holding an engine instance.
+   */
+  ProgressEngine.blendCategoryMastery = function(category, skillId, accuracy) {
+    if (!category || !skillId) return null;
+
+    var next = ProgressEngine.toMasteryPercent(accuracy);
+    var current;
+    var blended;
+
+    if (typeof SparkMastery !== "undefined" && SparkMastery
+        && typeof SparkMastery.get === "function" && typeof SparkMastery.set === "function") {
+      current = SparkMastery.get(category, skillId);
+      blended = typeof current === "number" ? (current * 0.75) + (next * 0.25) : next;
+      SparkMastery.set(category, skillId, blended);
+      return blended;
+    }
+
+    if (typeof S === "undefined" || !S) return null;
+    if (!S.mastery || typeof S.mastery !== "object") S.mastery = {};
+    if (!S.mastery[category] || typeof S.mastery[category] !== "object") S.mastery[category] = {};
+    current = S.mastery[category][skillId];
+    blended = typeof current === "number" ? (current * 0.75) + (next * 0.25) : next;
+    S.mastery[category][skillId] = blended;
+    return blended;
+  };
+
+  /*
    * Decide whether a skill can be unlocked. Pure: takes the current tree and
    * point balance, returns the outcome plus the resulting tree and balance.
    * The caller persists them; this never touches S or storage.
