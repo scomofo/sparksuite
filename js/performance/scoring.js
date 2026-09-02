@@ -84,11 +84,27 @@ function scorePerformanceEvent(event, snapshot, hitDeltaMs, difficulty, mode) {
 
   var total;
   if (event.type === "strum" && event.rhythm && diff) {
-    var dirScore = scoreStrumDirection(event.rhythm.dir, snapshot.strumDir || null, diff);
+    // Take the direction from the cluster that actually matched this event
+    // rather than whatever was strummed most recently. snapshot.strumDir is
+    // the older read and stays as a fallback for callers that supply one.
+    var actualDir = (cluster && cluster.strumDir) || snapshot.strumDir || null;
     var dw = diff.directionWeight || 0;
-    // Renormalize weights: note + timing + direction should sum to ~1
-    var sumW = nw + tw + dw;
-    total = (noteScore * nw + timingScore * tw + dirScore * dw) / (sumW || 1);
+    if (!actualDir) {
+      // Strum direction is not observable here. Mic input carries no stroke
+      // order at all, and inferStrumDirectionFromCluster (js/performance/input.js)
+      // is still a stub that returns null for every cluster — so this branch is
+      // currently ALWAYS taken. Scoring an unmeasured component as zero was a
+      // flat tax, not a skill test: it capped every pro strum at
+      // (0.65 + 0.35 + 0) / 1.25 = 0.80, putting "perfect" out of reach however
+      // well the player played. Drop the term rather than fail it; nw + tw sums
+      // to 1 on every difficulty, so the remaining weights need no rescaling.
+      total = noteScore * nw + timingScore * tw;
+    } else {
+      var dirScore = scoreStrumDirection(event.rhythm.dir, actualDir, diff);
+      // Renormalize weights: note + timing + direction should sum to ~1
+      var sumW = nw + tw + dw;
+      total = (noteScore * nw + timingScore * tw + dirScore * dw) / (sumW || 1);
+    }
   } else {
     total = noteScore * nw + timingScore * tw;
   }

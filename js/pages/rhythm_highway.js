@@ -834,8 +834,20 @@
     return palette[index] || "#999";
   }
 
+  // Five engine-tier call sites guard on startPlayableRhythmHighwayPayload and
+  // fall through when it is absent — which it always was, so the ExecutionGateway's
+  // practice route, Spotify play-along and SessionRuntime's drill launch all
+  // silently did nothing. They pass (payload, launchContext); startRhythmHighwayPayload
+  // takes the preset as its middle argument, so the adapter is the whole fix.
+  // Passing null for the preset lets it resolve from S.rhythmHighwayPreset or
+  // payload.enginePreset, which is what those callers set.
+  function startPlayableRhythmHighwayPayload(payload, launchContext) {
+    return startRhythmHighwayPayload(payload, null, launchContext || {});
+  }
+
   window.startRhythmHighwaySegment = startRhythmHighwaySegment;
   window.startRhythmHighwayPayload = startRhythmHighwayPayload;
+  window.startPlayableRhythmHighwayPayload = startPlayableRhythmHighwayPayload;
   window.stopSparkRhythmHighway = stopSparkRhythmHighway;
   window._sparkRhythmHighwayStrum = sparkRhythmHighwayStrum;
   window._sparkRhythmHighwayHandlesFrameRender = rhythmHighwayHandlesFrameRender;
