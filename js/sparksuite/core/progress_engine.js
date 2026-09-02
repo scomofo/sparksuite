@@ -829,5 +829,93 @@
     }
   }
 
+  /*
+   * Meta skill tree — unlock policy.
+   *
+   * The costs below and the affordability rules are progression policy, so
+   * they live here rather than in js/meta/skill_tree_meta.js, which used to
+   * own both. These are exposed as statics rather than instance methods
+   * because the decision is pure: callers outside the engine tree can reach
+   * it without constructing a ProgressEngine, and therefore without keeping
+   * a fallback copy of the rules around to drift.
+   */
+  var META_SKILL_TREE = {
+    rhythm_1: { unlocked: true, cost: 0 },
+    rhythm_2: { unlocked: false, cost: 2 },
+    chords_barre: { unlocked: false, cost: 3 },
+    lh_patterns: { unlocked: false, cost: 2 },
+    melody_mode: { unlocked: false, cost: 2 },
+    speed_training: { unlocked: false, cost: 3 },
+    sight_reading: { unlocked: false, cost: 4 }
+  };
+
+  function copySkillNode(node) {
+    var next = {};
+    var key;
+    for (key in node) {
+      if (Object.prototype.hasOwnProperty.call(node, key)) next[key] = node[key];
+    }
+    return next;
+  }
+
+  function copySkillTree(tree) {
+    var next = {};
+    var key;
+    for (key in tree) {
+      if (Object.prototype.hasOwnProperty.call(tree, key)) next[key] = copySkillNode(tree[key]);
+    }
+    return next;
+  }
+
+  ProgressEngine.getDefaultMetaSkillTree = function() {
+    return copySkillTree(META_SKILL_TREE);
+  };
+
+  /*
+   * Decide whether a skill can be unlocked. Pure: takes the current tree and
+   * point balance, returns the outcome plus the resulting tree and balance.
+   * The caller persists them; this never touches S or storage.
+   *
+   * Refusal order is deliberate — a zero balance refuses before cost is
+   * considered, so a free skill still cannot be taken with no points, which
+   * is the behaviour the meta layer had.
+   */
+  ProgressEngine.evaluateSkillUnlock = function(request) {
+    request = request || {};
+    var tree = request.skillTree && typeof request.skillTree === "object"
+      ? request.skillTree
+      : ProgressEngine.getDefaultMetaSkillTree();
+    var skillId = request.skillId || null;
+    var available = typeof request.skillPoints === "number" ? request.skillPoints : 0;
+    var node = skillId && Object.prototype.hasOwnProperty.call(tree, skillId) ? tree[skillId] : null;
+    var cost = node && typeof node.cost === "number" ? node.cost : 0;
+
+    function refuse(reason) {
+      return {
+        unlocked: false,
+        reason: reason,
+        cost: cost,
+        skillTree: tree,
+        skillPoints: available
+      };
+    }
+
+    if (!node) return refuse("unknown_skill");
+    if (node.unlocked) return refuse("already_unlocked");
+    if (available <= 0) return refuse("no_skill_points");
+    if (cost > available) return refuse("insufficient_skill_points");
+
+    var nextTree = copySkillTree(tree);
+    nextTree[skillId].unlocked = true;
+
+    return {
+      unlocked: true,
+      reason: "unlocked",
+      cost: cost,
+      skillTree: nextTree,
+      skillPoints: available - cost
+    };
+  };
+
   window.SparkSuiteProgressEngine = ProgressEngine;
 })();

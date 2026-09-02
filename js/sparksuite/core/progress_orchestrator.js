@@ -356,6 +356,24 @@
       }
 
       // 5. Update mastery
+      //
+      // KNOWN GAP: `updateMastery` has never been a global. It was declared
+      // inside the IIFE in js/progression/mastery.js and never exported, so
+      // both guards below have always been false and chord/song mastery is
+      // never written by this cascade — `SparkMastery.set` is only ever
+      // called for "rhythm" (progress_bridge.js) and "lessons"
+      // (progress_engine.js). Readers of chord/song mastery therefore always
+      // see 0: the Chord/Song Mastery rows in progress_ui.js, the piano
+      // practice summary, and the "F chord" / "song_2" rules in
+      // js/progression/unlocks.js, which can never fire.
+      //
+      // Wiring this up needs a scale decision first, so it is deliberately
+      // left as-is rather than half-fixed: the calls below write `acc * 100`
+      // (0-100), while unlocks.js compares mastery against 0.7 / 0.75 (0-1).
+      // Simply restoring the calls would unlock the F chord after a single
+      // session. Pick the canonical scale, align unlocks.js and
+      // progress_bridge.js (which clamps rhythm to 0-100) to it, then route
+      // this through the engine rather than a bare global.
       if (event.chordName && typeof updateMastery === "function") {
         var acc = event.accuracy || 0.75;
         updateMastery("chords", event.chordName, acc * 100);

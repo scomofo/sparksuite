@@ -1,28 +1,38 @@
 (function(){
 
+  // Applier only. The skill costs and the affordability rules are progression
+  // policy and live in ProgressEngine (getDefaultMetaSkillTree /
+  // evaluateSkillUnlock); this file asks for the decision and persists it.
+
+  function progressEngine(){
+    return typeof SparkSuiteProgressEngine !== "undefined" ? SparkSuiteProgressEngine : null;
+  }
+
   function ensureMetaSkillTree(){
     if(S.skillTree) return S.skillTree;
-    S.skillTree = {
-      rhythm_1:{ unlocked:true, cost:0 },
-      rhythm_2:{ unlocked:false, cost:2 },
-      chords_barre:{ unlocked:false, cost:3 },
-      lh_patterns:{ unlocked:false, cost:2 },
-      melody_mode:{ unlocked:false, cost:2 },
-      speed_training:{ unlocked:false, cost:3 },
-      sight_reading:{ unlocked:false, cost:4 }
-    };
+    var engine = progressEngine();
+    S.skillTree = engine && typeof engine.getDefaultMetaSkillTree === "function"
+      ? engine.getDefaultMetaSkillTree()
+      : {};
     return S.skillTree;
   }
 
-  function unlockSkill(skillId){
-    ensureMetaSkillTree();
-    if(!S.skillTree[skillId]) return;
-    if(S.metaProgress.skillPoints <= 0) return;
-    if(S.skillTree[skillId].unlocked) return;
-    if(S.skillTree[skillId].cost > S.metaProgress.skillPoints) return;
-    S.skillTree[skillId].unlocked = true;
-    S.metaProgress.skillPoints -= S.skillTree[skillId].cost;
+  function unlockMetaSkill(skillId){
+    var engine = progressEngine();
+    if(!engine || typeof engine.evaluateSkillUnlock !== "function") return null;
+
+    var outcome = engine.evaluateSkillUnlock({
+      skillTree: ensureMetaSkillTree(),
+      skillId: skillId,
+      skillPoints: (S.metaProgress && S.metaProgress.skillPoints) || 0
+    });
+
+    if(!outcome || !outcome.unlocked) return outcome;
+
+    S.skillTree = outcome.skillTree;
+    S.metaProgress.skillPoints = outcome.skillPoints;
     saveState();
+    return outcome;
   }
 
   function awardSkillPoint(){
@@ -33,7 +43,7 @@
 
   window.ensureMetaSkillTree = ensureMetaSkillTree;
   window.buildMetaSkillTree = ensureMetaSkillTree;
-  window.unlockMetaSkill = unlockSkill;
+  window.unlockMetaSkill = unlockMetaSkill;
   window.awardSkillPoint = awardSkillPoint;
 
 })();
