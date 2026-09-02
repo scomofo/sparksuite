@@ -18,7 +18,11 @@
     this.trackAnalyzer = null;
     this.chartService = null;
     this.playbackEngine = null;
-    this.practiceIntelligence = options.practiceIntelligence || (typeof SparkPracticeIntelligence !== "undefined" ? new SparkPracticeIntelligence() : null);
+    // Injectable only. The SparkPracticeIntelligence global it used to
+    // construct was never loaded by index.html, so this was always null in
+    // the app; the module has been removed with the rest of the unshipped
+    // Spotify practice feature that consumed it.
+    this.practiceIntelligence = options.practiceIntelligence || null;
     this.runtimeState = this.createInitialRuntimeState();
     this.eventBus = options.eventBus || (typeof SparkEventBus !== "undefined" ? new SparkEventBus({ maxEvents: 1000 }) : null);
     this.performanceMonitor = options.performanceMonitor || (
@@ -844,7 +848,7 @@
     input = input || {};
     if (!input.flow && input.mode) return this.startLegacyPracticeSession(input);
     var flow = input.flow || this.aiEngine.suggestNextFlow();
-    var today = new Date().toISOString().slice(0, 10);
+    var today = SparkDay.today();
     // The cached plan is also keyed by the active instrument — switching
     // instruments invalidates yesterday's cache even on the same day, so a
     // bass user doesn't see ukulele segments. When currentInstrumentType is

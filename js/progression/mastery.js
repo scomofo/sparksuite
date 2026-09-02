@@ -1,48 +1,18 @@
 (function(){
 
-  function updateMastery(skillType, skillId, accuracy){
-    if (typeof SparkMastery !== "undefined") {
-      var current = SparkMastery.get(skillType, skillId);
-      var next = current == null ? accuracy : (current * 0.7) + (accuracy * 0.3);
-      SparkMastery.set(skillType, skillId, next);
-      return;
-    }
-    if(!S.mastery[skillType]) S.mastery[skillType] = {};
-    if(!S.mastery[skillType][skillId]){
-      S.mastery[skillType][skillId] = accuracy;
-    }else{
-      var prev = S.mastery[skillType][skillId];
-      S.mastery[skillType][skillId] = (prev * 0.7) + (accuracy * 0.3);
-    }
-  }
-
-  function updateMasteryFromPerformance(result){
-    if(!result) return;
-
-    if(result.chords){
-      for(var c in result.chords){
-        updateMastery("chords", c, result.chords[c]);
-      }
-    }
-
-    if(result.transitions){
-      for(var t in result.transitions){
-        updateMastery("transitions", t, result.transitions[t]);
-      }
-    }
-
-    if(result.rhythm){
-      for(var r in result.rhythm){
-        updateMastery("rhythm", r, result.rhythm[r]);
-      }
-    }
-
-    if(result.songId){
-      updateMastery("songs", result.songId, result.accuracy);
-    }
-
-    saveState();
-  }
+  // Read-only mastery accessors over SparkMastery (js/utils/mastery.js), with
+  // a legacy S.mastery fallback.
+  //
+  // This file used to also define updateMastery() and
+  // updateMasteryFromPerformance(). Both are gone:
+  //   - updateMasteryFromPerformance had no callers anywhere in the repo.
+  //   - updateMastery was declared inside this IIFE and never exported, so the
+  //     only code that reached for it (progress_orchestrator.js step 5, via
+  //     `typeof updateMastery === "function"`) never found it. It was
+  //     unreachable, and its 0.7/0.3 blend was a second copy of a rule the
+  //     engine already owns as ProgressEngine.smoothMastery (0.75/0.25).
+  // See the note at progress_orchestrator.js step 5 for what still needs
+  // deciding before that cascade step can be wired up.
 
   function getMastery(skillType, skillId){
     if (typeof SparkMastery !== "undefined") {
@@ -65,7 +35,6 @@
     return count ? total / count : 0;
   }
 
-  window.updateMasteryFromPerformance = updateMasteryFromPerformance;
   window.getMastery = getMastery;
   window.getAverageMastery = getAverageMastery;
 

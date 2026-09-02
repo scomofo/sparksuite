@@ -139,7 +139,7 @@
     input = input || {};
     this.id = input.id || ("plan_" + Math.random().toString(36).slice(2, 10));
     this.flow = input.flow || "generic";
-    this.generatedDate = input.generatedDate || new Date().toISOString().slice(0, 10);
+    this.generatedDate = input.generatedDate || SparkDay.today();
     this.instrumentId = input.instrumentId || null;
     this.instrumentType = input.instrumentType || null;
     this.focus = input.focus || "Well-rounded practice";

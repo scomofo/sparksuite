@@ -96,6 +96,8 @@ function loadJS(file) {
   return fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
 }
 
+// SparkDay: the local-calendar-day helper day-boundary logic depends on.
+eval(loadJS('js/utils/day.js'));
 eval(loadJS('js/performance-core/chart-contract.js'));
 eval(loadJS('js/performance-core/transport-contract.js'));
 eval(loadJS('js/performance-core/performance-events.js'));

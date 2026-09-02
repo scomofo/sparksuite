@@ -829,5 +829,143 @@
     }
   }
 
+  /*
+   * Meta skill tree — unlock policy.
+   *
+   * The costs below and the affordability rules are progression policy, so
+   * they live here rather than in js/meta/skill_tree_meta.js, which used to
+   * own both. These are exposed as statics rather than instance methods
+   * because the decision is pure: callers outside the engine tree can reach
+   * it without constructing a ProgressEngine, and therefore without keeping
+   * a fallback copy of the rules around to drift.
+   */
+  var META_SKILL_TREE = {
+    rhythm_1: { unlocked: true, cost: 0 },
+    rhythm_2: { unlocked: false, cost: 2 },
+    chords_barre: { unlocked: false, cost: 3 },
+    lh_patterns: { unlocked: false, cost: 2 },
+    melody_mode: { unlocked: false, cost: 2 },
+    speed_training: { unlocked: false, cost: 3 },
+    sight_reading: { unlocked: false, cost: 4 }
+  };
+
+  function copySkillNode(node) {
+    var next = {};
+    var key;
+    for (key in node) {
+      if (Object.prototype.hasOwnProperty.call(node, key)) next[key] = node[key];
+    }
+    return next;
+  }
+
+  function copySkillTree(tree) {
+    var next = {};
+    var key;
+    for (key in tree) {
+      if (Object.prototype.hasOwnProperty.call(tree, key)) next[key] = copySkillNode(tree[key]);
+    }
+    return next;
+  }
+
+  ProgressEngine.getDefaultMetaSkillTree = function() {
+    return copySkillTree(META_SKILL_TREE);
+  };
+
+  /*
+   * Category mastery (SparkMastery / S.mastery) is on a 0-100 scale.
+   *
+   * Accuracy reaches this boundary in both conventions — scoring_engine.js
+   * emits 0-1, js/performance/scoring.js emits 0-100 — so normalize once
+   * here rather than defending in every consumer. A value at or below 1 is
+   * read as a fraction: on the percent scale those are sub-1% readings,
+   * indistinguishable from noise, whereas 1 as a fraction means a perfect
+   * score, which is the reading that matters. Same heuristic the psychology
+   * engine already applies (psychology_engine.js:99, :109).
+   */
+  ProgressEngine.MASTERY_SCALE_MAX = 100;
+
+  ProgressEngine.toMasteryPercent = function(value) {
+    var n = typeof value === "number" && isFinite(value) ? value : 0;
+    if (n < 0) n = 0;
+    if (n <= 1) n = n * 100;
+    return Math.max(0, Math.min(ProgressEngine.MASTERY_SCALE_MAX, n));
+  };
+
+  /*
+   * Blend one performance into a category's stored mastery and persist it.
+   * Uses the same 0.75/0.25 weighting as smoothMastery, so there is one
+   * blend rule rather than the two that used to coexist. Static because the
+   * progression cascade needs it without holding an engine instance.
+   */
+  ProgressEngine.blendCategoryMastery = function(category, skillId, accuracy) {
+    if (!category || !skillId) return null;
+
+    var next = ProgressEngine.toMasteryPercent(accuracy);
+    var current;
+    var blended;
+
+    if (typeof SparkMastery !== "undefined" && SparkMastery
+        && typeof SparkMastery.get === "function" && typeof SparkMastery.set === "function") {
+      current = SparkMastery.get(category, skillId);
+      blended = typeof current === "number" ? (current * 0.75) + (next * 0.25) : next;
+      SparkMastery.set(category, skillId, blended);
+      return blended;
+    }
+
+    if (typeof S === "undefined" || !S) return null;
+    if (!S.mastery || typeof S.mastery !== "object") S.mastery = {};
+    if (!S.mastery[category] || typeof S.mastery[category] !== "object") S.mastery[category] = {};
+    current = S.mastery[category][skillId];
+    blended = typeof current === "number" ? (current * 0.75) + (next * 0.25) : next;
+    S.mastery[category][skillId] = blended;
+    return blended;
+  };
+
+  /*
+   * Decide whether a skill can be unlocked. Pure: takes the current tree and
+   * point balance, returns the outcome plus the resulting tree and balance.
+   * The caller persists them; this never touches S or storage.
+   *
+   * Refusal order is deliberate — a zero balance refuses before cost is
+   * considered, so a free skill still cannot be taken with no points, which
+   * is the behaviour the meta layer had.
+   */
+  ProgressEngine.evaluateSkillUnlock = function(request) {
+    request = request || {};
+    var tree = request.skillTree && typeof request.skillTree === "object"
+      ? request.skillTree
+      : ProgressEngine.getDefaultMetaSkillTree();
+    var skillId = request.skillId || null;
+    var available = typeof request.skillPoints === "number" ? request.skillPoints : 0;
+    var node = skillId && Object.prototype.hasOwnProperty.call(tree, skillId) ? tree[skillId] : null;
+    var cost = node && typeof node.cost === "number" ? node.cost : 0;
+
+    function refuse(reason) {
+      return {
+        unlocked: false,
+        reason: reason,
+        cost: cost,
+        skillTree: tree,
+        skillPoints: available
+      };
+    }
+
+    if (!node) return refuse("unknown_skill");
+    if (node.unlocked) return refuse("already_unlocked");
+    if (available <= 0) return refuse("no_skill_points");
+    if (cost > available) return refuse("insufficient_skill_points");
+
+    var nextTree = copySkillTree(tree);
+    nextTree[skillId].unlocked = true;
+
+    return {
+      unlocked: true,
+      reason: "unlocked",
+      cost: cost,
+      skillTree: nextTree,
+      skillPoints: available - cost
+    };
+  };
+
   window.SparkSuiteProgressEngine = ProgressEngine;
 })();

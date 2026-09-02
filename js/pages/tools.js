@@ -199,7 +199,7 @@ function renderStatsCalendar(practiceDays){
   var today=new Date();
   for(var d=29;d>=0;d--){
     var dt=new Date(today);dt.setDate(dt.getDate()-d);
-    var ds=dt.toISOString().split("T")[0];
+    var ds=SparkDay.toISO(dt);
     var active=!!practiceDays[ds];
     var isToday=d===0;
     h+='<div class="cal-dot" title="'+ds+'" style="background:'+(active?"#4ECDC4":isToday?"var(--border)":"var(--input-bg)")+';border:'+(isToday?"2px solid var(--text-muted)":"2px solid transparent")+'" aria-label="'+ds+(active?" - practiced":"")+'"></div>';
@@ -215,7 +215,7 @@ function renderStatsWeekXpChart(hist){
   var weekXP=[];var maxXP=1;
   for(var d=6;d>=0;d--){
     var dt=new Date(today);dt.setDate(dt.getDate()-d);
-    var ds=dt.toISOString().split("T")[0];
+    var ds=SparkDay.toISO(dt);
     var dayXP=0;
     for(var i=0;i<hist.length;i++)if(hist[i].date===ds)dayXP+=normalizeToolsNumber(hist[i].xp,0);
     weekXP.push({day:dayNames[dt.getDay()],xp:dayXP,date:ds});

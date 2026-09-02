@@ -1,0 +1,15 @@
+{
+  "_comment": [
+    "Ratchet for check_ui_business_logic.js.",
+    "",
+    "Widening that scan from three directories (js/ui, js/pages, components) to",
+    "all of js/ surfaced three pre-existing violations. All three are now fixed,",
+    "so this list is empty and the scan passes with no exemptions.",
+    "",
+    "Keep the file: if a violation ever has to be grandfathered, record it here",
+    "as { file, term, note } rather than widening the allowlist in the scanner.",
+    "The check fails on an entry that no longer reproduces, so the list can only",
+    "shrink. Run with UI_LOGIC_NO_BASELINE=1 to see the raw, unfiltered list."
+  ],
+  "knownViolations": []
+}

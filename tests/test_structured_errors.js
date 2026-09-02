@@ -91,6 +91,9 @@ const errorCodesModule = require("../js/sparksuite/core/error_codes.js");
 const sparkErrorModule = require("../js/sparksuite/core/spark_error.js");
 const errorBoundaryModule = require("../js/sparksuite/core/error_boundary.js");
 const errorViewModule = require("../js/sparksuite/ui/error_view.js");
+// SessionPlan stamps generatedDate via SparkDay, so the local-calendar-day
+// helper has to be present before the domain module loads.
+global.SparkDay = require("../js/utils/day.js");
 require("../js/sparksuite/domain/session.js");
 const gateway = require("../js/sparksuite/core/execution_gateway.js");
 require("../js/sparksuite/core/spark_core.js");

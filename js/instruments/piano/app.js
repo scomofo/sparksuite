@@ -9,7 +9,7 @@ window.pianoRender = function() { return render(); };
 window.getCurrentSessionPlan = function() { return getCurrentSessionPlan(); };
 window.getCurrentLevel = function() { return getCurrentLevel(); };
 window.levelForSession = function(s) { return levelForSession(s); };
-window.addXP = function(n) { return addXP(n); };
+window.pianoAwardXp = function(n) { return pianoAwardXp(n); };
 window.addHistory = function(t, d) { return addHistory(t, d); };
 window.recordTransition = function(a, b) { return recordTransition(a, b); };
 window.genQuiz = function() { return genQuiz(); };
@@ -17,7 +17,15 @@ window.shuffleArray = function(arr) { return shuffleArray(arr); };
 window.startGuidedSession = function(requestedSession) { return startGuidedSession(requestedSession); };
 window.advanceSessionStep = function() { return advanceSessionStep(); };
 window.adaptBpm = function() { return adaptBpm(); };
-window.checkLevelUp = function() { return checkLevelUp(); };
+// Namespaced deliberately. Piano's checkLevelUp advances the per-instrument
+// curriculum level (S.level, capped at 8); js/meta/levels.js owns a different
+// checkLevelUp that advances the suite player level from the XP curve
+// (S.playerXP -> S.playerLevel). Exporting piano's under the bare name
+// overwrote meta's as soon as the deferred instrument scripts loaded — which
+// happens on idle for every user, whatever instrument they picked — so
+// awardXP() and the progression cascade silently stopped advancing
+// S.playerLevel. Piano's own calls resolve to the local function.
+window.pianoCheckLevelUp = function() { return checkLevelUp(); };
 window.checkReward = function(t) { return checkReward(t); };
 window.pickReviewChords = function() { return pickReviewChords(); };
 
@@ -133,7 +141,7 @@ function levelForSession(sessionNum) {
   return 8;
 }
 
-function addXP(n) {
+function pianoAwardXp(n) {
   if (typeof SparkInstrumentProgress !== "undefined") {
     SparkInstrumentProgress.addXp(n);
   } else if (typeof S !== "undefined") {
@@ -203,7 +211,7 @@ function tickSession() {
   if (S.paused || !S.active) return;
   S.timer--;
   addPracticeSecond();
-  if (S.timer % 30 === 0 && S.timer > 0) addXP(5);
+  if (S.timer % 30 === 0 && S.timer > 0) pianoAwardXp(5);
   var elapsed = S.practiceLen - S.timer;
   var msg = pianoFireMicro(elapsed, S.practiceLen);
   if (msg) showToast(msg);
@@ -215,7 +223,7 @@ function completeLegacySession() {
   if (T.session) { clearInterval(T.session); T.session = null; }
   S.active = false;
   S.sessions++;
-  addXP(20);
+  pianoAwardXp(20);
   var prog = (S.chordProg[S.chord] || 0) + 15;
   S.chordProg[S.chord] = Math.min(100, prog);
   addHistory("session", { chord: S.chord, dur: S.practiceLen });
@@ -242,7 +250,7 @@ function completeDrill() {
   if (T.drill) { clearInterval(T.drill); T.drill = null; }
   S.drillActive = false;
   S.drillsDone++;
-  addXP(30);
+  pianoAwardXp(30);
   addHistory("drill", { chords: S.drillChords.join(",") });
   checkPracticeDate();
   checkReward("drill_complete");
@@ -264,7 +272,7 @@ function completeDaily() {
   if (T.daily) { clearInterval(T.daily); T.daily = null; }
   S.dailyActive = false;
   S.dailiesDone++;
-  addXP(40);
+  pianoAwardXp(40);
   addHistory("daily", { score: S.dailyScore });
   checkPracticeDate();
   checkReward("daily_complete");
@@ -346,7 +354,7 @@ function checkReward(actionType) {
 
   if (shouldReward) {
     S.actionsSinceReward = 0;
-    addXP(xpAmount);
+    pianoAwardXp(xpAmount);
     if (isJackpot) {
       S.jackpotsHit++;
       playSound("jackpot");
@@ -462,7 +470,7 @@ function songTick() {
     if (!S.songsDone) S.songsDone = [];
     if (S.songsDone.indexOf(song.title) < 0) {
       S.songsDone.push(song.title);
-      addXP(15);
+      pianoAwardXp(15);
       pianoCheckBadges();
     }
   }
@@ -800,7 +808,7 @@ function applyPianoLegacyGuidedCompletion(outcome) {
       S.chordProg[chordName] = Math.min(100, (S.chordProg[chordName] || 0) + outcome.chordProgress[chordName]);
     }
   }
-  if (outcome.xpAwarded) addXP(outcome.xpAwarded);
+  if (outcome.xpAwarded) pianoAwardXp(outcome.xpAwarded);
   if (outcome.historyEntry) addHistory(outcome.historyEntry.type, outcome.historyEntry.detail || {});
   if (outcome.lhLevel != null) S.lhLevel = outcome.lhLevel;
 }
@@ -879,7 +887,7 @@ function completeFingerExercise(exerciseId) {
     if (!anyDoneToday) S.fingerDaysLogged++;
   }
 
-  addXP(10);
+  pianoAwardXp(10);
   checkReward("finger_exercise");
   checkFingerBadges();
   saveState();
@@ -915,7 +923,7 @@ function finishChordChange() {
     }
   }
 
-  addXP(Math.floor(S.chordChangeCount / 2));
+  pianoAwardXp(Math.floor(S.chordChangeCount / 2));
   addHistory("chord_change", { score: S.chordChangeCount, chords: S.chordChangePair.join(",") });
   checkFingerBadges();
   checkReward("chord_change");
@@ -1351,7 +1359,7 @@ function act(action, param) {
       S.quizTotal = (S.quizTotal || 0) + 1;
       if (param === S.quizQ.answer) {
         S.quizCorrect++;
-        addXP(10);
+        pianoAwardXp(10);
         playSound("complete");
         checkReward("quiz_correct");
       } else {
@@ -1383,7 +1391,7 @@ function act(action, param) {
     case "ear_guess":
       S.earRevealed = true;
       if (param === S.earChord) {
-        addXP(10);
+        pianoAwardXp(10);
         playSound("complete");
         checkReward("ear_correct");
       } else {
@@ -1785,7 +1793,7 @@ function act(action, param) {
       S.rhythmActive = false;
       if (T.rhythm) { clearInterval(T.rhythm); T.rhythm = null; }
       stopMetronome();
-      addXP(Math.floor(S.rhythmScore / 10));
+      pianoAwardXp(Math.floor(S.rhythmScore / 10));
       addHistory("rhythm", { score: S.rhythmScore });
       break;
 
@@ -1810,7 +1818,7 @@ function act(action, param) {
       if (param === S.runnerTarget) {
         S.runnerScore += 10;
         playSound("tick");
-        addXP(2);
+        pianoAwardXp(2);
         checkReward("runner_correct");
       } else {
         S.runnerScore = Math.max(0, S.runnerScore - 5);

@@ -12,22 +12,22 @@
 
   function evaluateUnlocks(){
     // Chord unlock rules
-    if(getMastery("chords","C") > 0.7 &&
-       getMastery("chords","G") > 0.7){
+    if(getMastery("chords","C") > 70 &&
+       getMastery("chords","G") > 70){
       unlockContent("chords","F");
     }
 
     // Lesson unlock rules
-    if(getAverageMastery("rhythm") > 0.6){
+    if(getAverageMastery("rhythm") > 60){
       unlockContent("lessons","strumming_1");
     }
 
-    if(getAverageMastery("transitions") > 0.7){
+    if(getAverageMastery("transitions") > 70){
       unlockContent("lessons","transitions_2");
     }
 
     // Song unlock rules
-    if(getAverageMastery("songs") > 0.75){
+    if(getAverageMastery("songs") > 75){
       unlockContent("songs","song_2");
     }
   }

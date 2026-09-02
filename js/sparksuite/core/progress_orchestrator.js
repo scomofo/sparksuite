@@ -157,7 +157,7 @@
       }
 
       // --- Streak: once per day ---
-      var today = new Date().toISOString().slice(0, 10);
+      var today = SparkDay.today();
       var sessionUpdate = {
         streak: null,
         sessionsDelta: 1,
@@ -356,15 +356,25 @@
       }
 
       // 5. Update mastery
-      if (event.chordName && typeof updateMastery === "function") {
-        var acc = event.accuracy || 0.75;
-        updateMastery("chords", event.chordName, acc * 100);
-        result.masteryUpdates[event.chordName] = typeof SparkMastery !== "undefined"
-          ? (SparkMastery.get("chords", event.chordName) || 0)
-          : (S.mastery && S.mastery.chords ? S.mastery.chords[event.chordName] : 0);
+      //
+      // This used to guard on `typeof updateMastery === "function"` — a bare
+      // global that never existed (it was declared inside the IIFE in
+      // js/progression/mastery.js and never exported), so the step silently
+      // did nothing and chord/song mastery was never written by anything.
+      // It now routes through the engine, which owns the 0-100 scale and the
+      // blend rule. ProgressEngine.toMasteryPercent accepts either accuracy
+      // convention, so no scaling is applied at this call site.
+      var masteryEngine = typeof SparkSuiteProgressEngine !== "undefined"
+        && typeof SparkSuiteProgressEngine.blendCategoryMastery === "function"
+        ? SparkSuiteProgressEngine
+        : null;
+
+      if (masteryEngine && event.chordName) {
+        result.masteryUpdates[event.chordName] =
+          masteryEngine.blendCategoryMastery("chords", event.chordName, event.accuracy || 0.75);
       }
-      if (event.type === "song" && event.songId && typeof updateMastery === "function") {
-        updateMastery("songs", event.songId, (event.accuracy || 0) * 100);
+      if (masteryEngine && event.type === "song" && event.songId) {
+        masteryEngine.blendCategoryMastery("songs", event.songId, event.accuracy || 0);
       }
 
       // 6. Evaluate unlocks

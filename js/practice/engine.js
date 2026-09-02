@@ -13,7 +13,7 @@
 
   function ensurePracticePlan(opts){
     opts = opts || {};
-    var today = new Date().toISOString().slice(0,10);
+    var today = SparkDay.today();
     var currentInstrument = currentInstrumentType();
     // The cached plan is keyed by both date AND instrument — switching
     // instruments forces a rebuild so a bass user doesn't see yesterday's
@@ -51,7 +51,7 @@
       if (plan) return plan.toLegacyPracticePlan();
     }
 
-    var today = new Date().toISOString().slice(0,10);
+    var today = SparkDay.today();
     var items = [];
 
     // The selectors module exports the *Candidate family — the old *Item /

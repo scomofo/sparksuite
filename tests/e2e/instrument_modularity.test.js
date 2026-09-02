@@ -44,6 +44,7 @@ function resetState() {
 }
 
 resetState();
+loadJS("js/utils/day.js");
 loadJS("js/sparksuite/domain/types.js");
 loadJS("js/sparksuite/domain/session_segment.js");
 loadJS("js/sparksuite/domain/session.js");
@@ -58,8 +59,8 @@ loadJS("js/sparksuite/instruments/ukulele/ukulele_scales.js");
 loadJS("js/sparksuite/instruments/ukulele/ukulele_exercises.js");
 loadJS("js/sparksuite/instruments/ukulele/ukulele_progression.js");
 loadJS("js/sparksuite/instruments/ukulele/ukulele_module.js");
-loadJS("js/sparksuite/core/practice_engine_v2.js");
-loadJS("js/sparksuite/core/session_engine_v2.js");
+loadJS("js/sparksuite/core/practice_engine.js");
+loadJS("js/sparksuite/core/session_engine.js");
 
 var curriculumEngine = {
   getDailyPracticeContext: function() {
@@ -80,8 +81,8 @@ var psychologyEngine = {
   getSessionDifficulty: function() { return "easy"; }
 };
 
-var practiceEngine = new SparkSuitePracticeEngineV2(psychologyEngine);
-var sessionEngine = new SparkSuiteSessionEngineV2(practiceEngine, curriculumEngine, psychologyEngine);
+var practiceEngine = new SparkSuitePracticeEngine(psychologyEngine);
+var sessionEngine = new SparkSuiteSessionEngine(practiceEngine, curriculumEngine);
 
 var plan = sessionEngine.buildSession(SparkSessionTypes.FLOW_DAILY_PRACTICE, {
   instrumentContext: {
@@ -92,9 +93,30 @@ var plan = sessionEngine.buildSession(SparkSessionTypes.FLOW_DAILY_PRACTICE, {
 });
 
 assert.ok(plan instanceof SessionPlan);
-assert.strictEqual(plan.lesson.id, "uke_04");
-assert.strictEqual(plan.exercises[0].data.gameplay.adapterType, "ukulele");
+assert.strictEqual(plan.lesson.id, "uke_04", "the curriculum engine chose the lesson");
+
+// The point of the test: the ukulele's own rhythm adapter shaped the payload,
+// with no ukulele-specific code in the session or practice engine. The chart
+// id, lane count and preset all come from the instrument module.
+var gameplay = plan.exercises[0].data.gameplay;
+assert.ok(gameplay && gameplay.payload, "the rhythm exercise carries an instrument-built payload");
+assert.strictEqual(gameplay.payload.adapterType, "ukulele");
+assert.strictEqual(gameplay.payload.chartId, "uke_open_strums_01", "chart id came from the ukulele module");
+assert.strictEqual(gameplay.payload.laneCount, 4, "a ukulele has four lanes, not the guitar default of five");
+
 assert.strictEqual(plan.exercises[1].type, "chord_transition");
 assert.deepStrictEqual(plan.exercises[1].data.core.chords, ["C", "Am"]);
+
+// Guard the thing that made this test misleading before: it must exercise the
+// engines index.html actually loads, not the dormant v2 pair.
+var indexHtml = fs.readFileSync(path.join(repoRoot, "index.html"), "utf8");
+assert.ok(
+  indexHtml.indexOf("js/sparksuite/core/session_engine.js") !== -1
+    && indexHtml.indexOf("js/sparksuite/core/practice_engine.js") !== -1,
+  "this test must drive the engines the app loads — it previously used the " +
+    "SparkSuite*EngineV2 pair, which index.html does not load, so the " +
+    "modularity claim was proven against code that never runs"
+);
+assert.strictEqual(typeof SparkSuiteSessionEngineV2, "undefined", "the v2 engines must not be loaded here");
 
 console.log("PASS: e2e ukulele modularity path builds valid instrument-native exercises without core edits");

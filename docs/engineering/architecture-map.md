@@ -1,5 +1,11 @@
 # SparkSuite Architecture Map
 
+_This document describes the code as it is. Dated documents under
+`docs/superpowers/plans/` and `docs/superpowers/specs/` are historical
+records of work as it was planned; several predate the `js/spark-core/`
+retirement and reference paths that no longer exist. Trust this map and
+`index.html` over them._
+
 Related architecture guardrails:
 
 - [ADR index](../adr/README.md)
@@ -12,25 +18,49 @@ Related architecture guardrails:
 
 ## Boot Order (index.html)
 
-1. **Core Utilities** - spark-highway, contracts, time/math/ids utils, persistence, analytics, progression
-2. **Spark-Core v0.2** - profile, storage, events, progress-engine, achievements, content, psychology, progress-orchestrator, instrument-adapter, session-engine, index (namespace barrel)
-3. **Performance-Core** - chart-contract, transport-contract, highway-adapter, events, index
-4. **Launcher** - SparkInstruments registry (register/activate/getActive)
-5. **Instrument Modules** - guitar (pages, capo, register, app), ukulele (normalizer, validator, svg, register), piano (data, audio, ui, register, app), bass (data, ui, register, app), drums (register)
-6. **Shared UI + Data** - data.js, state.js, audio.js, ui.js (chordSVG, ringHTML, etc.)
-7. **Page Renderers** - shared, practice, session, games, songs, tools, guided, dual
-8. **Performance System** - config, difficulties, arrangements, adapters, chart, transport, input, calibration, scoring, session, progression, recommendations, practice_engine, analytics, badges, highway, midi_backing
-9. **Performance Pages** - perform, rhythm_highway, perform_song, performance_stats, editor, calibration
-10. **Practice Stack** - exercises/generator, weakspots, adaptive, plan, progress, selectors, engine, launchers
-11. **SparkSuite Domain** - types, session_segment, session, tempo_map, note_event, phrase, chart, gameplay_result, engine_preset
-12. **Bridges** - practice_bridge, curriculum_bridge, progress_bridge, performance_bridge
-13. **SparkSuite Instruments** - ukulele (skill_tree, lessons, chords, scales, tuning, exercises, progression, module, adapter, index), bass, piano, guitar
-14. **SparkSuite Core** - storage, ai_engine, instrument_manager, psychology_engine, curriculum_engine, calibration_engine, timing_engine, chart_io, replay_engine, input_judge, scoring_engine, rhythm_gameplay_engine, practice_engine, progress_engine, session_engine, **spark_core.js** (composition root)
-15. **Progression** - adaptive, mastery, unlocks, tree, progress_ui, skill_tree
-16. **Meta** - xp, levels, achievements, profile, challenges, weekly_goals, skill_tree_meta, meta_progress, dashboard
-17. **Analytics** - stats, trends, charts, reports, dashboard
-18. **Editor, MIDI, Desktop, Cloud, Content, Curriculum, Recommend, Career, Insights, Challenges, Home, Settings, Onboarding**
-19. **app.js** - final initialization
+_363 script tags, in this order. Regenerate this list rather than editing it
+by hand — it drifted badly enough to describe a directory that no longer
+existed. The counts are script tags per directory:_
+
+```
+ 1. js/*.js (root)                17    spark-highway, launcher, boot_loader, data, state,
+                                        audio, ui, timers, render*, actions, app
+ 2. js/sparksuite/core            30    contracts, progress_orchestrator, then the engines
+ 3. js/sparksuite/services         8    profile_schema, storage, events, progress,
+                                        achievements, content_*, psychology
+ 4. js/sparksuite/bridges          5    instrument_adapter, practice/curriculum/progress/
+                                        performance bridges
+ 5. js/sparksuite/legacy           2    practice_engine, session_engine (SparkSession)
+ 6. js/performance-core            5    chart/transport contracts, highway adapter, events
+ 7. js/sparksuite/instruments/*   55    vocals, ukulele, bass, piano, guitar module trees
+ 8. js/instruments/*              21    per-instrument page code (deferred via boot_loader,
+                                        except vocals/register.js)
+ 9. js/showroom, js/ui, js/core    8    launcher chrome and shared UI helpers
+10. js/utils                       9    day, normalize, ids, mastery, chord_progress, …
+11. js/pages                      18    practice, session, games, songs, tools, guided, …
+12. js/performance                19    config → chart → transport → scoring → session → …
+13. js/sparksuite/domain           9    types, session, chart, tempo_map, engine_preset, …
+14. js/practice, js/exercises      8    plan, adaptive, weakspots, selectors, engine
+15. js/analytics, js/insights     14
+16. js/progression, js/meta       22    mastery, unlocks, tree; xp, levels, challenges
+17. js/audio, js/editor, js/midi  34    timing, metronome, latency; chart editor; MIDI
+18. js/import, js/storage, debug   8
+19. js/desktop, js/cloud           9
+20. js/content, js/curriculum,    30    registry/loader, recommend, career, home,
+    recommend, career, home,             settings, onboarding
+    settings, onboarding
+21. js/actions                    10    action families (dispatch)
+22. js/dev                         5    dev overlay and validators (deferred)
+23. js/instruments/piano/pages    13    piano page overrides, registered by the inline
+                                        script at the end of index.html
+```
+
+Two ordering constraints are load-bearing and pinned by
+`tests/test_engine_boot_wiring.js`: the engines must precede `spark_core.js`,
+which composes them, and `js/utils/day.js` must precede `js/state.js`, which
+uses it for streaks and the daily-goal reset. Note that anything placed
+between `<!-- Instrument Modules -->` and `js/data.js` sits inside the block
+`scripts/apply_generated_instrument.js` regenerates and will be stripped.
 
 ## Key Globals
 
@@ -41,11 +71,41 @@ Related architecture guardrails:
 
 ## Composition Roots
 
-### Legacy: `window.SparkCore` (js/spark-core/index.js)
-Namespace barrel. Points at: SparkProfile, SparkStorage, SparkEvents, SparkProgress, SparkAchievements, SparkContent, SparkContentNormalizer, SparkSession, SparkPsychology, SparkInstrumentAdapter, SparkProgressOrchestrator.
+### `SparkSuiteCore` (js/sparksuite/core/spark_core.js)
+The composition root. Constructor-based; instantiates SparkSuiteStorage,
+SparkAIEngine, SparkInstrumentManager, SparkSuitePsychologyEngine,
+SparkSuiteCurriculumEngine, SparkSuitePracticeEngine, SparkSuiteProgressEngine
+and SparkSuiteSessionEngine. `createDefaultSparkCore()` builds the app's single
+`window.sparkCore`.
 
-### Current: `SparkSuiteCore` (js/sparksuite/core/spark_core.js)
-Constructor-based. Instantiates: SparkSuiteStorage, SparkAIEngine, SparkInstrumentManager, SparkSuitePsychologyEngine, SparkSuiteCurriculumEngine, SparkSuitePracticeEngine, SparkSuiteProgressEngine, SparkSuiteSessionEngine. Manages runtime state, session plans, performance editor, all flow orchestration.
+It is also a god object: 143 prototype methods and ~150 runtime-state fields,
+including roughly two dozen `sync*RuntimeState` methods — one per screen — and
+a `Legacy` family covering the pre-engine minigame flows. Splitting it by
+lifecycle is open work; see migration-checklist.md.
+
+### The former `js/spark-core/` barrel — retired
+That directory is gone. Its contents were relocated, which is what the (now
+deleted) spark-core-retirement-inventory.md set out to do:
+
+| Global | Now lives in |
+|---|---|
+| SparkContracts | js/sparksuite/core/contracts.js |
+| SparkProgressOrchestrator | js/sparksuite/core/progress_orchestrator.js |
+| SparkProfile | js/sparksuite/services/profile_schema.js |
+| SparkStorage | js/sparksuite/services/storage.js |
+| SparkEvents | js/sparksuite/services/events.js |
+| SparkProgress | js/sparksuite/services/progress.js |
+| SparkAchievements | js/sparksuite/services/achievements.js |
+| SparkContentNormalizer | js/sparksuite/services/content_normalizer.js |
+| SparkPsychology | js/sparksuite/services/psychology.js |
+| SparkSession | js/sparksuite/legacy/session_engine.js |
+| SparkPracticeEngine | js/sparksuite/legacy/practice_engine.js |
+| SparkInstrumentAdapter | js/sparksuite/bridges/instrument_adapter.js |
+| SparkContent | js/content/registry.js |
+
+`window.SparkCore` as a namespace barrel no longer exists. The two remaining
+files that reference it (`spotify_integration.js`, `system_wiring.js`) are part
+of the unshipped play-along/Spotify feature and are not loaded.
 
 ## Instrument Module Contract
 

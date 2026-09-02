@@ -72,7 +72,7 @@
   }
 
   function getTodayPerfDateKey(){
-    return new Date().toISOString().split("T")[0];
+    return SparkDay.today();
   }
 
   function currentActiveInstrumentType(){

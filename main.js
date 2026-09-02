@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, session } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, session, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -29,7 +29,61 @@ function hashFilePath(filePath) {
   return crypto.createHash('md5').update(filePath).digest('hex').substring(0, 12);
 }
 
+// Kept byte-identical to the meta tag in index.html; the two used to
+// disagree, so the effective policy depended on which one applied.
+const CONTENT_SECURITY_POLICY = "default-src 'self'; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' file:; connect-src 'self' data:; font-src 'self'";
+
+// The app is entirely local: index.html, its assets, and nothing else. Any
+// navigation away from it, and any window the renderer tries to open, is
+// therefore unexpected — send external https links to the system browser and
+// refuse the rest, rather than letting them take over the app window or open
+// a second unconstrained Electron window.
+const ALLOWED_EXTERNAL_PREFIXES = ['https://github.com/scomofo/sparksuite'];
+
+function isAllowedExternal(rawUrl) {
+  let parsed;
+  try {
+    parsed = new URL(rawUrl);
+  } catch (e) {
+    return false;
+  }
+  if (parsed.protocol !== 'https:') return false;
+  return ALLOWED_EXTERNAL_PREFIXES.some(function(prefix) {
+    return rawUrl === prefix || rawUrl.startsWith(prefix + '/');
+  });
+}
+
+function hardenWindow(win) {
+  win.webContents.setWindowOpenHandler(function(details) {
+    if (isAllowedExternal(details.url)) shell.openExternal(details.url);
+    return { action: 'deny' };
+  });
+
+  win.webContents.on('will-navigate', function(event, url) {
+    // The renderer only ever navigates within its own file:// document.
+    if (url === win.webContents.getURL()) return;
+    event.preventDefault();
+    if (isAllowedExternal(url)) shell.openExternal(url);
+  });
+
+  win.webContents.on('will-attach-webview', function(event) {
+    event.preventDefault();
+  });
+}
+
 function createWindow() {
+  // Register the CSP before the load is requested. This used to run three
+  // lines after loadFile(); asynchrony usually saved it, but the ordering was
+  // a race by construction.
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [CONTENT_SECURITY_POLICY]
+      }
+    });
+  });
+
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -42,9 +96,12 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      sandbox: true
     }
   });
+
+  hardenWindow(mainWindow);
 
   if (process.env.SPARKSUITE_SMOKE_OUTPUT) {
     runPackagedSmokeForWindow(mainWindow, {
@@ -59,16 +116,6 @@ function createWindow() {
   }
 
   mainWindow.loadFile('index.html');
-
-  // Enforce Content Security Policy headers.
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        'Content-Security-Policy': ["default-src 'self'; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; media-src 'self' file:; connect-src 'self' data:; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com"]
-      }
-    });
-  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;

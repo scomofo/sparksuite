@@ -3,17 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<!-- All remote endpoints must stay on HTTPS. Plain HTTP is limited to
-     localhost:3456, where the Songs-tab Spotify playlist bridge
-     (SparkSpotifyPlaylistClient) expects its separately-run backend —
-     the bundled Express server was removed with the community feature. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://lh3.googleusercontent.com; media-src 'self' file:; connect-src 'self' data: http://localhost:3456 https://localhost:3456; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com">
+<!-- No remote origins. Fonts are self-hosted under assets/fonts/, so the
+     googleapis/gstatic grants are gone along with the render-blocking
+     <link>s they served. The old localhost:3456 connect-src (for the
+     Spotify playlist bridge) and lh3.googleusercontent.com img-src both
+     went too: neither has a consumer that index.html loads. This policy is
+     kept byte-identical to the header set in main.js. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' file:; connect-src 'self' data:; font-src 'self'">
 <title>SparkSuite</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Syne:wght@400;500;600;700;800;900&display=swap">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0&display=swap">
+<link rel="stylesheet" href="assets/fonts/fonts.css">
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="spark-showroom.css">
 <link rel="stylesheet" href="spark-visual.css">
@@ -99,6 +97,12 @@
 <!-- vocals -->
 <script data-deferred-src="js/instruments/vocals/register.js"></script>
 <script src="js/data.js"></script>
+<!-- SparkDay: local-calendar-day helper. Must precede state.js and the
+     practice/performance modules, which use it for streaks, the daily
+     goal reset, and daily plan/challenge keys. Kept below js/data.js:
+     everything above that line is the block
+     scripts/apply_generated_instrument.js regenerates and would strip. -->
+<script src="js/utils/day.js"></script>
 <script src="js/state.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/ui.js"></script>

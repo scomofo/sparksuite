@@ -77,7 +77,7 @@
   function updatePerformanceStats(songId, arrangementType, difficulty, results) {
     var stats = getPerformanceStats(songId, arrangementType, difficulty);
     stats.runs++;
-    stats.lastPlayed = new Date().toISOString().split("T")[0];
+    stats.lastPlayed = SparkDay.today();
     if (results.score > stats.bestScore) stats.bestScore = results.score;
     if (results.accuracy > stats.bestAccuracy) stats.bestAccuracy = results.accuracy;
     if (results.stars > stats.bestStars) stats.bestStars = results.stars;

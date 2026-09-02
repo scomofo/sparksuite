@@ -632,6 +632,14 @@
     if (a === "performMode") {
       setLegacyFields({ performMode: v, performInputSource: v }, false);
       PerformanceInput.start(v);
+      // Open or release the microphone to match the chosen source, so the
+      // setup screen shows live detection before Play is pressed.
+      // startPerformance re-opens it after its own stopAllTimers().
+      if (v === "mic") {
+        if (typeof ensurePerformanceMicInput === "function") ensurePerformanceMicInput();
+      } else if (S.chordDetectOn && typeof stopChordDetect === "function") {
+        stopChordDetect();
+      }
       var modeCore = getPerformanceActionCore();
       if (modeCore && typeof modeCore.syncPerformanceRuntimeState === "function") {
         modeCore.syncPerformanceRuntimeState("configure", { mode: v });

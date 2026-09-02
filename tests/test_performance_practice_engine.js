@@ -30,6 +30,8 @@ function resetState() {
 function test(name, fn) {
   try {
     resetState();
+    // SparkDay: the local-calendar-day helper day-boundary logic depends on.
+    global.eval(loadJS("js/utils/day.js"));
     global.eval(loadJS("js/performance/practice_engine.js"));
     fn();
     console.log("  PASS: " + name);

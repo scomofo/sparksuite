@@ -315,7 +315,7 @@ var PERSIST_FIELDS=["activeInstrument","xp","streak","sessions","drillCount","da
   "practicePlan","practicePlanDate","practicePlanHistory",
   "weakSpots","practiceHistory","adaptiveState",
   "weeklyPracticePlan","practiceStreak","totalPracticeMinutes","todayPracticeMinutes",
-  "mastery","unlocks",
+  "mastery","masteryScaleVersion","unlocks",
   "playerXP","playerLevel","playerAchievements","playerStats","xpLog","contentLibrary",
   "dailyChallenges","weeklyGoals","skillTree","metaProgress","challengeHistory",
   "analytics",
@@ -515,11 +515,10 @@ function recoverFromCrash(){
 // habit apps; a freeze keeps a single slip from zeroing weeks of momentum.
 function isStreakFreezeAvailable(todayISO){
   if(!S.streakFreezeUsedAt) return true;
-  var usedISO;
-  try{ usedISO=new Date(S.streakFreezeUsedAt).toISOString().split("T")[0]; }
-  catch(e){ return true; }
-  var days=Math.floor((new Date(todayISO)-new Date(usedISO))/86400000);
-  return days>=7;
+  var usedISO=SparkDay.toISO(S.streakFreezeUsedAt);
+  if(!usedISO) return true;
+  var days=SparkDay.daysBetween(usedISO, todayISO);
+  return days==null||days>=7;
 }
 
 // A streak is "at risk" when the last session was exactly yesterday and
@@ -528,28 +527,26 @@ function isStreakFreezeAvailable(todayISO){
 // for the home screen's rescue nudge.
 function isStreakAtRisk(){
   if(!S.streak||S.streak<1||!S.lastSessionDate) return false;
-  var today=new Date().toISOString().split("T")[0];
-  var lastISO;
-  try{ lastISO=new Date(S.lastSessionDate).toISOString().split("T")[0]; }
-  catch(e){ return false; }
-  var diff=Math.floor((new Date(today)-new Date(lastISO))/86400000);
-  return diff===1;
+  var lastISO=SparkDay.toISO(S.lastSessionDate);
+  if(!lastISO) return false;
+  return SparkDay.daysBetween(lastISO, SparkDay.today())===1;
 }
 
 function checkStreak(){
-  var today=new Date().toISOString().split("T")[0];
+  var today=SparkDay.today();
   if(S.lastSessionDate){
     // Normalise: legacy data may be stored as toDateString() format
-    var last=new Date(S.lastSessionDate);
-    var lastISO=last.toISOString().split("T")[0];
-    var diff=Math.floor((new Date(today)-new Date(lastISO))/86400000);
+    var lastISO=SparkDay.toISO(S.lastSessionDate);
+    if(!lastISO) return;
+    var diff=SparkDay.daysBetween(lastISO, today);
+    if(diff==null) return;
     if(diff===2&&S.streak>0&&isStreakFreezeAvailable(today)){
       // Exactly one missed day — consume the freeze instead of resetting.
       S.streakFreezeUsedAt=today;
       // Credit the missed day as a virtual session: without this, a re-run
       // of checkStreak the same day sees diff===2 again with the freeze now
       // on cooldown and wipes the streak the freeze just protected.
-      var yesterday=new Date(new Date(today)-86400000).toISOString().split("T")[0];
+      var yesterday=SparkDay.addDays(today,-1);
       S.lastSessionDate=yesterday;
       // Mirror the virtual date into the per-instrument profiles too —
       // otherwise the engine's updateStreak sees a 2-day gap on the next
@@ -567,7 +564,7 @@ function checkStreak(){
 }
 
 function checkPracticeDate(){
-  var today=new Date().toISOString().split("T")[0];
+  var today=SparkDay.today();
   if(S.lastPracticeDate!==today){
     // Check if previous day goal was met before resetting
     if(S.lastPracticeDate&&S.goalReachedToday){
@@ -596,7 +593,7 @@ function logHistory(type,detail,xp){
   var now=new Date();
   S.history.push({
     type:type,
-    date:now.toISOString().split("T")[0],
+    date:SparkDay.toISO(now),
     timestamp:now.getTime(),
     xp:xp,
     detail:detail

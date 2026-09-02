@@ -79,6 +79,8 @@ function resetState() {
 }
 
 resetState();
+// SparkDay: the local-calendar-day helper the day-boundary logic depends on.
+loadJS("js/utils/day.js");
 loadJS("js/utils/normalize.js");
 loadJS("js/sparksuite/domain/types.js");
 loadJS("js/sparksuite/domain/session_segment.js");

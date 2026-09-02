@@ -210,10 +210,31 @@ function startPerformanceCountIn(chart, speed, onDone) {
   requestAnimationFrame(updateCountInVisual);
 }
 
+/*
+ * Mic mode needs a microphone. Selecting "Mic" used to set S.performMode and
+ * nothing else — PerformanceInput.start() only resets buffers — so nothing
+ * ever called getUserMedia and every note scored as a miss for anyone
+ * playing an acoustic instrument. The detector loop in js/audio.js already
+ * publishes to PerformanceInput.onMicUpdate while the perform screen is in
+ * mic mode; it just was never started.
+ *
+ * This has to run after stopAllTimers() (which tears the detector down), so
+ * it cannot live only in the performMode action handler — pressing Play
+ * would stop the mic again.
+ */
+function ensurePerformanceMicInput() {
+  if (typeof S === "undefined" || S.performMode !== "mic") return false;
+  if (S.chordDetectOn) return true;
+  if (typeof startChordDetect !== "function") return false;
+  startChordDetect();
+  return true;
+}
+
 function startPerformance(chartIdOrChart, opts) {
   opts = opts || {};
   _performStopping = false;
   stopAllTimers();
+  ensurePerformanceMicInput();
 
   var chartPromise;
   if (typeof chartIdOrChart === "string") {

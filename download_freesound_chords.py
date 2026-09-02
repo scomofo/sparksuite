@@ -10,7 +10,12 @@ SETUP — one time only:
        Name:        ChordSpark
        Description: Download guitar chord samples for a guitar learning app
        Callback URL: http://localhost
-  2. You'll see a table — copy the values into CLIENT_ID and CLIENT_SECRET below.
+  2. You'll see a table. Export those values before running:
+       Windows:  set FREESOUND_CLIENT_ID=... & set FREESOUND_CLIENT_SECRET=...
+       macOS/Linux:
+                 export FREESOUND_CLIENT_ID=...
+                 export FREESOUND_CLIENT_SECRET=...
+     Never paste them into this file — it is committed.
 
 INSTALL:
   pip install requests requests-oauthlib scipy numpy
@@ -41,10 +46,13 @@ except ImportError:
     print("  Run:  pip install scipy numpy  to enable it.\n")
 
 # -----------------------------------------------------------------
-# PASTE YOUR CREDENTIALS HERE
+# Credentials come from the environment. They were previously hardcoded
+# here and are therefore in this repository's git history — the pair that
+# was committed must be treated as compromised and revoked at
+# https://freesound.org/apiv2/apply/ rather than merely deleted.
 # -----------------------------------------------------------------
-CLIENT_ID     = "vpfg92AwtyKE7mEbv8E1"
-CLIENT_SECRET = "kO4eK06SWOWEDfbQ64q9mlYgNusKTrD72CrIHW2v"
+CLIENT_ID     = os.environ.get("FREESOUND_CLIENT_ID", "")
+CLIENT_SECRET = os.environ.get("FREESOUND_CLIENT_SECRET", "")
 # -----------------------------------------------------------------
 
 OUTPUT_DIR      = "guitar_chords"
@@ -102,10 +110,12 @@ def get_access_token():
         print("Using cached OAuth token.\n")
         return cached["access_token"]
 
-    if CLIENT_ID == "YOUR_CLIENT_ID_HERE":
-        print("\nERROR: CLIENT_ID and CLIENT_SECRET not set.")
+    if not CLIENT_ID or not CLIENT_SECRET:
+        print("\nERROR: FREESOUND_CLIENT_ID / FREESOUND_CLIENT_SECRET not set.")
         print("  1. Go to: https://freesound.org/apiv2/apply/")
-        print("  2. Paste credentials at the top of this script.")
+        print("  2. Export them in your shell before running this script:")
+        print("       export FREESOUND_CLIENT_ID=...")
+        print("       export FREESOUND_CLIENT_SECRET=...")
         sys.exit(1)
 
     print("-" * 60)
