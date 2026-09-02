@@ -315,7 +315,15 @@
     stopSparkRhythmHighway();
 
     var resolvedPresetName = resolveRhythmHighwayPresetName(presetName || S.rhythmHighwayPreset || payload.enginePreset);
-    var resolvedLoopSpec = launchContext.loopSpec || S.rhythmHighwayLoop || null;
+    // The loop window is per-launch, never inherited. `||` could not express
+    // "no loop" — a null loopSpec fell straight through to S.rhythmHighwayLoop,
+    // so starting a different segment silently sliced the new chart with the
+    // tick range the player had set on the previous one. An explicitly present
+    // loopSpec is now honoured literally; only a caller that omits the property
+    // entirely gets the stored window.
+    var resolvedLoopSpec = Object.prototype.hasOwnProperty.call(launchContext, "loopSpec")
+      ? (launchContext.loopSpec || null)
+      : (S.rhythmHighwayLoop || null);
     var activePayload = resolvedLoopSpec ? buildRhythmHighwayLoopPayload(payload, resolvedLoopSpec) : payload;
     if (!activePayload || !activePayload.songChart) activePayload = payload;
 
@@ -834,8 +842,30 @@
     return palette[index] || "#999";
   }
 
+  // Five engine-tier call sites guard on startPlayableRhythmHighwayPayload and
+  // fall through when it is absent — which it always was, so the ExecutionGateway's
+  // practice route, Spotify play-along and SessionRuntime's drill launch all
+  // silently did nothing. They pass (payload, launchContext); startRhythmHighwayPayload
+  // takes the preset as its middle argument, so the adapter is the shape fix.
+  //
+  // It also has to defend against inherited state. These callers start a DIFFERENT
+  // exercise than whatever ran last, but startRhythmHighwayPayload falls back to
+  // S.rhythmHighwayPreset *ahead* of payload.enginePreset, and to S.rhythmHighwayLoop
+  // whenever no loopSpec is given. Left alone, a programmatic drill would launch at
+  // the previous run's assist preset and be sliced by the loop window the player set
+  // on some earlier exercise. Passing the payload's own preset fixes the first.
+  // The second needs the stale loop cleared outright: the resolution is
+  // `launchContext.loopSpec || S.rhythmHighwayLoop`, so passing null cannot express
+  // "no loop" — null falls straight through to the old range.
+  function startPlayableRhythmHighwayPayload(payload, launchContext) {
+    launchContext = launchContext || {};
+    if (!Object.prototype.hasOwnProperty.call(launchContext, "loopSpec")) launchContext.loopSpec = null;
+    return startRhythmHighwayPayload(payload, (payload && payload.enginePreset) || null, launchContext);
+  }
+
   window.startRhythmHighwaySegment = startRhythmHighwaySegment;
   window.startRhythmHighwayPayload = startRhythmHighwayPayload;
+  window.startPlayableRhythmHighwayPayload = startPlayableRhythmHighwayPayload;
   window.stopSparkRhythmHighway = stopSparkRhythmHighway;
   window._sparkRhythmHighwayStrum = sparkRhythmHighwayStrum;
   window._sparkRhythmHighwayHandlesFrameRender = rhythmHighwayHandlesFrameRender;

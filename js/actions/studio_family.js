@@ -201,6 +201,8 @@
       var modulePayload = buildModuleExerciseRhythmPayload(moduleExercise);
       if (modulePayload && typeof startRhythmHighwayPayload === "function") {
         startRhythmHighwayPayload(modulePayload, S.rhythmHighwayPreset, {
+          // A different exercise: the loop window from the last one does not apply.
+          loopSpec: null,
           source: "module_exercise",
           label: moduleExercise && (moduleExercise.exerciseName || moduleExercise.lessonId || moduleExercise.skill) || "Module exercise",
           instrument: moduleExercise && moduleExercise.instrument || null,
@@ -223,7 +225,9 @@
       var nextPreset = v || "spark_learning";
       setLegacyFields({ rhythmHighwayPreset: nextPreset }, false);
       if (S.activeCoreSegmentId && typeof startRhythmHighwaySegment === "function") {
-        startRhythmHighwaySegment(S.activeCoreSegmentId, nextPreset);
+        // Same segment at a new assist preset, so the player's loop window
+        // still applies and has to be passed — it is no longer inherited.
+        startRhythmHighwaySegment(S.activeCoreSegmentId, nextPreset, S.rhythmHighwayLoop);
         return true;
       }
       render();

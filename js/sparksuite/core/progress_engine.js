@@ -91,7 +91,7 @@
     var weakestPhrase = getWeakestPerformancePhrase(phrases);
     var chartId = runtimeState.performanceChartId || (chart && chart.id) || "unknown";
     var totalEvents = clampProgressNumber(results.totalEvents, 0, 999999999, 0);
-    var accuracy = clampProgressNumber(results.accuracy, 0, 100, 0);
+    var accuracy = ProgressEngine.toAccuracyPercent(results.accuracy, ProgressEngine.ACCURACY_PERCENT);
 
     return {
       hasResults: true,
@@ -306,7 +306,10 @@
         xpToast: { amount: 20, time: Date.now() }
       };
       if (payload.gameplayResult) {
-        xpAwarded += Math.max(0, Math.round(((payload.gameplayResult.gameplay && payload.gameplayResult.gameplay.accuracy) || 0) * 20));
+        xpAwarded += Math.max(0, Math.round(ProgressEngine.toAccuracyFraction(
+          payload.gameplayResult.gameplay && payload.gameplayResult.gameplay.accuracy,
+          ProgressEngine.ACCURACY_FRACTION
+        ) * 20));
         sessionStatePatch = mergeSessionStatePatch(sessionStatePatch, buildGameplayLearningPatch(payload.gameplayResult.learning, payload.gameplayContext, payload.gameplayResult.gameplay));
         sessionStatePatch.xpToast.amount = xpAwarded;
       }
@@ -440,7 +443,10 @@
       var performanceResults = payload.performanceResults || {};
       var xpAwarded = typeof payload.xpAwarded === "number"
         ? payload.xpAwarded
-        : Math.max(5, Math.round((performanceResults.accuracy || 0) / 10));
+        : Math.max(5, Math.round(ProgressEngine.toAccuracyPercent(
+            performanceResults.accuracy,
+            ProgressEngine.ACCURACY_PERCENT
+          ) / 10));
       SparkProgressBridge.applyLegacyReward({
         xpDelta: xpAwarded,
         toastAmount: xpAwarded
@@ -517,7 +523,7 @@
     var skillConfig = resolveInstrumentSkillProgressConfig(instrument);
     if (!skillConfig) return null;
 
-    var accuracy = typeof gameplay.accuracy === "number" ? Math.max(0, Math.min(1, gameplay.accuracy)) : 0;
+    var accuracy = ProgressEngine.toAccuracyFraction(gameplay.accuracy, ProgressEngine.ACCURACY_FRACTION);
     var maxCombo = typeof gameplay.maxCombo === "number" ? gameplay.maxCombo : 0;
     var comboFactor = Math.max(0, Math.min(1, maxCombo / 20));
     var weakAreas = Array.isArray(learning.weakAreas) ? learning.weakAreas : [];
@@ -889,6 +895,37 @@
     if (n < 0) n = 0;
     if (n <= 1) n = n * 100;
     return Math.max(0, Math.min(ProgressEngine.MASTERY_SCALE_MAX, n));
+  };
+
+  /*
+   * Accuracy reaches ProgressEngine on TWO different scales, because the two
+   * scorers report differently:
+   *
+   *   gameplayResult.gameplay.accuracy   0..1    SparkScoringEngine.toSummary()
+   *   performanceResults.accuracy        0..100  finalizePerformanceResults()
+   *
+   * Every consumer used to clamp rather than convert, so a value arriving on
+   * the wrong scale was silently flattened instead of rejected: 0.95 clamped
+   * into the percent range reads as 1% accuracy, and 95 clamped into the
+   * fraction range reads as a flawless run. Both corrupt XP and mastery
+   * without raising anything.
+   *
+   * Unlike toMasteryPercent above, these do not guess from the value — the
+   * caller names the scale its source produces, so a mismatch is a visible
+   * error at the call site rather than a plausible-looking number.
+   */
+  ProgressEngine.ACCURACY_FRACTION = "fraction";
+  ProgressEngine.ACCURACY_PERCENT = "percent";
+
+  ProgressEngine.toAccuracyPercent = function(value, sourceScale) {
+    var n = typeof value === "number" && isFinite(value) ? value : Number(value);
+    if (!isFinite(n) || n < 0) n = 0;
+    if (sourceScale === ProgressEngine.ACCURACY_FRACTION) n = n * 100;
+    return Math.max(0, Math.min(100, n));
+  };
+
+  ProgressEngine.toAccuracyFraction = function(value, sourceScale) {
+    return ProgressEngine.toAccuracyPercent(value, sourceScale) / 100;
   };
 
   /*

@@ -141,6 +141,55 @@ UI layer decides how to render:
 
 ---
 
+# 🎯 Scoring: Two Judges, One Boundary
+
+SparkSuite has **two scoring models, and this is deliberate.** They are not
+duplicates and neither is being retired.
+
+| Judge | Owns | Reads |
+|---|---|---|
+| `core/input_judge.js` + `core/scoring_engine.js` | Rhythm Highway | `{atSec, laneMask}` — timestamp + fret bitmask from buttons/keys |
+| `performance/scoring.js` | Song Performance | detected pitch classes from mic or MIDI attack clusters |
+
+## The rule
+
+**A judge owns an input modality, not a screen.** Lane/button input is judged by
+the engine-tier pair; audio and MIDI input is judged by the performance scorer.
+Neither can judge the other's input — they do not share an input vocabulary, so
+"just use the other one" is never a valid simplification.
+
+## What is shared, and must stay shared
+
+Hit windows come from **one** source: `SparkEnginePresetRegistry`
+(`domain/engine_preset.js`). `performance/difficulties.js` derives its windows
+from the same presets. This is pinned by `tests/test_timing_convergence.js`.
+Do not introduce a second window table.
+
+## Accuracy has two scales — always name yours
+
+The two judges report accuracy differently, and this is the sharpest edge in the
+codebase:
+
+```
+gameplayResult.gameplay.accuracy   0..1     SparkScoringEngine.toSummary()
+performanceResults.accuracy        0..100   finalizePerformanceResults()
+```
+
+ProgressEngine accepts both, through two completion contracts. **Never clamp an
+accuracy value — convert it**, using `ProgressEngine.toAccuracyPercent()` or
+`toAccuracyFraction()` with an explicit `ACCURACY_FRACTION` / `ACCURACY_PERCENT`
+source scale. Clamping a value on the wrong scale silently produces a
+plausible-looking number (0.95 reads as 1%, 95 reads as a perfect run) instead
+of failing.
+
+## Before adding a third
+
+Guided practice already scores inline (`pages/guided.js`), duplicating a formula
+that also appears twice in `js/audio.js`. Do not add a fourth. If a new surface
+needs judging, it routes to one of the two judges above by its input modality.
+
+---
+
 # 🔄 Data Flow
 
 User Profile
