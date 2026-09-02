@@ -96,6 +96,8 @@ function resetState() {
 
 resetState();
 
+// SparkDay: the local-calendar-day helper day-boundary logic depends on.
+eval(loadJS("js/utils/day.js"));
 eval(loadJS("js/sparksuite/bridges/progress_bridge.js"));
 eval(loadJS("js/practice/progress.js"));
 global.Math.random = function() { return 1; };
@@ -254,7 +256,8 @@ test("spark session processResults delegates session progression writes to the b
   assert.strictEqual(S.streak, 1);
   assert.strictEqual(S.xp, 10);
   assert.strictEqual(S.chordProgress["E Major"], 34);
-  assert.strictEqual(S.lastSessionDate, new Date().toISOString().slice(0, 10));
+  // Local calendar day, matching SparkDay — not the UTC day.
+  assert.strictEqual(S.lastSessionDate, SparkDay.today());
 });
 
 test("practice weak-spot updater delegates to bridge helper", function() {

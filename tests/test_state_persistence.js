@@ -53,6 +53,7 @@ function makeContext(store) {
   };
   ctx.window = ctx;
   vm.createContext(ctx);
+  vm.runInContext(loadSource('js/utils/day.js'), ctx);
   vm.runInContext(loadSource('js/utils/ids.js'), ctx);
   vm.runInContext(loadSource('js/state.js'), ctx);
   return ctx;

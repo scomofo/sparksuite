@@ -44,6 +44,7 @@ function resetState() {
 }
 
 resetState();
+loadJS("js/utils/day.js");
 loadJS("js/sparksuite/domain/types.js");
 loadJS("js/sparksuite/domain/session_segment.js");
 loadJS("js/sparksuite/domain/session.js");

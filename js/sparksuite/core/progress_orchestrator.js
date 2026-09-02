@@ -157,7 +157,7 @@
       }
 
       // --- Streak: once per day ---
-      var today = new Date().toISOString().slice(0, 10);
+      var today = SparkDay.today();
       var sessionUpdate = {
         streak: null,
         sessionsDelta: 1,

@@ -61,6 +61,8 @@ test("loadState migrates legacy performAudioOffsetMs into performMicOffsetMs", f
     performAudioOffsetMs: 87,
     performMicOffsetMs: null
   });
+  // SparkDay: the local-calendar-day helper day-boundary logic depends on.
+  global.eval(loadJS("js/utils/day.js"));
   global.eval(loadJS("js/state.js"));
   assert.strictEqual(S.performMicOffsetMs, 87);
   assert.strictEqual(S.performAudioOffsetMs, 0);

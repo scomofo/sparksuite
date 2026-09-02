@@ -76,7 +76,7 @@
     }
 
     S.practicePlan = {
-      date: new Date().toISOString().slice(0,10),
+      date: SparkDay.today(),
       items: items
     };
 
@@ -140,7 +140,7 @@
       S.practicePlanDate = previousPlanDate;
       S.practicePlanComplete = previousPlanComplete;
       S.weeklyPracticePlan = {
-        weekStart: new Date().toISOString().slice(0,10),
+        weekStart: SparkDay.today(),
         days: sharedDays
       };
       return S.weeklyPracticePlan;
@@ -156,7 +156,7 @@
     S.practicePlanDate = previousLegacyPlanDate;
     S.practicePlanComplete = previousLegacyPlanComplete;
     S.weeklyPracticePlan = {
-      weekStart: new Date().toISOString().slice(0,10),
+      weekStart: SparkDay.today(),
       days: days
     };
     return S.weeklyPracticePlan;

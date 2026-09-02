@@ -137,6 +137,8 @@ resetState();
 // Loaded the same way as the page modules below (matches the test's
 // existing bootstrapping pattern).
 var _eval = eval;
+// SparkDay: the local-calendar-day helper day-boundary logic depends on.
+_eval(loadJS("js/utils/day.js"));
 _eval(loadJS("js/utils/normalize.js"));
 
 eval(loadJS("js/sparksuite/domain/types.js"));

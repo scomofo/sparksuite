@@ -21,9 +21,9 @@
   }
 
   function updatePracticeStreak(){
-    var today = new Date().toISOString().slice(0,10);
+    var today = SparkDay.today();
     if(S.lastPracticeDate === today) return;
-    var yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+    var yesterday = SparkDay.addDays(today, -1);
     if(S.lastPracticeDate === yesterday){
       S.practiceStreak++;
     }else{

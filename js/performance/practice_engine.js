@@ -66,7 +66,7 @@
       if (corePlan) return corePlan.toLegacyPracticePlan();
     }
 
-    var today = new Date().toISOString().split("T")[0];
+    var today = SparkDay.today();
     if (S.practicePlanDate === today && S.practicePlan) return S.practicePlan;
 
     var items = [];

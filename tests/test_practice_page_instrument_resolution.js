@@ -11,6 +11,7 @@ function loadJS(file) {
 // the window alias first (resetEnv() also sets it but runs per-test).
 global.window = global.window || global;
 var _testEval = eval;
+_testEval(loadJS("js/utils/day.js"));
 _testEval(loadJS("js/utils/normalize.js"));
 _testEval(loadJS("js/sparksuite/ui/session_shell.js"));
 

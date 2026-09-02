@@ -848,7 +848,7 @@
     input = input || {};
     if (!input.flow && input.mode) return this.startLegacyPracticeSession(input);
     var flow = input.flow || this.aiEngine.suggestNextFlow();
-    var today = new Date().toISOString().slice(0, 10);
+    var today = SparkDay.today();
     // The cached plan is also keyed by the active instrument — switching
     // instruments invalidates yesterday's cache even on the same day, so a
     // bass user doesn't see ukulele segments. When currentInstrumentType is

@@ -97,6 +97,12 @@
 <!-- vocals -->
 <script data-deferred-src="js/instruments/vocals/register.js"></script>
 <script src="js/data.js"></script>
+<!-- SparkDay: local-calendar-day helper. Must precede state.js and the
+     practice/performance modules, which use it for streaks, the daily
+     goal reset, and daily plan/challenge keys. Kept below js/data.js:
+     everything above that line is the block
+     scripts/apply_generated_instrument.js regenerates and would strip. -->
+<script src="js/utils/day.js"></script>
 <script src="js/state.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/ui.js"></script>

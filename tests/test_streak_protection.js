@@ -48,12 +48,18 @@ function makeContext() {
   };
   ctx.window = ctx;
   vm.createContext(ctx);
+  vm.runInContext(loadSource('js/utils/day.js'), ctx);
   vm.runInContext(loadSource('js/state.js'), ctx);
   return ctx;
 }
 
+// Local calendar days, matching what the code under test now produces.
+// This used toISOString(), i.e. the UTC day, which agreed with the code only
+// while the code was also UTC-based — and so passed in CI (UTC) while
+// failing for any developer west of Greenwich.
+var SparkDay = require('../js/utils/day.js');
 function isoDaysAgo(n) {
-  return new Date(Date.now() - n * 86400000).toISOString().split('T')[0];
+  return SparkDay.addDays(SparkDay.today(), -n);
 }
 
 console.log('=== Streak Protection Tests ===');

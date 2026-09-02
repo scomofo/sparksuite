@@ -54,6 +54,7 @@ function makeContext(opts) {
   ctx.saveState = function() {};
   ctx.window = ctx;
   vm.createContext(ctx);
+  loadInto(ctx, 'js/utils/day.js');
   loadInto(ctx, 'js/sparksuite/core/contracts.js');
   loadInto(ctx, 'js/sparksuite/core/progress_orchestrator.js');
   return ctx;
