@@ -367,7 +367,7 @@
     }
 
     if (a === "toggleChordDetect") {
-      if (S.chordDetectOn) stopChordDetect();
+      if (typeof isChordDetectActive === "function" && isChordDetectActive()) stopChordDetect();
       else startChordDetect();
       return true;
     }

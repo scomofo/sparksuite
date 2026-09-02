@@ -39,7 +39,7 @@ function tickS(){
   } else if(S.timerActive&&S.timer<=0){
     S.timerActive=false;clearTimeout(T.session);
     if(S.metronomeOn)stopMetronome();
-    if(S.chordDetectOn)stopChordDetect();
+    if(typeof isChordDetectActive==="function"&&isChordDetectActive())stopChordDetect();
     var core=getTimerCore();
     if(core && typeof core.completeLegacyPracticeSession === "function"){
       core.completeLegacyPracticeSession({
@@ -524,7 +524,7 @@ function stopAllTimers(){
   // they share an ID pool, but using the wrong API is technically incorrect.
   clearInterval(T.strum);clearInterval(T.song);clearTimeout(T.metro);clearInterval(T.prog);
   if(S.metronomeOn){stopMetronome();S.metronomeOn=false;}
-  if(S.chordDetectOn)stopChordDetect();
+  if(typeof isChordDetectActive==="function"&&isChordDetectActive())stopChordDetect();
   if(window.SparkProgressBridge&&typeof SparkProgressBridge.applyLegacyActivityRuntime==="function"){
     SparkProgressBridge.applyLegacyActivityRuntime({
       setFields:{

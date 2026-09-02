@@ -225,6 +225,12 @@ function startPerformanceCountIn(chart, speed, onDone) {
 function ensurePerformanceMicInput() {
   if (typeof S === "undefined" || S.performMode !== "mic") return false;
   if (S.chordDetectOn) return true;
+  // S.chordDetectOn only turns true once a stream has arrived, so checking it
+  // alone would start a second acquisition while the first is still pending —
+  // for instance selecting Mic and pressing Play before the permission prompt
+  // resolves. startChordDetect() disposes of superseded streams either way,
+  // but there is no reason to ask for the microphone twice.
+  if (typeof isChordDetectPending === "function" && isChordDetectPending()) return true;
   if (typeof startChordDetect !== "function") return false;
   startChordDetect();
   return true;

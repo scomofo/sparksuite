@@ -369,12 +369,24 @@
         ? SparkSuiteProgressEngine
         : null;
 
+      // `|| default` would turn a real accuracy of 0 — a completely failed
+      // attempt — into the default. That mattered once this step actually ran:
+      // two failed chord attempts each recorded 75% mastery, which cleared the
+      // `> 70` gates in evaluateUnlocks() and unlocked the F chord for a
+      // learner who had just played nothing right. Only a missing or
+      // non-numeric reading may take a default.
+      function accuracyOr(fallback) {
+        return typeof event.accuracy === "number" && isFinite(event.accuracy)
+          ? event.accuracy
+          : fallback;
+      }
+
       if (masteryEngine && event.chordName) {
         result.masteryUpdates[event.chordName] =
-          masteryEngine.blendCategoryMastery("chords", event.chordName, event.accuracy || 0.75);
+          masteryEngine.blendCategoryMastery("chords", event.chordName, accuracyOr(0.75));
       }
       if (masteryEngine && event.type === "song" && event.songId) {
-        masteryEngine.blendCategoryMastery("songs", event.songId, event.accuracy || 0);
+        masteryEngine.blendCategoryMastery("songs", event.songId, accuracyOr(0));
       }
 
       // 6. Evaluate unlocks

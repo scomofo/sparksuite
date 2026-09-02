@@ -637,7 +637,7 @@
       // startPerformance re-opens it after its own stopAllTimers().
       if (v === "mic") {
         if (typeof ensurePerformanceMicInput === "function") ensurePerformanceMicInput();
-      } else if (S.chordDetectOn && typeof stopChordDetect === "function") {
+      } else if (typeof isChordDetectActive === "function" && isChordDetectActive() && typeof stopChordDetect === "function") {
         stopChordDetect();
       }
       var modeCore = getPerformanceActionCore();

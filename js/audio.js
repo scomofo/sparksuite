@@ -3,6 +3,15 @@ var AC=window.AudioContext||window.webkitAudioContext||null;
 var audioCtx=null;
 var tunerR={stream:null,analyser:null,ctx:null,anim:null};
 var chordR={stream:null,analyser:null,ctx:null,anim:null};
+// getUserMedia is async, so S.chordDetectOn stays false while a request is
+// in flight. Without a token, a second start during that window acquires a
+// second stream (one overwrites chordR and the other leaks, leaving the mic
+// live), and a stop cannot cancel a request already pending — the mic would
+// switch on after the user had chosen another input source. Each attempt
+// carries a generation; a resolution whose generation is stale disposes of
+// its own stream instead of installing it.
+var _chordDetectGeneration=0;
+var _chordDetectPending=false;
 
 function getAudioCore(){
   return window.sparkCore || (typeof sparkCore !== "undefined" ? sparkCore : null);
@@ -524,7 +533,15 @@ function startChordDetect(){
     render();return;
   }
   _chordNoteHistory=[];_chordFrameCount=0;
+  var myGeneration=++_chordDetectGeneration;
+  _chordDetectPending=true;
   navigator.mediaDevices.getUserMedia(getAudioConstraint()).then(function(st){
+    if(myGeneration!==_chordDetectGeneration){
+      // Superseded or stopped while we were waiting — release this stream.
+      st.getTracks().forEach(function(t){t.stop();});
+      return;
+    }
+    _chordDetectPending=false;
     chordR.stream=st;
     var ctx=new AC(),src=ctx.createMediaStreamSource(st),an=ctx.createAnalyser();
     an.fftSize=16384; // Higher resolution: ~2.7 Hz/bin at 44.1kHz
@@ -572,6 +589,8 @@ function startChordDetect(){
       chordR.anim=requestAnimationFrame(det);
     }det();
   }).catch(function(){
+    if(myGeneration!==_chordDetectGeneration) return;
+    _chordDetectPending=false;
     if(core&&typeof core.syncChordDetectRuntimeState==="function"){
       core.syncChordDetectRuntimeState({active:false,notes:[],match:-1,error:"Microphone access denied"});
     }
@@ -583,6 +602,16 @@ function startChordDetect(){
     render();
   });
 }
+
+// True while a microphone request is in flight. Callers that would otherwise
+// start a second acquisition should wait on this rather than on
+// S.chordDetectOn, which only turns true once a stream has arrived.
+function isChordDetectPending(){return _chordDetectPending;}
+// True while the microphone is on OR still being acquired. Teardown paths
+// must use this, not S.chordDetectOn: that flag stays false for the whole
+// getUserMedia round-trip, so a guard on it alone silently skips the stop
+// and the stream installs itself after the user has left mic mode.
+function isChordDetectActive(){return !!(typeof S!=="undefined"&&S.chordDetectOn)||_chordDetectPending;}
 
 function stopChordDetect(){
   var core=getAudioCore();
@@ -596,6 +625,9 @@ function stopChordDetect(){
   }else{
     S.chordDetectOn=false;S.detectedNotes=[];S.chordMatch=-1;
   }
+  // Invalidate any in-flight acquisition so it disposes of its own stream.
+  _chordDetectGeneration++;
+  _chordDetectPending=false;
   if(chordR.anim)cancelAnimationFrame(chordR.anim);
   if(chordR.stream)chordR.stream.getTracks().forEach(function(t){t.stop();});
   if(chordR.ctx)chordR.ctx.close();

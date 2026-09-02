@@ -1596,7 +1596,7 @@ function guidedTryVerifyStop() {
     _guidedTryVerify.timer = null;
   }
   _guidedTryVerify.tracker = null;
-  if (S.chordDetectOn && typeof stopChordDetect === "function") stopChordDetect();
+  if (typeof isChordDetectActive === "function" && isChordDetectActive() && typeof stopChordDetect === "function") stopChordDetect();
 }
 
 function guidedTryVerifyStatusInner() {
