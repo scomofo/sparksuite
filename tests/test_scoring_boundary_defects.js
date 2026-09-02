@@ -55,20 +55,95 @@ test("every guarded call to startPlayableRhythmHighwayPayload has a definition",
   );
 });
 
-test("the launcher forwards launchContext as startRhythmHighwayPayload's third argument", function () {
+test("the launcher does not inherit the previous run's preset or loop", function () {
   var page = strip(read("js/pages/rhythm_highway.js"));
   var body = page.slice(page.indexOf("function startPlayableRhythmHighwayPayload"));
   body = body.slice(0, body.indexOf("\n  }") + 4);
+
+  // These callers start a different exercise than whatever ran last, so the
+  // exercise's own preset must win over the sticky S.rhythmHighwayPreset that
+  // startRhythmHighwayPayload would otherwise prefer.
   assert.ok(
-    /startRhythmHighwayPayload\(\s*payload\s*,\s*null\s*,\s*launchContext\s*\|\|\s*\{\}\s*\)/.test(body),
-    "the preset must be the middle argument and stay null so it resolves from " +
-      "S.rhythmHighwayPreset or payload.enginePreset, which is what callers set"
+    /startRhythmHighwayPayload\(\s*payload\s*,\s*\(payload && payload\.enginePreset\) \|\| null\s*,\s*launchContext\s*\)/.test(body),
+    "the payload's own enginePreset must be passed as the middle argument"
   );
-  // The underlying function's own contract, so the adapter cannot drift from it.
+  assert.ok(
+    /S\.rhythmHighwayLoop = null/.test(body),
+    "a stale loop window must be cleared; passing loopSpec null cannot express " +
+      "'no loop' because the resolution is `launchContext.loopSpec || S.rhythmHighwayLoop`"
+  );
+
+  // The two behaviours above only matter because of these two lines in the
+  // function being delegated to. Pin them so the adapter cannot silently
+  // become redundant or wrong if the resolution changes.
+  assert.ok(
+    /resolveRhythmHighwayPresetName\(presetName \|\| S\.rhythmHighwayPreset \|\| payload\.enginePreset\)/.test(page),
+    "preset resolution changed — recheck whether the adapter still needs to pass one"
+  );
+  assert.ok(
+    /var resolvedLoopSpec = launchContext\.loopSpec \|\| S\.rhythmHighwayLoop \|\| null;/.test(page),
+    "loop resolution changed — recheck whether clearing S.rhythmHighwayLoop is still needed"
+  );
   assert.ok(
     /function startRhythmHighwayPayload\(payload, presetName, launchContext\)/.test(page),
     "startRhythmHighwayPayload's signature changed — recheck the adapter"
   );
+});
+
+test("the adapter clears the stale loop and forwards the payload preset", function () {
+  // Run the real adapter body against a stub of the function it delegates to,
+  // so this asserts behaviour rather than matching source text.
+  var page = strip(read("js/pages/rhythm_highway.js"));
+  var body = page.slice(page.indexOf("function startPlayableRhythmHighwayPayload"));
+  body = body.slice(0, body.indexOf("\n  }") + 4);
+
+  var seen = null;
+  var scope = {
+    S: {
+      rhythmHighwayPreset: "spark_gentle",
+      rhythmHighwayLoop: { startTick: 0, endTick: 480, label: "previous exercise" }
+    }
+  };
+  var run = new Function("S", "startRhythmHighwayPayload", body +
+    "; return startPlayableRhythmHighwayPayload;")(scope.S, function (payload, presetName, ctx) {
+      // Capture what the real function would resolve against, per lines 317-318.
+      seen = {
+        presetName: presetName,
+        loopAtCall: scope.S.rhythmHighwayLoop,
+        resolvedPreset: presetName || scope.S.rhythmHighwayPreset || payload.enginePreset,
+        resolvedLoop: (ctx && ctx.loopSpec) || scope.S.rhythmHighwayLoop || null
+      };
+      return true;
+    });
+
+  run({ chartId: "drill", enginePreset: "spark_pro", songChart: {} },
+      { source: "session_runtime", label: "Drill", instrument: "guitar" });
+
+  assert.strictEqual(seen.presetName, "spark_pro",
+    "the exercise's own preset must be passed, not left to the sticky S.rhythmHighwayPreset");
+  assert.strictEqual(seen.resolvedPreset, "spark_pro",
+    "a drill must not launch at the previous run's assist preset");
+  assert.strictEqual(seen.loopAtCall, null, "the stale loop window must be cleared before delegating");
+  assert.strictEqual(seen.resolvedLoop, null,
+    "a fresh drill must not be sliced by the loop window set on a previous exercise");
+});
+
+test("a caller that asks for a loop still gets one", function () {
+  var page = strip(read("js/pages/rhythm_highway.js"));
+  var body = page.slice(page.indexOf("function startPlayableRhythmHighwayPayload"));
+  body = body.slice(0, body.indexOf("\n  }") + 4);
+  var seen = null;
+  var S = { rhythmHighwayPreset: null, rhythmHighwayLoop: { startTick: 0, endTick: 100 } };
+  var run = new Function("S", "startRhythmHighwayPayload", body +
+    "; return startPlayableRhythmHighwayPayload;")(S, function (payload, presetName, ctx) {
+      seen = { loopSpec: ctx.loopSpec, loopState: S.rhythmHighwayLoop };
+      return true;
+    });
+  var wanted = { startTick: 200, endTick: 400, label: "requested" };
+  run({ songChart: {} }, { loopSpec: wanted });
+  assert.strictEqual(seen.loopSpec, wanted, "an explicitly requested loop must survive");
+  assert.strictEqual(seen.loopState, S.rhythmHighwayLoop,
+    "clearing must not fire when the caller supplied its own loop");
 });
 
 // --- Defect 2: two accuracy scales ---------------------------------------

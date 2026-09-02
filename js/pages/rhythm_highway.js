@@ -838,11 +838,21 @@
   // fall through when it is absent — which it always was, so the ExecutionGateway's
   // practice route, Spotify play-along and SessionRuntime's drill launch all
   // silently did nothing. They pass (payload, launchContext); startRhythmHighwayPayload
-  // takes the preset as its middle argument, so the adapter is the whole fix.
-  // Passing null for the preset lets it resolve from S.rhythmHighwayPreset or
-  // payload.enginePreset, which is what those callers set.
+  // takes the preset as its middle argument, so the adapter is the shape fix.
+  //
+  // It also has to defend against inherited state. These callers start a DIFFERENT
+  // exercise than whatever ran last, but startRhythmHighwayPayload falls back to
+  // S.rhythmHighwayPreset *ahead* of payload.enginePreset, and to S.rhythmHighwayLoop
+  // whenever no loopSpec is given. Left alone, a programmatic drill would launch at
+  // the previous run's assist preset and be sliced by the loop window the player set
+  // on some earlier exercise. Passing the payload's own preset fixes the first.
+  // The second needs the stale loop cleared outright: the resolution is
+  // `launchContext.loopSpec || S.rhythmHighwayLoop`, so passing null cannot express
+  // "no loop" — null falls straight through to the old range.
   function startPlayableRhythmHighwayPayload(payload, launchContext) {
-    return startRhythmHighwayPayload(payload, null, launchContext || {});
+    launchContext = launchContext || {};
+    if (!launchContext.loopSpec && typeof S !== "undefined") S.rhythmHighwayLoop = null;
+    return startRhythmHighwayPayload(payload, (payload && payload.enginePreset) || null, launchContext);
   }
 
   window.startRhythmHighwaySegment = startRhythmHighwaySegment;
