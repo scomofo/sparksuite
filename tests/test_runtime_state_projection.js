@@ -83,7 +83,7 @@ eval(loadJS("js/sparksuite/core/practice_engine.js"));
 eval(loadJS("js/sparksuite/core/progress_engine.js"));
 eval(loadJS("js/sparksuite/core/session_engine.js"));
 eval(loadJS("js/sparksuite/core/execution_gateway.js"));
-eval(loadJS("js/sparksuite/core/spark_core.js"));
+require("./spark_core_modules.js").loadSparkCore(loadJS);
 
 console.log("\n--- SparkCore Runtime State Projection (Phase 2) ---");
 

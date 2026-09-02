@@ -96,7 +96,7 @@ const errorViewModule = require("../js/sparksuite/ui/error_view.js");
 global.SparkDay = require("../js/utils/day.js");
 require("../js/sparksuite/domain/session.js");
 const gateway = require("../js/sparksuite/core/execution_gateway.js");
-require("../js/sparksuite/core/spark_core.js");
+require("./spark_core_modules.js").sparkCoreModules().forEach(function (f) { require("../" + f); });
 
 const SparkErrorCodes = errorCodesModule.SparkErrorCodes;
 const SparkError = sparkErrorModule.SparkError;
