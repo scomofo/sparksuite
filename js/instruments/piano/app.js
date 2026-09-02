@@ -17,7 +17,15 @@ window.shuffleArray = function(arr) { return shuffleArray(arr); };
 window.startGuidedSession = function(requestedSession) { return startGuidedSession(requestedSession); };
 window.advanceSessionStep = function() { return advanceSessionStep(); };
 window.adaptBpm = function() { return adaptBpm(); };
-window.checkLevelUp = function() { return checkLevelUp(); };
+// Namespaced deliberately. Piano's checkLevelUp advances the per-instrument
+// curriculum level (S.level, capped at 8); js/meta/levels.js owns a different
+// checkLevelUp that advances the suite player level from the XP curve
+// (S.playerXP -> S.playerLevel). Exporting piano's under the bare name
+// overwrote meta's as soon as the deferred instrument scripts loaded — which
+// happens on idle for every user, whatever instrument they picked — so
+// awardXP() and the progression cascade silently stopped advancing
+// S.playerLevel. Piano's own calls resolve to the local function.
+window.pianoCheckLevelUp = function() { return checkLevelUp(); };
 window.checkReward = function(t) { return checkReward(t); };
 window.pickReviewChords = function() { return pickReviewChords(); };
 
