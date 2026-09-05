@@ -38,10 +38,12 @@ function test(name, fn) {
 
 test("every guarded call to startPlayableRhythmHighwayPayload has a definition", function () {
   var guards = [];
-  ["js/sparksuite/core/execution_gateway.js", "js/sparksuite/core/spark_core.js",
-   "js/sparksuite/core/session_runtime.js"].forEach(function (f) {
-    if (/startPlayableRhythmHighwayPayload/.test(read(f))) guards.push(f);
-  });
+  fs.readdirSync(path.join(repoRoot, "js/sparksuite/core"))
+    .filter(function (name) { return /\.js$/.test(name); })
+    .map(function (name) { return "js/sparksuite/core/" + name; })
+    .forEach(function (f) {
+      if (/startPlayableRhythmHighwayPayload/.test(read(f))) guards.push(f);
+    });
   assert.ok(guards.length >= 3, "expected the engine tier to still guard on this launcher");
 
   var page = read("js/pages/rhythm_highway.js");
